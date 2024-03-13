@@ -82,9 +82,10 @@ pub fn Radio(
       "disabled",
       Signal::derive(move || {
         disabled
-          .map(|disabled| disabled.get())
-          .unwrap_or(false)
-          .to_string()
+          .map(|disabled| disabled.get().then_some(""))
+          .flatten()
+        // .unwrap_or(false)
+        // .to_string()
       })
       .into_attribute(),
     ),
@@ -107,8 +108,6 @@ pub fn Radio(
       attrs=merged_attrs
       node_ref=Some(node_ref)
       on:click=move |ev: MouseEvent| {
-        logging::log!("radio button clicked");
-
         if checked.map(|checked| checked.get()).unwrap_or(false) == false {
           if let Some(on_check) = on_check {
             on_check(())

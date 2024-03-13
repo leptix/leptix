@@ -265,7 +265,7 @@ fn ToggleGroup(
       if roving_focus.map(|roving_focus| roving_focus.get()).unwrap_or(true) {
         view! {
           <RovingFocusGroup
-            // as_child=true
+            as_child=true
             orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Horizontal))
             direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight))
             should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
@@ -326,11 +326,13 @@ pub fn ToggleGroupItem(
       if state_context.roving_focus.get() {
         view! {
           <RovingFocusGroupItem
-            // as_child=true
-            focusable=Signal::derive(move || is_disabled.get())
+            as_child=true
+            focusable=Signal::derive(move || !is_disabled.get())
             active=Signal::derive(move || is_pressed.get())
           >
             <ToggleRoot
+              disabled=Signal::derive(move || is_disabled.get())
+              pressed=Signal::derive(move || is_pressed.get())
               attrs=merged_attrs
               node_ref=node_ref
               on_pressed_changed=Callback::new(move |pressed| {
@@ -348,6 +350,8 @@ pub fn ToggleGroupItem(
       } else {
         view! {
           <ToggleRoot
+            disabled=Signal::derive(move || is_disabled.get())
+            pressed=Signal::derive(move || is_pressed.get())
             attrs=merged_attrs
             node_ref=node_ref
             on_pressed_changed=Callback::new(move |pressed| {
