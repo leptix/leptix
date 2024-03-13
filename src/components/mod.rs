@@ -5,6 +5,7 @@ pub mod checkbox;
 pub mod collapsible;
 pub mod primitive;
 pub mod progress;
+pub mod label;
 pub(crate) mod radio;
 pub mod radio_group;
 pub mod separator;
