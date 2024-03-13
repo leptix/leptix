@@ -9,6 +9,7 @@ pub(crate) mod radio;
 pub mod radio_group;
 pub mod separator;
 pub mod slot;
+pub mod switch;
 pub mod toggle;
 pub mod toggle_group;
 pub mod toolbar;

@@ -1,4 +1,5 @@
 use leptos::{html::AnyElement, *};
+use web_sys::MouseEvent;
 
 use crate::{
   components::primitive::Primitive,
@@ -12,6 +13,7 @@ pub fn ToggleRoot(
   #[prop(optional)] disabled: Option<Signal<bool>>,
   #[prop(optional)] default_pressed: Option<Signal<bool>>,
   #[prop(optional)] on_pressed_changed: Option<Callback<bool>>,
+  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 
   #[prop(attrs)] attrs: Attributes,
@@ -60,7 +62,11 @@ pub fn ToggleRoot(
       attrs=merged_attrs
       element=html::button
       node_ref=Some(node_ref)
-      on:click=move |_| {
+      on:click=move |ev: MouseEvent| {
+        if let Some(on_click) = on_click {
+          on_click(ev);
+        }
+
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
           set_pressed.update(|pressed| *pressed = Some(!pressed.unwrap_or(false)));
         }
