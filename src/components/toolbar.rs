@@ -34,12 +34,12 @@ pub fn ToolbarRoot(
     orientation: Signal::derive(move || {
       orientation
         .map(|orientation| orientation.get())
-        .unwrap_or(Orientation::Horizontal)
+        .unwrap_or_default()
     }),
     direction: Signal::derive(move || {
       direction
         .map(|direction| direction.get())
-        .unwrap_or(Direction::LeftToRight)
+        .unwrap_or_default()
     }),
   });
 
@@ -50,7 +50,7 @@ pub fn ToolbarRoot(
       Signal::derive(move || {
         match orientation
           .map(|orientation| orientation.get())
-          .unwrap_or(Orientation::Horizontal)
+          .unwrap_or_default()
         {
           Orientation::Horizontal => "horizontal",
           Orientation::Vertical => "vertical",
@@ -63,7 +63,7 @@ pub fn ToolbarRoot(
       Signal::derive(move || {
         match direction
           .map(|direction| direction.get())
-          .unwrap_or(Direction::LeftToRight)
+          .unwrap_or_default()
         {
           Direction::LeftToRight => "ltr",
           Direction::RightToLeft => "rtl",
@@ -77,8 +77,8 @@ pub fn ToolbarRoot(
 
   view! {
     <RovingFocusGroup
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Horizontal))
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight))
+      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
+      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
       should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
     >
       <Primitive
@@ -146,6 +146,7 @@ pub fn ToolbarButton(
 
 #[component]
 pub fn ToolbarLink(
+  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -160,6 +161,10 @@ pub fn ToolbarLink(
         attrs=attrs
         node_ref=Some(node_ref)
         on:keydown=move |ev: KeyboardEvent| {
+          if let Some(on_key_down) = on_key_down {
+            on_key_down(ev.clone());
+          }
+
           if ev.key() == " " {
             if let Some(current_target) = ev.current_target() {
               if let Some(current_target) = current_target.dyn_ref::<HtmlAnchorElement>() {
@@ -215,8 +220,8 @@ pub fn ToolbarToggleGroup(
       kind=kind
       attrs=merged_attrs
       disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Horizontal))
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight))
+      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
+      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
       roving_focus=Signal::derive(|| false)
     >
       {children()}
@@ -234,7 +239,9 @@ pub fn ToolbarToggleItem(
   children: ChildrenFn,
 ) -> impl IntoView {
   view! {
-    <ToolbarButton>
+    <ToolbarButton
+      as_child=true
+    >
       <ToggleGroupItem
         attrs=attrs
         disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))

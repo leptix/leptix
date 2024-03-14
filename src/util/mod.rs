@@ -3,14 +3,16 @@ pub(crate) mod create_id;
 pub(crate) mod create_previous;
 pub(crate) mod create_state_machine;
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub enum Direction {
+  #[default]
   LeftToRight,
   RightToLeft,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub enum Orientation {
+  #[default]
   Horizontal,
   Vertical,
 }

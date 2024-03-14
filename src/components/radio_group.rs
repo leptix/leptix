@@ -71,7 +71,7 @@ pub fn RadioGroupRoot(
       Signal::derive(move || {
         match orientation
           .map(|orientation| orientation.get())
-          .unwrap_or(Orientation::Horizontal)
+          .unwrap_or_default()
         {
           Orientation::Horizontal => "horizontal",
           Orientation::Vertical => "vertical",
@@ -89,7 +89,7 @@ pub fn RadioGroupRoot(
       Signal::derive(move || {
         match direction
           .map(|direction| direction.get())
-          .unwrap_or(Direction::LeftToRight)
+          .unwrap_or_default()
         {
           Direction::LeftToRight => "ltr",
           Direction::RightToLeft => "rtl",
@@ -104,8 +104,8 @@ pub fn RadioGroupRoot(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Horizontal))
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight))
+      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
+      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
       should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
     >
       <Primitive
@@ -122,6 +122,8 @@ pub fn RadioGroupRoot(
 #[component]
 pub fn RadioGroupItem(
   value: Signal<String>,
+  #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
+  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(optional)] disabled: Option<Signal<bool>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
@@ -182,11 +184,19 @@ pub fn RadioGroupItem(
         attrs=attrs
         on_check=Callback::new(move |_| (context.on_value_change)(value.get()))
         on:keydown=move |ev: KeyboardEvent| {
+          if let Some(on_key_down) = on_key_down {
+            on_key_down(ev.clone());
+          }
+
           if ev.key() == "Enter" {
             ev.prevent_default();
           }
         }
         on:focus=move |ev: FocusEvent| {
+          if let Some(on_focus) = on_focus {
+            on_focus(ev.clone());
+          }
+
           if is_arrow_key_pressed.get_value() {
             let Some(node) = node_ref.get() else {
               return;

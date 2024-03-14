@@ -225,6 +225,7 @@ fn Accordion(
   #[prop(optional)] disabled: Option<Signal<bool>>,
   #[prop(optional)] orientation: Option<Signal<Orientation>>,
   #[prop(optional)] direction: Option<Signal<Direction>>,
+  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -270,6 +271,10 @@ fn Accordion(
       attrs=merged_attrs
       node_ref=Some(node_ref)
       on:keydown=move |ev: KeyboardEvent| {
+        if let Some(on_key_down) = on_key_down {
+          on_key_down(ev.clone());
+        }
+
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
           return;
         }

@@ -27,6 +27,7 @@ pub fn Radio(
   #[prop(optional)] checked: Option<Signal<bool>>,
   #[prop(optional)] required: Option<Signal<bool>>,
   #[prop(optional)] on_check: Option<Callback<()>>,
+  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
 
   #[prop(optional)] disabled: Option<Signal<bool>>,
   #[prop(optional)] name: Option<Signal<Option<String>>>,
@@ -34,7 +35,7 @@ pub fn Radio(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<AnyElement>::new();
+  // let node_ref = NodeRef::<AnyElement>::new();
   let is_form_control = Signal::derive(move || {
     let Some(node) = node_ref.get() else {
       return true;
@@ -108,6 +109,10 @@ pub fn Radio(
       attrs=merged_attrs
       node_ref=Some(node_ref)
       on:click=move |ev: MouseEvent| {
+        if let Some(on_click) = on_click {
+          on_click(ev.clone());
+        }
+
         if checked.map(|checked| checked.get()).unwrap_or(false) == false {
           if let Some(on_check) = on_check {
             on_check(())

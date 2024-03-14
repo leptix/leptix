@@ -254,7 +254,7 @@ fn ToggleGroup(
       merged_attrs.extend([
         ("role", "group".into_attribute()),
         ("dir", Signal::derive(move || {
-          match direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight) {
+          match direction.map(|direction| direction.get()).unwrap_or_default() {
             Direction::LeftToRight => "ltr",
             Direction::RightToLeft => "rtl",
           }
@@ -266,8 +266,8 @@ fn ToggleGroup(
         view! {
           <RovingFocusGroup
             as_child=true
-            orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Horizontal))
-            direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or(Direction::LeftToRight))
+            orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
+            direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
             should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
           >
             <Primitive

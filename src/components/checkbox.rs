@@ -39,6 +39,8 @@ pub fn CheckboxRoot(
   #[prop(optional)] checked: Option<Signal<CheckedState>>,
   #[prop(optional)] default_checked: Option<Signal<CheckedState>>,
   #[prop(optional)] on_checked_change: Option<Callback<CheckedState>>,
+  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
+  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
@@ -155,11 +157,19 @@ pub fn CheckboxRoot(
       attrs=merged_attrs
       as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
+        if let Some(on_key_down) = on_key_down {
+          on_key_down(ev.clone());
+        }
+
         if ev.key() == "Enter" {
           ev.prevent_default();
         }
       }
       on:click=move |ev: MouseEvent| {
+        if let Some(on_click) = on_click {
+          on_click(ev.clone());
+        }
+
         set_checked.clone().update(|checked| *checked = Some(match checked.as_ref().unwrap_or(&CheckedState::Checked(false)) {
           CheckedState::Checked(checked) => CheckedState::Checked(!checked),
           CheckedState::Indeterminate => CheckedState::Checked(true),
@@ -206,7 +216,7 @@ pub fn CheckboxIndicator(
       || state.get() == CheckedState::Indeterminate
       || state.get() == CheckedState::Checked(true);
 
-    logging::log!("is_present: {foo}");
+    // logging::log!("is_present: {foo}");
 
     foo
   });

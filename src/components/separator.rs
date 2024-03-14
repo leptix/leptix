@@ -21,7 +21,7 @@ pub fn Separator(
         Signal::derive(move || {
           match orientation
             .map(|orientation| orientation.get())
-            .unwrap_or(Orientation::Horizontal)
+            .unwrap_or_default()
           {
             Orientation::Horizontal => "horizontal",
             Orientation::Vertical => "vertical",
@@ -39,7 +39,7 @@ pub fn Separator(
     Signal::derive(move || {
       match orientation
         .map(|orientation| orientation.get())
-        .unwrap_or(Orientation::Horizontal)
+        .unwrap_or_default()
       {
         Orientation::Horizontal => "horizontal",
         Orientation::Vertical => "vertical",

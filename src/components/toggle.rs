@@ -64,7 +64,7 @@ pub fn ToggleRoot(
       node_ref=Some(node_ref)
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev);
+          on_click(ev.clone());
         }
 
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {

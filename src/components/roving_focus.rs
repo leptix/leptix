@@ -2,7 +2,7 @@ use std::{collections::HashMap, ops::Deref};
 
 use leptos::{html::AnyElement, *};
 use wasm_bindgen::{closure::Closure, JsCast};
-use web_sys::HtmlSpanElement;
+use web_sys::{Event, FocusEvent, HtmlSpanElement, KeyboardEvent, MouseEvent};
 
 use itertools::Either;
 
@@ -61,7 +61,10 @@ pub(crate) fn RovingFocusGroup(
   #[prop(optional)] current_tab_stop_id: Option<Signal<String>>,
   #[prop(optional)] default_current_tab_stop_id: Option<Signal<String>>,
   #[prop(optional)] on_current_tab_stop_id_change: Option<Callback<Option<String>>>,
-  #[prop(optional)] on_entry_focus: Option<Callback<web_sys::Event>>,
+  #[prop(optional)] on_entry_focus: Option<Callback<Event>>,
+  #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
+  #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
+  #[prop(optional)] on_blur: Option<Callback<FocusEvent>>,
   #[prop(optional)] prevent_scroll_on_entry_focus: Option<bool>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -176,10 +179,18 @@ pub(crate) fn RovingFocusGroup(
       as_child=as_child
       attrs=merged_attrs
       node_ref=Some(collection_ref)
-      on:mousedown=move |_| {
+      on:mousedown=move |ev: MouseEvent| {
+        if let Some(on_mouse_down) = on_mouse_down {
+          on_mouse_down(ev);
+        }
+
         is_click_focus.set_value(true);
       }
-      on:focus=move |ev: web_sys::FocusEvent| {
+      on:focus=move |ev: FocusEvent| {
+        if let Some(on_focus) = on_focus {
+          on_focus(ev.clone());
+        }
+
         let is_keyboard_focus = !is_click_focus.get_value();
 
         if ev.target() == ev.current_target() && is_keyboard_focus && is_tabbing_back_out.get() == false {
@@ -215,7 +226,13 @@ pub(crate) fn RovingFocusGroup(
 
         is_click_focus.set_value(false);
       }
-      on:blur=move |_| { set_is_tabbing_back_out(false); }
+      on:blur=move |ev: FocusEvent| {
+        if let Some(on_blur) = on_blur {
+          on_blur(ev);
+        }
+
+        set_is_tabbing_back_out(false);
+      }
     >
       {children()}
     </Primitive>
@@ -228,6 +245,9 @@ pub(crate) fn RovingFocusGroupItem(
   #[prop(optional)] tab_stop_id: Option<Signal<String>>,
   #[prop(optional)] focusable: Option<Signal<bool>>,
   #[prop(optional)] active: Option<Signal<bool>>,
+  #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
+  #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
+  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
@@ -287,17 +307,29 @@ pub(crate) fn RovingFocusGroupItem(
       as_child=as_child
       attrs=merged_attrs
       node_ref=Some(item_ref)
-      on:mousedown=move |ev: web_sys::MouseEvent| {
+      on:mousedown=move |ev: MouseEvent| {
+        if let Some(on_mouse_down) = on_mouse_down {
+          on_mouse_down(ev.clone());
+        }
+
         if focusable.map(|focusable| focusable.get()).unwrap_or(false) == false {
           ev.prevent_default();
         } else {
           on_item_focus(id());
         }
       }
-      on:focus=move |_| {
+      on:focus=move |ev: FocusEvent| {
+        if let Some(on_focus) = on_focus {
+          on_focus(ev);
+        }
+
         on_item_focus(id());
       }
-      on:keydown=move |ev: web_sys::KeyboardEvent| {
+      on:keydown=move |ev: KeyboardEvent| {
+        if let Some(on_key_down) = on_key_down {
+          on_key_down(ev.clone());
+        }
+
         if ev.key() == "Tab" && ev.shift_key() {
           on_item_shift_tab(());
           return;

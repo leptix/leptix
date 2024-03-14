@@ -16,12 +16,25 @@ pub(crate) struct WriteControllableSignal<T: Clone + 'static> {
 
 impl<T: Clone + 'static> WriteControllableSignal<T> {
   pub(crate) fn set(&self, value: T) {
+    // logging::log!("checking if is controlled");
     if self.is_controlled.get_untracked() {
+      // logging::log!("controlled on_change");
       (self.on_change)(Some(value));
+      // logging::log!("finished controlled on_change");
     } else {
-      self.set_uncontrolled_value.set(Some(value.clone()));
+      // logging::log!("uncontrolled set");
+      // let set_uncontrolled_value = self.set_uncontrolled_value.clone();
+      let cloned_value = value.clone();
+
+      // request_animation_frame(move || {
+      // set_uncontrolled_value.set(Some(cloned_value));
+      self.set_uncontrolled_value.set(Some(cloned_value));
+      // });
+      // logging::log!("uncontrolled on_change");
       (self.on_change)(Some(value));
+      // logging::log!("finished uncontrolled");
     }
+    // logging::log!("exiting controllable set");
   }
 
   pub(crate) fn update(&self, callback: impl FnOnce(&mut Option<T>)) {

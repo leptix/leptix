@@ -33,6 +33,7 @@ pub fn SwitchRoot(
   #[prop(optional)] default_checked: Option<Signal<bool>>,
   #[prop(optional)] required: Option<Signal<bool>>,
   #[prop(optional)] on_checked_change: Option<Callback<bool>>,
+  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -112,6 +113,10 @@ pub fn SwitchRoot(
       attrs=merged_attrs
       node_ref=Some(node_ref)
       on:click=move |ev: MouseEvent| {
+        if let Some(on_click) = on_click {
+          on_click(ev.clone());
+        }
+
         set_checked.update(|checked| *checked = Some(!checked.unwrap_or(false)));
 
         if is_form_control.get() {

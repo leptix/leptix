@@ -22,7 +22,7 @@ pub fn LabelRoot(
       element=html::label
       attrs=merged_attrs
       node_ref=Some(node_ref)
-      on:mousedown=move |ev| {
+      on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down(ev.clone());
         }
