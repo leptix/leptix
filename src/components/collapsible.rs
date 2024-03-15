@@ -175,17 +175,17 @@ pub fn CollapsibleContent(
 
   let node_ref = NodeRef::<AnyElement>::new();
 
-  let width = store_value::<Option<f64>>(Some(0.));
-  let height = store_value::<Option<f64>>(Some(0.));
+  let width = StoredValue::<Option<f64>>::new(Some(0.));
+  let height = StoredValue::<Option<f64>>::new(Some(0.));
 
   let (width_signal, set_width_signal) = create_signal::<Option<f64>>(Some(0.));
   let (height_signal, set_height_signal) = create_signal::<Option<f64>>(Some(0.));
 
   let is_open = Signal::derive(move || open.get() || present_state.get());
-  let is_mount_animation_prevented = store_value(is_open.get());
-  let original_styles = store_value::<Option<HashMap<String, String>>>(None);
+  let is_mount_animation_prevented = StoredValue::new(is_open.get());
+  let original_styles = StoredValue::<Option<HashMap<String, String>>>::new(None);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Ok(animation_frame) = request_animation_frame_with_handle(move || {
       is_mount_animation_prevented.set_value(false);
     }) else {
@@ -197,7 +197,7 @@ pub fn CollapsibleContent(
     });
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
       return;
     };
@@ -289,8 +289,8 @@ pub fn CollapsibleContent(
         ("hidden", Signal::derive(move || !is_open.get()).into_attribute()),
         ("style", Signal::derive(move || {
           format!("{}{}",
-            height_signal.get().map(|height| format!("--radix-collapsible-content-height: {height}px; ")).unwrap_or_default(),
-            width_signal.get().map(|width| format!("--radix-collapsible-content-width: {width}px")).unwrap_or_default(),
+            height_signal.get().map(|height| format!("--primitive-collapsible-content-height: {height}px; ")).unwrap_or_default(),
+            width_signal.get().map(|width| format!("--primitive-collapsible-content-width: {width}px")).unwrap_or_default(),
           )
         }).into_attribute())
       ];
@@ -305,8 +305,8 @@ pub fn CollapsibleContent(
                 let attr = Signal::derive(move || {
                   format!("{}{}{}",
                     attr.as_nameless_value_string().map(|value| format!("{}; ", value.to_string())).unwrap_or_default(),
-                    height_signal.get().map(|height| format!("--radix-collapsible-content-height: {height}px; ")).unwrap_or_default(),
-                    width_signal.get().map(|width| format!("--radix-collapsible-content-width: {width}px")).unwrap_or_default(),
+                    height_signal.get().map(|height| format!("--primitive-collapsible-content-height: {height}px; ")).unwrap_or_default(),
+                    width_signal.get().map(|width| format!("--primitive-collapsible-content-width: {width}px")).unwrap_or_default(),
                   )
                 });
 

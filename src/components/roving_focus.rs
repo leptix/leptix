@@ -96,11 +96,11 @@ pub(crate) fn RovingFocusGroup(
     use_context::<CollectionContextValue<ItemData, AnyElement>>().expect("what happen");
 
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
-  let is_click_focus = store_value(false);
+  let is_click_focus = StoredValue::new(false);
 
   let (focusable_items_count, set_focusable_items_count) = create_signal(0);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if let Some(node_ref) = node_ref.get() {
       let listen_entry_focus =
         Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
@@ -274,7 +274,7 @@ pub(crate) fn RovingFocusGroupItem(
   let is_current_tab_stop = Signal::derive(move || current_tab_stop_id.get() == Some(id()));
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
       on_focusable_item_add(());
       on_cleanup(move || {

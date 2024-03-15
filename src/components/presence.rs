@@ -10,9 +10,9 @@ pub(crate) struct CreatePresenceResult {
 }
 
 pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult {
-  let styles = store_value(CssStyleDeclaration::from(JsValue::from(Object::new())));
-  let prev_present = store_value(is_present.get());
-  let prev_animation_name = store_value(String::from("none"));
+  let styles = StoredValue::new(CssStyleDeclaration::from(JsValue::from(Object::new())));
+  let prev_present = StoredValue::new(is_present.get());
+  let prev_animation_name = StoredValue::new(String::from("none"));
   let node_ref = NodeRef::<AnyElement>::new();
 
   let initial = Signal::derive(move || {
@@ -31,7 +31,7 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
     }
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let current_animation_name = styles
       .get_value()
       .get_property_value("animation-name")
@@ -43,7 +43,7 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
     });
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let was_present = prev_present.get_value();
     let has_present_changed = was_present == is_present.get();
 
@@ -91,7 +91,7 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
     logging::log!("prev present set");
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
       send(PresenceEvent::AnimationEnd);
       return;

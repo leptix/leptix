@@ -45,7 +45,7 @@ pub fn CheckboxRoot(
   children: Children,
 ) -> impl IntoView {
   let node_ref = NodeRef::<AnyElement>::new();
-  let has_consumer_stropped_propagation = store_value(false);
+  let has_consumer_stropped_propagation = StoredValue::new(false);
 
   let is_form_control = Signal::derive(move || {
     if let Some(node) = node_ref.get() {
@@ -67,9 +67,9 @@ pub fn CheckboxRoot(
     }),
   });
 
-  let initial_checked_state = store_value(checked.get());
+  let initial_checked_state = StoredValue::new(checked.get());
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
       return;
     };
@@ -275,7 +275,7 @@ fn BubbleInput(
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
   let UseElementSizeReturn { width, height } = use_element_size(control);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     (|| {
       let input = node_ref.get()?;
       let input_el = window().get("HTMLInputElement")?;

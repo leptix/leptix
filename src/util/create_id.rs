@@ -9,7 +9,7 @@ pub(crate) fn create_id() -> Signal<String> {
 // pub(crate) fn create_deterministic_id(id: String) -> Signal<String> {
 //   let (id, set_id) = create_signal(nanoid::naonid!());
 
-//   create_effect(move |_| {
+//   Effect::new(move |_| {
 
 //   });
 

@@ -41,18 +41,14 @@ pub fn SwitchRoot(
 ) -> impl IntoView {
   let node_ref = NodeRef::<AnyElement>::new();
   let is_form_control = Signal::derive(move || {
-    let Some(node) = node_ref.get() else {
-      return true;
-    };
-
-    let Some(node_el) = node.dyn_ref::<HtmlButtonElement>() else {
-      return true;
-    };
-
-    node_el.closest("form").ok().flatten().is_some()
+    if let Some(node) = node_ref.get() {
+      node.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    }
   });
 
-  let has_consumer_stopped_propagation = store_value(false);
+  let has_consumer_stopped_propagation = StoredValue::new(false);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || checked.map(|checked| checked.get())),
@@ -200,7 +196,7 @@ pub fn BubbleInput(
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
   let UseElementSizeReturn { width, height } = use_element_size(control);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     (|| {
       let input = node_ref.get()?;
       let input_el = window().get("HTMLInputElement")?;

@@ -14,7 +14,7 @@ pub fn AvatarRoot(#[prop(attrs)] attrs: Attributes, children: Children) -> impl 
   let (image_loading_status, set_image_loading_status) = create_signal(ImageLoadingStatus::Idle);
 
   provide_context(AvatarContextValue {
-    image_loading_status: image_loading_status.into_signal(),
+    image_loading_status: Signal::derive(move || image_loading_status.get()),
     on_image_loading_status_change: Callback::new(set_image_loading_status),
   });
 
@@ -40,7 +40,7 @@ pub fn AvatarImage(
       item
         .1
         .as_nameless_value_string()
-        .map(|value| (move || value.to_string()).into_signal())
+        .map(|value| Signal::derive(move || value.to_string()))
     })
     .flatten();
 
@@ -54,7 +54,7 @@ pub fn AvatarImage(
     (context.on_image_loading_status_change)(status);
   };
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if image_loading_status.get() != ImageLoadingStatus::Idle {
       handle_loading_status_change(image_loading_status.get());
     }
@@ -77,7 +77,7 @@ pub fn AvatarFallback(
     .expect("AvatarFallback needs to be in an AvatarRoot component");
   let (can_render, set_can_render) = create_signal(delay_ms.is_none());
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if let Some(delay_ms) = delay_ms {
       let callback = Closure::<dyn Fn()>::new(move || set_can_render(true));
       let timer_id = window()
@@ -111,7 +111,7 @@ pub enum ImageLoadingStatus {
 fn use_image_loading_status(src: Option<Signal<String>>) -> Signal<ImageLoadingStatus> {
   let (loading_status, set_loading_status) = create_signal(ImageLoadingStatus::Idle);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(src) = src else {
       set_loading_status(ImageLoadingStatus::Error);
       return;
@@ -158,5 +158,5 @@ fn use_image_loading_status(src: Option<Signal<String>>) -> Signal<ImageLoadingS
     });
   });
 
-  loading_status.into_signal()
+  Signal::derive(loading_status)
 }

@@ -270,7 +270,7 @@ pub fn TabsContent(
     Signal::derive(move || format!("{}-content-{}", context.base_id.get(), value.get()));
 
   let is_selected = Signal::derive(move || context.value.get() == Some(value.get()));
-  let is_mount_animation_prevented = store_value(is_selected.get());
+  let is_mount_animation_prevented = StoredValue::new(is_selected.get());
 
   let is_present = Signal::derive(move || {
     is_selected.get()
@@ -281,7 +281,7 @@ pub fn TabsContent(
 
   // let presence = create_presence(is_present);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Ok(animation_frame_handle) = request_animation_frame_with_handle(move || {
       is_mount_animation_prevented.set_value(false);
     }) else {

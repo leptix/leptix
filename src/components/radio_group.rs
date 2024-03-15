@@ -137,9 +137,9 @@ pub fn RadioGroupItem(
   });
 
   let is_checked = Signal::derive(move || context.value.get() == Some(value.get()));
-  let is_arrow_key_pressed = store_value(false);
+  let is_arrow_key_pressed = StoredValue::new(false);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let handle_key_down = Closure::<dyn Fn(_)>::new(move |ev: KeyboardEvent| {
       if ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].contains(&ev.key().as_str()) {
         is_arrow_key_pressed.set_value(true);

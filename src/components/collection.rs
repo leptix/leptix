@@ -47,7 +47,7 @@ pub fn create_collection_item_ref<
     set_id(Some(id));
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(id) = id.get() else {
       return;
     };

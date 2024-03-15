@@ -23,13 +23,13 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
       // logging::log!("finished controlled on_change");
     } else {
       // logging::log!("uncontrolled set");
-      // let set_uncontrolled_value = self.set_uncontrolled_value.clone();
+      let set_uncontrolled_value = self.set_uncontrolled_value.clone();
       let cloned_value = value.clone();
 
-      // request_animation_frame(move || {
-      // set_uncontrolled_value.set(Some(cloned_value));
-      self.set_uncontrolled_value.set(Some(cloned_value));
-      // });
+      request_animation_frame(move || {
+        set_uncontrolled_value.set(Some(cloned_value));
+        // self.set_uncontrolled_value.set(Some(cloned_value));
+      });
       // logging::log!("uncontrolled on_change");
       (self.on_change)(Some(value));
       // logging::log!("finished uncontrolled");
@@ -102,9 +102,9 @@ fn create_uncontrolled_signal<T: Clone + PartialEq + 'static>(
 ) -> (ReadSignal<Option<T>>, WriteSignal<Option<T>>) {
   let (uncontrolled_value, set_uncontrolled_value) = create_signal(default_value.get());
 
-  let prev_value = store_value(uncontrolled_value.get());
+  let prev_value = StoredValue::new(uncontrolled_value.get());
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if prev_value.get_value() != uncontrolled_value.get() {
       if let Some(value) = uncontrolled_value.get() {
         on_change(value);

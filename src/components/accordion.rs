@@ -54,10 +54,12 @@ pub fn AccordionRoot(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  provide_context(CollectionContextValue::<(), AnyElement> {
-    collection_ref: NodeRef::new(),
-    item_map: RwSignal::new(HashMap::new()),
-  });
+  provide_context(
+    CollectionContextValue::<AccordionCollectionItem, AnyElement> {
+      collection_ref: NodeRef::new(),
+      item_map: RwSignal::new(HashMap::new()),
+    },
+  );
 
   match kind {
     AccordionKind::Single {
@@ -220,6 +222,9 @@ struct AccordionStateContextValue {
   direction: Signal<Option<Direction>>,
 }
 
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
+struct AccordionCollectionItem;
+
 #[component]
 fn Accordion(
   #[prop(optional)] disabled: Option<Signal<bool>>,
@@ -231,7 +236,7 @@ fn Accordion(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let get_items = use_collection_context::<(), AnyElement>();
+  let get_items = use_collection_context::<AccordionCollectionItem, AnyElement>();
 
   let is_direction_left_to_right = Signal::derive(move || {
     direction

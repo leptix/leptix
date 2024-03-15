@@ -19,13 +19,13 @@ pub fn ProgressRoot(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let max = max.unwrap_or((move || DEFAULT_MAX).into_signal());
-  let value = value.map(|value| (move || value.get() % (max.get() + 1)).into_signal());
+  let max = max.unwrap_or(Signal::derive(move || DEFAULT_MAX));
+  let value = value.map(|value| Signal::derive(move || value.get() % (max.get() + 1)));
 
   let value_label = value
     .map(|value| {
       get_value_label
-        .map(|get_value_label| (move || get_value_label((value.get(), max.get()))).into_signal())
+        .map(|get_value_label| Signal::derive(move || get_value_label((value.get(), max.get()))))
     })
     .flatten();
 
