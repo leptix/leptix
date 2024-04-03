@@ -26,22 +26,26 @@ struct RadioGroupContextValue {
 
 #[component]
 pub fn RadioGroupRoot(
-  #[prop(optional)] name: Option<Signal<String>>,
-  #[prop(optional)] required: Option<Signal<bool>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] should_loop: Option<Signal<bool>>,
-  #[prop(optional)] value: Option<Signal<String>>,
-  #[prop(optional)] default_value: Option<Signal<String>>,
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] direction: Option<Signal<Direction>>,
+  #[prop(optional)] name: Option<MaybeSignal<String>>,
+  #[prop(optional)] required: Option<MaybeSignal<bool>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
+  #[prop(optional)] value: Option<MaybeSignal<String>>,
+  #[prop(optional)] default_value: Option<MaybeSignal<String>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
   #[prop(optional)] on_value_change: Option<Callback<String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.map(|value| value.get())),
-    default_value: Signal::derive(move || default_value.map(|default_value| default_value.get())),
+    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
+    default_value: Signal::derive(move || {
+      default_value
+        .as_ref()
+        .map(|default_value| default_value.get())
+    }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
         on_value_change(value);
@@ -50,7 +54,7 @@ pub fn RadioGroupRoot(
   });
 
   provide_context(RadioGroupContextValue {
-    name: Signal::derive(move || name.map(|name| name.get())),
+    name: Signal::derive(move || name.as_ref().map(|name| name.get())),
     required: Signal::derive(move || required.map(|required| required.get()).unwrap_or(false)),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
     value: Signal::derive(move || value.get()),
@@ -104,9 +108,9 @@ pub fn RadioGroupRoot(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
-      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
+      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default()).into()
+      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default()).into()
+      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true)).into()
     >
       <Primitive
         element=html::div
@@ -121,10 +125,10 @@ pub fn RadioGroupRoot(
 
 #[component]
 pub fn RadioGroupItem(
-  value: Signal<String>,
+  value: MaybeSignal<String>,
   #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -136,7 +140,8 @@ pub fn RadioGroupItem(
     context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
   });
 
-  let is_checked = Signal::derive(move || context.value.get() == Some(value.get()));
+  let is_checked_value = value.clone();
+  let is_checked = Signal::derive(move || context.value.get() == Some(is_checked_value.get()));
   let is_arrow_key_pressed = StoredValue::new(false);
 
   Effect::new(move |_| {
@@ -168,21 +173,23 @@ pub fn RadioGroupItem(
 
   let node_ref = NodeRef::<AnyElement>::new();
 
+  let on_check_value = value.clone();
+
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || !is_disabled.get())
-      active=Signal::derive(move || is_checked.get())
+      focusable=Signal::derive(move || !is_disabled.get()).into()
+      active=Signal::derive(move || is_checked.get()).into()
     >
       <Radio
         value=Signal::derive(move || value.get())
-        disabled=Signal::derive(move || is_disabled.get())
-        required=Signal::derive(move || context.required.get())
-        checked=Signal::derive(move || is_checked.get())
-        name=Signal::derive(move || context.name.get())
+        disabled=Signal::derive(move || is_disabled.get()).into()
+        required=Signal::derive(move || context.required.get()).into()
+        checked=Signal::derive(move || is_checked.get()).into()
+        name=Signal::derive(move || context.name.get()).into()
         node_ref=node_ref
         attrs=attrs
-        on_check=Callback::new(move |_| (context.on_value_change)(value.get()))
+        on_check=Callback::new(move |_| (context.on_value_change)(on_check_value.get()))
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
             on_key_down(ev.clone());

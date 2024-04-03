@@ -4,8 +4,8 @@ use crate::{components::primitive::Primitive, util::Orientation, Attributes};
 
 #[component]
 pub fn Separator(
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] decorative: Option<Signal<bool>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] decorative: Option<MaybeSignal<bool>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {

@@ -24,9 +24,9 @@ struct CollapsibleContextValue {
 
 #[component]
 pub fn CollapsibleRoot(
-  #[prop(optional)] open: Option<Signal<bool>>,
-  #[prop(optional)] default_open: Option<Signal<bool>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
+  #[prop(optional)] open: Option<MaybeSignal<bool>>,
+  #[prop(optional)] default_open: Option<MaybeSignal<bool>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_open_change: Option<Callback<bool>>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(optional)] as_child: Option<bool>,
@@ -148,7 +148,7 @@ pub fn CollapsibleTrigger(
 
 #[component]
 pub fn CollapsibleContent(
-  #[prop(optional)] force_mount: Option<Signal<bool>>,
+  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(optional)] as_child: Option<bool>,
   // #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,

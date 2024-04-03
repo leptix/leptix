@@ -7,14 +7,14 @@ use crate::{components::primitive::Primitive, Attributes};
 pub fn LabelRoot(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
-  #[prop(optional)] for_html: Option<Signal<String>>,
+  #[prop(optional)] for_html: Option<MaybeSignal<String>>,
   #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
   let mut merged_attrs = attrs.clone();
   merged_attrs.push((
     "for",
-    Signal::derive(move || for_html.map(|for_html| for_html.get())).into_attribute(),
+    Signal::derive(move || for_html.as_ref().map(|for_html| for_html.get())).into_attribute(),
   ));
 
   view! {

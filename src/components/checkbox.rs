@@ -34,10 +34,10 @@ struct CheckboxValueContext {
 #[component]
 pub fn CheckboxRoot(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] required: Option<Signal<bool>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] checked: Option<Signal<CheckedState>>,
-  #[prop(optional)] default_checked: Option<Signal<CheckedState>>,
+  #[prop(optional)] required: Option<MaybeSignal<bool>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] checked: Option<MaybeSignal<CheckedState>>,
+  #[prop(optional)] default_checked: Option<MaybeSignal<CheckedState>>,
   #[prop(optional)] on_checked_change: Option<Callback<CheckedState>>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
@@ -202,7 +202,7 @@ pub fn CheckboxRoot(
 
 #[component]
 pub fn CheckboxIndicator(
-  #[prop(optional)] force_mount: Option<Signal<bool>>,
+  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 ) -> impl IntoView {

@@ -23,14 +23,14 @@ use super::collection::CollectionContextValue;
 
 pub enum AccordionKind {
   Single {
-    value: Option<Signal<String>>,
-    default_value: Option<Signal<String>>,
+    value: Option<MaybeSignal<String>>,
+    default_value: Option<MaybeSignal<String>>,
     on_value_change: Option<Callback<String>>,
-    collapsible: Option<Signal<bool>>,
+    collapsible: Option<MaybeSignal<bool>>,
   },
   Multiple {
-    value: Option<Signal<Vec<String>>>,
-    default_value: Option<Signal<Vec<String>>>,
+    value: Option<MaybeSignal<Vec<String>>>,
+    default_value: Option<MaybeSignal<Vec<String>>>,
     on_value_change: Option<Callback<Vec<String>>>,
   },
 }
@@ -99,18 +99,22 @@ pub fn AccordionRoot(
 
 #[component]
 fn AccordionSingle(
-  #[prop(optional_no_strip)] value: Option<Signal<String>>,
-  #[prop(optional_no_strip)] default_value: Option<Signal<String>>,
+  #[prop(optional_no_strip)] value: Option<MaybeSignal<String>>,
+  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<String>>,
   #[prop(optional_no_strip)] on_value_change: Option<Callback<String>>,
-  #[prop(optional_no_strip)] collapsible: Option<Signal<bool>>,
+  #[prop(optional_no_strip)] collapsible: Option<MaybeSignal<bool>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.map(|value| value.get())),
-    default_value: Signal::derive(move || default_value.map(|default_value| default_value.get())),
+    value: Signal::derive(move || value.clone().map(|value| value.get())),
+    default_value: Signal::derive(move || {
+      default_value
+        .clone()
+        .map(|default_value| default_value.get())
+    }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
         on_value_change(value);
@@ -156,17 +160,23 @@ fn AccordionSingle(
 
 #[component]
 fn AccordionMultiple(
-  #[prop(optional_no_strip)] value: Option<Signal<Vec<String>>>,
-  #[prop(optional_no_strip)] default_value: Option<Signal<Vec<String>>>,
+  #[prop(optional_no_strip)] value: Option<MaybeSignal<Vec<String>>>,
+  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<Vec<String>>>,
   #[prop(optional_no_strip)] on_value_change: Option<Callback<Vec<String>>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
+  let controllable_value = value.clone();
+  let controllable_default_value = default_value.clone();
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.map(|value| value.get())),
-    default_value: Signal::derive(move || default_value.map(|default_value| default_value.get())),
+    value: Signal::derive(move || controllable_value.as_ref().map(|value| value.get())),
+    default_value: Signal::derive(move || {
+      controllable_default_value
+        .as_ref()
+        .map(|default_value| default_value.get())
+    }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
         on_value_change(value);
@@ -227,9 +237,9 @@ struct AccordionCollectionItem;
 
 #[component]
 fn Accordion(
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] direction: Option<Signal<Direction>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
 
   #[prop(attrs)] attrs: Attributes,
@@ -391,8 +401,8 @@ struct AccordionItemContextValue {
 
 #[component]
 pub fn AccordionItem(
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  value: Signal<String>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  value: MaybeSignal<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -403,12 +413,13 @@ pub fn AccordionItem(
     .expect("AccordionItem must be in an AccordionRoot component");
 
   let trigger_id = create_id();
+  let is_open_value = value.clone();
   let is_open = Signal::derive(move || {
     value_context
       .value
       .get()
       .iter()
-      .find(|item| (*item).eq(&value.get()) && !value.get().is_empty())
+      .find(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
       .is_some()
   });
   let is_disabled = Signal::derive(move || {
@@ -438,17 +449,18 @@ pub fn AccordionItem(
 
   merged_attrs.extend(attrs.into_iter());
 
+  let open_value = value.clone();
   view! {
     <CollapsibleRoot
       attrs=merged_attrs
-      open=Signal::derive(move || is_open.get())
-      disabled=Signal::derive(move || is_disabled.get())
+      open=Signal::derive(move || is_open.get()).into()
+      disabled=Signal::derive(move || is_disabled.get()).into()
       node_ref=node_ref
       on_open_change=Callback::new(move |open| {
         if open {
-          (value_context.on_item_open)(value.get());
+          (value_context.on_item_open)(open_value.get());
         } else {
-          (value_context.on_item_close)(value.get());
+          (value_context.on_item_close)(open_value.get());
         }
       })
     >

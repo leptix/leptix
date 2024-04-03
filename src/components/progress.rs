@@ -12,14 +12,14 @@ struct ProgressContextValue {
 
 #[component]
 pub fn ProgressRoot(
-  #[prop(optional)] value: Option<Signal<u32>>,
-  #[prop(optional)] max: Option<Signal<u32>>,
+  #[prop(optional)] value: Option<MaybeSignal<u32>>,
+  #[prop(optional)] max: Option<MaybeSignal<u32>>,
   #[prop(optional)] get_value_label: Option<Callback<(u32, u32), String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let max = max.unwrap_or(Signal::derive(move || DEFAULT_MAX));
+  let max = max.unwrap_or(DEFAULT_MAX.into());
   let value = value.map(|value| Signal::derive(move || value.get() % (max.get() + 1)));
 
   let value_label = value
@@ -29,7 +29,10 @@ pub fn ProgressRoot(
     })
     .flatten();
 
-  provide_context(ProgressContextValue { value, max });
+  provide_context(ProgressContextValue {
+    value,
+    max: Signal::derive(move || max.get()),
+  });
 
   let mut merged_attrs = attrs.clone();
 

@@ -7,7 +7,7 @@ pub(crate) trait MachineState<T, Event> {
 }
 
 pub(crate) fn create_state_machine<T: std::fmt::Debug, Event: std::fmt::Debug + Copy>(
-  initial_state: Signal<T>,
+  initial_state: MaybeSignal<T>,
 ) -> (ReadSignal<T>, Callback<Event>)
 where
   T: MachineState<T, Event> + Clone,

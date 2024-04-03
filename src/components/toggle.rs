@@ -9,9 +9,9 @@ use crate::{
 
 #[component]
 pub fn ToggleRoot(
-  #[prop(optional)] pressed: Option<Signal<bool>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] default_pressed: Option<Signal<bool>>,
+  #[prop(optional)] pressed: Option<MaybeSignal<bool>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] default_pressed: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_pressed_changed: Option<Callback<bool>>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,

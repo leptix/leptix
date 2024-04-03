@@ -42,9 +42,9 @@ impl PartialOrd for ItemData {
 
 #[derive(Clone)]
 struct RovingContextValue {
-  orientation: Option<Signal<Orientation>>,
-  direction: Option<Signal<Direction>>,
-  should_loop: Option<Signal<bool>>,
+  orientation: Signal<Option<Orientation>>,
+  direction: Signal<Option<Direction>>,
+  should_loop: Signal<Option<bool>>,
   current_tab_stop_id: Signal<Option<String>>,
   on_item_focus: Callback<String>,
   on_item_shift_tab: Callback<()>,
@@ -55,11 +55,11 @@ struct RovingContextValue {
 #[component]
 pub(crate) fn RovingFocusGroup(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] direction: Option<Signal<Direction>>,
-  #[prop(optional)] should_loop: Option<Signal<bool>>,
-  #[prop(optional)] current_tab_stop_id: Option<Signal<String>>,
-  #[prop(optional)] default_current_tab_stop_id: Option<Signal<String>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
+  #[prop(optional)] current_tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional)] default_current_tab_stop_id: Option<MaybeSignal<String>>,
   #[prop(optional)] on_current_tab_stop_id_change: Option<Callback<Option<String>>>,
   #[prop(optional)] on_entry_focus: Option<Callback<Event>>,
   #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
@@ -76,8 +76,9 @@ pub(crate) fn RovingFocusGroup(
 
   let node_ref = NodeRef::<html::Div>::new();
 
-  let value = Signal::derive(move || current_tab_stop_id.map(|id| id.get()));
-  let default_value = Signal::derive(move || default_current_tab_stop_id.map(|id| id.get()));
+  let value = Signal::derive(move || current_tab_stop_id.as_ref().map(|id| id.get()));
+  let default_value =
+    Signal::derive(move || default_current_tab_stop_id.as_ref().map(|id| id.get()));
 
   let (current_tab_stop_id, set_current_tab_stop_id) =
     create_controllable_signal(CreateControllableSignalProps {
@@ -126,9 +127,9 @@ pub(crate) fn RovingFocusGroup(
   });
 
   provide_context(RovingContextValue {
-    orientation,
-    direction,
-    should_loop,
+    orientation: Signal::derive(move || orientation.as_ref().map(|orientation| orientation.get())),
+    direction: Signal::derive(move || direction.as_ref().map(|direction| direction.get())),
+    should_loop: Signal::derive(move || should_loop.as_ref().map(|should_loop| should_loop.get())),
     current_tab_stop_id: Signal::derive(move || current_tab_stop_id.get()),
     on_item_focus: Callback::new(move |item| {
       set_current_tab_stop_id.set(item);
@@ -242,9 +243,9 @@ pub(crate) fn RovingFocusGroup(
 #[component]
 pub(crate) fn RovingFocusGroupItem(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] tab_stop_id: Option<Signal<String>>,
-  #[prop(optional)] focusable: Option<Signal<bool>>,
-  #[prop(optional)] active: Option<Signal<bool>>,
+  #[prop(optional)] tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional)] focusable: Option<MaybeSignal<bool>>,
+  #[prop(optional)] active: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
   #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
@@ -263,7 +264,12 @@ pub(crate) fn RovingFocusGroupItem(
   } = use_context::<RovingContextValue>()
     .expect("RovingFocusGroupItem must be used in a RovingFocusGroup component");
 
-  let id = move || tab_stop_id.map(|id| id.get()).unwrap_or(create_id().get());
+  let id = move || {
+    tab_stop_id
+      .as_ref()
+      .map(|id| id.get())
+      .unwrap_or(create_id().get())
+  };
 
   let item_ref = create_collection_item_ref::<html::AnyElement, ItemData>(ItemData {
     id: id(),
@@ -271,7 +277,9 @@ pub(crate) fn RovingFocusGroupItem(
     active: Signal::derive(move || active.map(|active| active.get()).unwrap_or(false)),
   });
 
-  let is_current_tab_stop = Signal::derive(move || current_tab_stop_id.get() == Some(id()));
+  let is_current_tab_stop_id = id.clone();
+  let is_current_tab_stop =
+    Signal::derive(move || current_tab_stop_id.get() == Some(is_current_tab_stop_id()));
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
 
   Effect::new(move |_| {
@@ -291,7 +299,7 @@ pub(crate) fn RovingFocusGroupItem(
     (
       "data-orientation",
       (move || {
-        orientation.map(|orientation| match orientation.get() {
+        orientation.get().map(|orientation| match orientation {
           Orientation::Horizontal => "horizontal",
           Orientation::Vertical => "vertical",
         })
@@ -301,6 +309,9 @@ pub(crate) fn RovingFocusGroupItem(
   ];
 
   merged_attrs.extend(attrs.into_iter());
+
+  let mousedown_id = id.clone();
+  let focus_id = id.clone();
 
   view! {
     <Primitive element=html::span
@@ -315,7 +326,7 @@ pub(crate) fn RovingFocusGroupItem(
         if focusable.map(|focusable| focusable.get()).unwrap_or(false) == false {
           ev.prevent_default();
         } else {
-          on_item_focus(id());
+          on_item_focus(mousedown_id());
         }
       }
       on:focus=move |ev: FocusEvent| {
@@ -323,7 +334,7 @@ pub(crate) fn RovingFocusGroupItem(
           on_focus(ev);
         }
 
-        on_item_focus(id());
+        on_item_focus(focus_id());
       }
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
@@ -339,7 +350,7 @@ pub(crate) fn RovingFocusGroupItem(
           return;
         }
 
-        let focus_intent = get_focus_intent(&ev, orientation.map(|orientation| orientation.get()), direction.map(|direction| direction.get()));
+        let focus_intent = get_focus_intent(&ev, orientation.get(), direction.get());
 
         if let Some(focus_intent) = focus_intent {
           if ev.meta_key() || ev.ctrl_key() || ev.alt_key() || ev.shift_key() {
@@ -379,7 +390,7 @@ pub(crate) fn RovingFocusGroupItem(
             .collect::<Vec<_>>();
 
           let candidate_nodes = if let Some(current_index) = current_index {
-            if should_loop.map(|should_loop| should_loop.get()).unwrap_or(false) {
+            if should_loop.get().unwrap_or(false) {
               let len = candidate_nodes.len();
               // (&mut candidate_nodes).rotate_right((current_index + 1) % len); // might need in the future? may cause weird behavior if not added back
 

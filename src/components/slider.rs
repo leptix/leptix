@@ -21,7 +21,7 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
-    Direction, Orientation,
+    linear_scale, Direction, Orientation,
   },
   Attributes,
 };
@@ -39,16 +39,16 @@ struct SliderContextValue {
 
 #[component]
 pub fn SliderRoot(
-  #[prop(optional)] name: Option<Signal<String>>,
-  #[prop(optional)] min: Option<Signal<f64>>,
-  #[prop(optional)] max: Option<Signal<f64>>,
-  #[prop(optional)] step: Option<Signal<f64>>,
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] min_steps_between_thumbs: Option<Signal<f64>>,
-  #[prop(optional)] value: Option<Signal<Vec<f64>>>,
-  #[prop(optional)] default_value: Option<Signal<Vec<f64>>>,
-  #[prop(optional)] inverted: Option<Signal<bool>>,
+  #[prop(optional)] name: Option<MaybeSignal<String>>,
+  #[prop(optional)] min: Option<MaybeSignal<f64>>,
+  #[prop(optional)] max: Option<MaybeSignal<f64>>,
+  #[prop(optional)] step: Option<MaybeSignal<f64>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] min_steps_between_thumbs: Option<MaybeSignal<f64>>,
+  #[prop(optional)] value: Option<MaybeSignal<Vec<f64>>>,
+  #[prop(optional)] default_value: Option<MaybeSignal<Vec<f64>>>,
+  #[prop(optional)] inverted: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_value_change: Option<Callback<Vec<f64>>>,
   #[prop(optional)] on_value_commit: Option<Callback<Vec<f64>>>,
 
@@ -69,10 +69,11 @@ pub fn SliderRoot(
   });
 
   let (values, set_values) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.map(|value| value.get())),
+    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
     default_value: Signal::derive(move || {
       Some(
         default_value
+          .as_ref()
           .map(|default_value| default_value.get())
           .unwrap_or(vec![min.map(|min| min.get()).unwrap_or(0.)]),
       )
@@ -337,7 +338,7 @@ fn Slider(
   min: Signal<f64>,
   inverted: Signal<bool>,
   orientation: Signal<Orientation>,
-  #[prop(optional)] direction: Option<Signal<Direction>>,
+  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
   #[prop(optional)] on_slide_start: Option<Callback<f64>>,
   #[prop(optional)] on_slide_move: Option<Callback<f64>>,
   #[prop(optional)] on_slide_end: Option<Callback<()>>,
@@ -996,20 +997,6 @@ fn has_min_steps_between_values(values: &[f64], min_steps_between_values: f64) -
     })
     .map(|steps_between_values| steps_between_values >= min_steps_between_values)
     .unwrap_or(false)
-}
-
-fn linear_scale(
-  (input_start, input_end): (f64, f64),
-  (output_start, output_end): (f64, f64),
-) -> impl Fn(f64) -> f64 {
-  move |value| {
-    if input_start == input_end || output_start == output_end {
-      return output_start;
-    }
-
-    let ratio = (output_end - output_start) / (input_end - input_start);
-    output_start + ratio * (value - input_start)
-  }
 }
 
 fn get_decimal_count(value: f64) -> usize {

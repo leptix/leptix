@@ -34,20 +34,24 @@ pub enum ActivationMode {
 
 #[component]
 pub fn TabsRoot(
-  #[prop(optional)] value: Option<Signal<String>>,
-  #[prop(optional)] default_value: Option<Signal<String>>,
+  #[prop(optional)] value: Option<MaybeSignal<String>>,
+  #[prop(optional)] default_value: Option<MaybeSignal<String>>,
   #[prop(optional)] on_value_change: Option<Callback<String>>,
-  #[prop(optional)] orientation: Option<Signal<Orientation>>,
-  #[prop(optional)] direction: Option<Signal<Direction>>,
-  #[prop(optional)] activation_mode: Option<Signal<ActivationMode>>,
+  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional)] activation_mode: Option<MaybeSignal<ActivationMode>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.map(|value| value.get())),
-    default_value: Signal::derive(move || default_value.map(|default_value| default_value.get())),
+    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
+    default_value: Signal::derive(move || {
+      default_value
+        .as_ref()
+        .map(|default_value| default_value.get())
+    }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
         on_value_change(value);
@@ -75,6 +79,7 @@ pub fn TabsRoot(
     }),
     activation_mode: Signal::derive(move || {
       activation_mode
+        .as_ref()
         .map(|activation_mode| activation_mode.get())
         .unwrap_or_default()
     }),
@@ -93,7 +98,7 @@ pub fn TabsRoot(
 
 #[component]
 pub fn TabsList(
-  #[prop(optional)] should_loop: Option<Signal<bool>>,
+  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -121,9 +126,9 @@ pub fn TabsList(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Signal::derive(move || context.orientation.get())
-      direction=Signal::derive(move || context.direction.get())
-      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
+      orientation=Signal::derive(move || context.orientation.get()).into()
+      direction=Signal::derive(move || context.direction.get()).into()
+      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true)).into()
     >
       <Primitive
         element=html::div
@@ -138,8 +143,8 @@ pub fn TabsList(
 
 #[component]
 pub fn TabsTrigger(
-  #[prop(optional)] value: Signal<String>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
+  #[prop(optional)] value: MaybeSignal<String>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
@@ -151,12 +156,18 @@ pub fn TabsTrigger(
   let context =
     use_context::<TabsContextValue>().expect("TabsTrigger must be used in a TabsRoot component");
 
+  let trigger_value = value.clone();
   let trigger_id =
-    Signal::derive(move || format!("{}-trigger-{}", context.base_id.get(), value.get()));
-  let content_id =
-    Signal::derive(move || format!("{}-content-{}", context.base_id.get(), value.get()));
-  let is_selected = Signal::derive(move || context.value.get() == Some(value.get()));
+    Signal::derive(move || format!("{}-trigger-{}", context.base_id.get(), trigger_value.get()));
 
+  let content_value = value.clone();
+  let content_id =
+    Signal::derive(move || format!("{}-content-{}", context.base_id.get(), content_value.get()));
+
+  let is_selected_value = value.clone();
+  let is_selected = Signal::derive(move || context.value.get() == Some(is_selected_value.get()));
+
+  let data_disabled = disabled.clone();
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend(
     [
@@ -183,7 +194,7 @@ pub fn TabsTrigger(
       ),
       (
         "data-disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
+        Signal::derive(move || data_disabled.map(|disabled| disabled.get().then_some("")))
           .into_attribute(),
       ),
       (
@@ -198,11 +209,15 @@ pub fn TabsTrigger(
     .into_iter(),
   );
 
+  let inner_disabled = disabled.clone();
+  let keydown_value = value.clone();
+  let focus_value = value.clone();
+  let mousedown_disabled = disabled.clone();
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || !disabled.map(|disabled| disabled.get()).unwrap_or(false))
-      active=Signal::derive(move || is_selected.get())
+      focusable=Signal::derive(move || !inner_disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
+      active=Signal::derive(move || is_selected.get()).into()
     >
       <Primitive
         element=html::button
@@ -215,7 +230,7 @@ pub fn TabsTrigger(
 
           // logging::log!("selecting tab");
 
-          if !disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
+          if !mousedown_disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
             // logging::log!("firing on_value_change");
             (context.on_value_change)(value.get());
             // logging::log!("fired on_value_change");
@@ -231,7 +246,7 @@ pub fn TabsTrigger(
           }
 
           if [" ", "Enter"].contains(&ev.key().as_str()) {
-            (context.on_value_change)(value.get());
+            (context.on_value_change)(keydown_value.get());
           }
         }
         on:focus=move |ev: FocusEvent| {
@@ -242,7 +257,7 @@ pub fn TabsTrigger(
           let is_automatic_activation = context.activation_mode.get() != ActivationMode::Manual;
 
           if !is_selected.get() && !disabled.map(|disabled| disabled.get()).unwrap_or(false) && is_automatic_activation {
-            (context.on_value_change)(value.get());
+            (context.on_value_change)(focus_value.get());
           }
         }
       >
@@ -254,8 +269,8 @@ pub fn TabsTrigger(
 
 #[component]
 pub fn TabsContent(
-  #[prop(optional)] value: Signal<String>,
-  #[prop(optional)] force_mount: Option<Signal<bool>>,
+  #[prop(optional)] value: MaybeSignal<String>,
+  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -264,12 +279,15 @@ pub fn TabsContent(
   let context =
     use_context::<TabsContextValue>().expect("TabsContent must be used in a TabsRoot component");
 
+  let trigger_value = value.clone();
   let trigger_id =
-    Signal::derive(move || format!("{}-trigger-{}", context.base_id.get(), value.get()));
+    Signal::derive(move || format!("{}-trigger-{}", context.base_id.get(), trigger_value.get()));
+  let content_value = value.clone();
   let content_id =
-    Signal::derive(move || format!("{}-content-{}", context.base_id.get(), value.get()));
+    Signal::derive(move || format!("{}-content-{}", context.base_id.get(), content_value.get()));
 
-  let is_selected = Signal::derive(move || context.value.get() == Some(value.get()));
+  let is_selected_value = value.clone();
+  let is_selected = Signal::derive(move || context.value.get() == Some(is_selected_value.get()));
   let is_mount_animation_prevented = StoredValue::new(is_selected.get());
 
   let is_present = Signal::derive(move || {

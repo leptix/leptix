@@ -26,12 +26,12 @@ struct SwitchContextValue {
 
 #[component]
 pub fn SwitchRoot(
-  #[prop(optional)] checked: Option<Signal<bool>>,
-  #[prop(optional)] value: Option<Signal<String>>,
-  #[prop(optional)] name: Option<Signal<String>>,
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] default_checked: Option<Signal<bool>>,
-  #[prop(optional)] required: Option<Signal<bool>>,
+  #[prop(optional)] checked: Option<MaybeSignal<bool>>,
+  #[prop(optional)] value: Option<MaybeSignal<String>>,
+  #[prop(optional)] name: Option<MaybeSignal<String>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] default_checked: Option<MaybeSignal<bool>>,
+  #[prop(optional)] required: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_checked_change: Option<Callback<bool>>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
 
@@ -67,6 +67,8 @@ pub fn SwitchRoot(
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
   });
 
+  let attr_value = value.clone();
+
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend(
     [
@@ -97,11 +99,14 @@ pub fn SwitchRoot(
       ),
       (
         "value",
-        Signal::derive(move || value.map(|value| value.get())).into_attribute(),
+        Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
       ),
     ]
     .into_iter(),
   );
+
+  let inner_name = name.clone();
+  let inner_value = value.clone();
 
   view! {
     <Primitive
@@ -125,16 +130,21 @@ pub fn SwitchRoot(
       }
     >
       {children()}
-      {move || is_form_control.get().then(|| view! {
-        <BubbleInput
-          checked=Signal::derive(move || checked.get().unwrap_or(false))
-          bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-          name=Signal::derive(move || name.map(|name| name.get()))
-          value=Signal::derive(move || value.map(|name| name.get()).unwrap_or("on".to_string()))
-          disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-          required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
-          control=node_ref
-        />
+      {move || is_form_control.get().then(|| {
+        let inner_name = inner_name.clone();
+        let inner_value = inner_value.clone();
+
+        view! {
+          <BubbleInput
+            checked=Signal::derive(move || checked.get().unwrap_or(false))
+            bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
+            name=Signal::derive(move || inner_name.as_ref().map(|name| name.get()))
+            value=Signal::derive(move || inner_value.as_ref().map(|name| name.get()).unwrap_or("on".to_string()))
+            disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
+            required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
+            control=node_ref
+          />
+        }
       })}
     </Primitive>
   }

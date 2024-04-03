@@ -24,13 +24,13 @@ struct RadioContextValue {
 #[component]
 pub fn Radio(
   value: Signal<String>,
-  #[prop(optional)] checked: Option<Signal<bool>>,
-  #[prop(optional)] required: Option<Signal<bool>>,
+  #[prop(optional)] checked: Option<MaybeSignal<bool>>,
+  #[prop(optional)] required: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_check: Option<Callback<()>>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
 
-  #[prop(optional)] disabled: Option<Signal<bool>>,
-  #[prop(optional)] name: Option<Signal<Option<String>>>,
+  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional)] name: Option<MaybeSignal<Option<String>>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -125,16 +125,20 @@ pub fn Radio(
       }
     >
       {children()}
-      {move || is_form_control.get().then(|| view! {
-        <BubbleInput
-          checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
-          bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-          name=Signal::derive(move || name.map(|name| name.get()).flatten())
-          value=Signal::derive(move || value.get())
-          required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
-          disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-          control=node_ref
-        />
+      {move || is_form_control.get().then(|| {
+        let inner_name = name.clone();
+
+        view! {
+          <BubbleInput
+            checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
+            bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
+            name=Signal::derive(move || inner_name.as_ref().map(|name| name.get()).flatten())
+            value=Signal::derive(move || value.get())
+            required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
+            disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
+            control=node_ref
+          />
+        }
       })}
     </Primitive>
   }
@@ -142,7 +146,7 @@ pub fn Radio(
 
 #[component]
 pub fn RadioIndicator(
-  #[prop(optional)] force_mount: Option<Signal<bool>>,
+  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
