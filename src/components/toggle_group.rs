@@ -261,12 +261,8 @@ fn ToggleGroup(
 
       merged_attrs.extend([
         ("role", "group".into_attribute()),
-        ("dir", Signal::derive(move || {
-          match direction.map(|direction| direction.get()).unwrap_or_default() {
-            Direction::LeftToRight => "ltr",
-            Direction::RightToLeft => "rtl",
-          }
-        })
+        ("dir", (move ||
+          direction.map(|direction| direction.get()).unwrap_or_default().to_string())
         .into_attribute())
       ]);
 

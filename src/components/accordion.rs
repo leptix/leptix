@@ -267,13 +267,10 @@ fn Accordion(
   let mut merged_attrs = vec![(
     "data-orientation",
     Signal::derive(move || {
-      match orientation
+      orientation
         .map(|orientation| orientation.get())
         .unwrap_or(Orientation::Vertical)
-      {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      }
+        .to_string()
     })
     .into_attribute(),
   )];
@@ -435,11 +432,7 @@ pub fn AccordionItem(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || match state_context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "data-state",
@@ -483,11 +476,7 @@ pub fn AccordionHeader(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || match state_context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "data-state",
@@ -535,11 +524,7 @@ pub fn AccordionTrigger(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || match state_context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "id",
@@ -578,10 +563,7 @@ pub fn AccordionContent(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || match state_context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
+      Signal::derive(move || state_context.orientation.get().to_string())
       .into_attribute(),
     ),
     (

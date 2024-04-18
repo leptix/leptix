@@ -121,11 +121,7 @@ pub fn ScrollAreaRoot(
   merged_attrs.extend(
     [(
       "dir",
-      Signal::derive(move || match direction.get() {
-        Direction::LeftToRight => "ltr",
-        Direction::RightToLeft => "rtl",
-      })
-      .into_attribute(),
+      (move || direction.get().to_string()).into_attribute(),
     )]
     .into_iter(),
   );
@@ -411,21 +407,21 @@ fn ScrollAreaScrollbarScroll(
     });
   });
 
-  let is_present = Signal::derive(move || {
+  let is_present = move || {
     force_mount
       .map(|force_mount| force_mount.get())
       .unwrap_or(false)
       || state.get() == ScrollAreaScrollbarScrollState::Hidden
-  });
+  };
 
   // let presence = create_presence(is_present);
 
   view! {
-    {move || is_present.get().then(|| {
+    {move || is_present().then(|| {
       let mut merged_attrs = attrs.clone();
 
       merged_attrs.extend([
-        ("data-state", Signal::derive(move || if state.get() == ScrollAreaScrollbarScrollState::Hidden { "hidden" } else { "visible" }).into_attribute())
+        ("data-state", (move || if state.get() == ScrollAreaScrollbarScrollState::Hidden { "hidden" } else { "visible" }).into_attribute())
       ].into_iter());
 
       let children = children.clone();
@@ -502,7 +498,7 @@ fn ScrollAreaScrollbarAuto(
     {move || is_present.get().then(|| {
       let mut merged_attrs = attrs.clone();
       merged_attrs.extend([
-        ("data-state", Signal::derive(move || if visible.get() { "visible" } else { "hidden" }).into_attribute())
+        ("data-state", (move || if visible.get() { "visible" } else { "hidden" }).into_attribute())
       ].into_iter());
 
       let children = children.clone();

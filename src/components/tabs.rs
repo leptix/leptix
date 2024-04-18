@@ -113,11 +113,7 @@ pub fn TabsList(
       ("role", "tablist".into_attribute()),
       (
         "aria-orientation",
-        Signal::derive(move || match context.orientation.get() {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-        .into_attribute(),
+        (move || context.orientation.get().to_string()).into_attribute(),
       ),
     ]
     .into_iter(),
@@ -315,7 +311,7 @@ pub fn TabsContent(
     ("role", "tabpanel".into_attribute()),
     (
       "data-state",
-      Signal::derive(move || {
+      (move || {
         if is_selected.get() {
           "active"
         } else {
@@ -326,24 +322,14 @@ pub fn TabsContent(
     ),
     (
       "data-orientation",
-      Signal::derive(move || match context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      (move || context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "aria-labelledby",
-      Signal::derive(move || trigger_id.get()).into_attribute(),
+      (move || trigger_id.get()).into_attribute(),
     ),
-    (
-      "hidden",
-      Signal::derive(move || !is_present.get()).into_attribute(),
-    ),
-    (
-      "id",
-      Signal::derive(move || content_id.get()).into_attribute(),
-    ),
+    ("hidden", (move || !is_present.get()).into_attribute()),
+    ("id", (move || content_id.get()).into_attribute()),
     ("tabindex", 0.into_attribute()),
   ];
   merged_attrs.extend(attrs.clone().into_iter().map(|(name, attr)| {

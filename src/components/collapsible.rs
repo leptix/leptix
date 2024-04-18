@@ -56,7 +56,7 @@ pub fn CollapsibleRoot(
   let mut merged_attrs = vec![
     (
       "data-state",
-      Signal::derive(move || {
+      (move || {
         if open.get().unwrap_or(false) {
           "open"
         } else {
@@ -67,8 +67,7 @@ pub fn CollapsibleRoot(
     ),
     (
       "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-        .into_attribute(),
+      (move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into_attribute(),
     ),
   ];
 
@@ -103,25 +102,19 @@ pub fn CollapsibleTrigger(
     .expect("CollapsibleTrigger must be used in a CollapsibleRoot component");
 
   let mut merged_attrs = vec![
-    (
-      "aria-controls",
-      Signal::derive(move || content_id.get()).into_attribute(),
-    ),
-    (
-      "aria-expanded",
-      Signal::derive(move || open.get()).into_attribute(),
-    ),
+    ("aria-controls", (move || content_id.get()).into_attribute()),
+    ("aria-expanded", (move || open.get()).into_attribute()),
     (
       "data-state",
-      Signal::derive(move || if open.get() { "open" } else { "closed" }).into_attribute(),
+      (move || if open.get() { "open" } else { "closed" }).into_attribute(),
     ),
     (
       "data-disabled",
-      Signal::derive(move || disabled.get().unwrap_or(false)).into_attribute(),
+      (move || disabled.get().unwrap_or(false)).into_attribute(),
     ),
     (
       "disabled",
-      Signal::derive(move || disabled.get().unwrap_or(false)).into_attribute(),
+      (move || disabled.get().unwrap_or(false)).into_attribute(),
     ),
   ];
 
@@ -259,7 +252,7 @@ pub fn CollapsibleContent(
       let mut merged_attrs = vec![
         (
           "data-state",
-          Signal::derive(move || {
+          (move || {
             if open.get() {
               "open"
             } else {
@@ -270,13 +263,13 @@ pub fn CollapsibleContent(
         ),
         (
           "data-disabled",
-          Signal::derive(move || disabled.get().unwrap_or(false))
+          (move || disabled.get().unwrap_or(false))
             .into_attribute()
         ),
-        ("id", Signal::derive(move || content_id.get()).into_attribute()),
+        ("id", (move || content_id.get()).into_attribute()),
         ("fart", "master".into_attribute()),
-        ("hidden", Signal::derive(move || !(is_open.get() || present_state.get())).into_attribute()),
-        ("style", Signal::derive(move || {
+        ("hidden", (move || !(is_open.get() || present_state.get())).into_attribute()),
+        ("style", (move || {
           let Some((width, height)) = rect_size.get() else {
             return String::new();
           };

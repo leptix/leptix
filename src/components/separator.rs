@@ -19,13 +19,10 @@ pub fn Separator(
       (
         "aria-orientation",
         Signal::derive(move || {
-          match orientation
+          orientation
             .map(|orientation| orientation.get())
             .unwrap_or_default()
-          {
-            Orientation::Horizontal => "horizontal",
-            Orientation::Vertical => "vertical",
-          }
+            .to_string()
         })
         .into_attribute(),
       ),
@@ -37,13 +34,10 @@ pub fn Separator(
   merged_attrs.extend([(
     "data-orientation",
     Signal::derive(move || {
-      match orientation
+      orientation
         .map(|orientation| orientation.get())
         .unwrap_or_default()
-      {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      }
+        .to_string()
     })
     .into_attribute(),
   )]);

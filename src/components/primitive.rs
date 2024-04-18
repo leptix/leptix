@@ -53,15 +53,13 @@ fn map_items_to_children(
             })
             .collect::<Vec<_>>();
 
-          let merged_attrs = merge_attrs(attrs.clone(), child_attrs);
-
-          for (name, attr) in merged_attrs {
+          for (name, attr) in child_attrs {
             if let Some(attr) = attr.as_nameless_value_string() {
               _ = el.set_attribute(&name, &attr);
             }
           }
 
-          el.node_ref(node_ref).into_view()
+          el.node_ref(node_ref).attrs(attrs.clone()).into_view()
         }
         View::Component(comp) => map_items_to_children(&comp.children, attrs.clone(), node_ref),
         _ => child.into_view(),

@@ -481,22 +481,14 @@ fn Slider(
   let mut merged_attrs = attrs.clone();
   merged_attrs.push((
     "data-orientation",
-    Signal::derive(move || match orientation.get() {
-      Orientation::Horizontal => "horizontal",
-      Orientation::Vertical => "vertical",
-    })
-    .into_attribute(),
+    (move || orientation.get().to_string()).into_attribute(),
   ));
 
   if orientation.get() == Orientation::Horizontal {
     if let Some(direction) = direction {
       merged_attrs.push((
         "dir",
-        Signal::derive(move || match direction.get() {
-          Direction::LeftToRight => "ltr",
-          Direction::RightToLeft => "rtl",
-        })
-        .into_attribute(),
+        (move || direction.get().to_string()).into_attribute(),
       ));
     }
   }
@@ -508,7 +500,14 @@ fn Slider(
 
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
-      _ = node.style("--primitive-slider-thumb-transform", "translateX(50%)");
+      _ = node.style(
+        "--primitive-slider-thumb-transform",
+        if orientation.get() == Orientation::Vertical {
+          "translateY(50%)"
+        } else {
+          "translateX(-50%)"
+        },
+      );
     }
   });
 
@@ -630,15 +629,11 @@ pub fn SliderTrack(
     [
       (
         "data-disabled",
-        Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
+        (move || context.disabled.get().then_some("")).into_attribute(),
       ),
       (
         "data-orientation",
-        Signal::derive(move || match context.orientation.get() {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-        .into_attribute(),
+        (move || context.orientation.get().to_string()).into_attribute(),
       ),
     ]
     .into_iter(),
@@ -697,11 +692,7 @@ pub fn SliderRange(
     ),
     (
       "data-orientation",
-      Signal::derive(move || match context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      Signal::derive(move || context.orientation.get().to_string()).into_attribute(),
     ),
   ]);
 
@@ -849,35 +840,24 @@ pub fn SliderThumb(
       ),
       (
         "aria-valuemin",
-        Signal::derive(move || context.min.get()).into_attribute(),
+        (move || context.min.get()).into_attribute(),
       ),
-      (
-        "aria-valuenow",
-        Signal::derive(move || value.get()).into_attribute(),
-      ),
+      ("aria-valuenow", (move || value.get()).into_attribute()),
       (
         "aria-valuemax",
-        Signal::derive(move || context.max.get()).into_attribute(),
+        (move || context.max.get()).into_attribute(),
       ),
       (
         "aria-orientation",
-        Signal::derive(move || match context.orientation.get() {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-        .into_attribute(),
+        (move || context.orientation.get().to_string()).into_attribute(),
       ),
       (
         "data-orientation",
-        Signal::derive(move || match context.orientation.get() {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-        .into_attribute(),
+        (move || context.orientation.get().to_string()).into_attribute(),
       ),
       (
         "data-disabled",
-        Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
+        (move || context.disabled.get().then_some("")).into_attribute(),
       ),
     ]
     .into_iter(),
@@ -899,7 +879,7 @@ pub fn SliderThumb(
   });
 
   view! {
-    <span style:position="absolute" node_ref=span_ref>
+    <span style:transform="var(--primitive-slider-thumb-transform)" style:position="absolute" node_ref=span_ref>
       <Primitive
         element=html::span
         attrs=merged_attrs

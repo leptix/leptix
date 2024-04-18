@@ -47,27 +47,21 @@ pub fn ToolbarRoot(
     ("role", "toolbar".into_attribute()),
     (
       "aria-orientation",
-      Signal::derive(move || {
-        match orientation
+      (move || {
+        orientation
           .map(|orientation| orientation.get())
           .unwrap_or_default()
-        {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        }
+          .to_string()
       })
       .into_attribute(),
     ),
     (
       "dir",
-      Signal::derive(move || {
-        match direction
+      (move || {
+        direction
           .map(|direction| direction.get())
           .unwrap_or_default()
-        {
-          Direction::LeftToRight => "ltr",
-          Direction::RightToLeft => "rtl",
-        }
+          .to_string()
       })
       .into_attribute(),
     ),
@@ -198,19 +192,11 @@ pub fn ToolbarToggleGroup(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || match context.orientation.get() {
-        Orientation::Horizontal => "horizontal",
-        Orientation::Vertical => "vertical",
-      })
-      .into_attribute(),
+      (move || context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "dir",
-      Signal::derive(move || match context.direction.get() {
-        Direction::LeftToRight => "ltr",
-        Direction::RightToLeft => "rtl",
-      })
-      .into_attribute(),
+      (move || context.direction.get().to_string()).into_attribute(),
     ),
   ];
   merged_attrs.extend(attrs.into_iter());

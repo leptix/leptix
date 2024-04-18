@@ -67,37 +67,29 @@ pub fn RadioGroupRoot(
     ("role", "radiogroup".into_attribute()),
     (
       "aria-required",
-      Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
-        .into_attribute(),
+      (move || required.map(|required| required.get()).unwrap_or(false)).into_attribute(),
     ),
     (
       "aria-orientation",
-      Signal::derive(move || {
-        match orientation
+      (move || {
+        orientation
           .map(|orientation| orientation.get())
           .unwrap_or_default()
-        {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        }
+          .to_string()
       })
       .into_attribute(),
     ),
     (
       "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-        .into_attribute(),
+      (move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into_attribute(),
     ),
     (
       "dir",
-      Signal::derive(move || {
-        match direction
+      (move || {
+        direction
           .map(|direction| direction.get())
           .unwrap_or_default()
-        {
-          Direction::LeftToRight => "ltr",
-          Direction::RightToLeft => "rtl",
-        }
+          .to_string()
       })
       .into_attribute(),
     ),

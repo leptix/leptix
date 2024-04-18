@@ -163,13 +163,7 @@ pub(crate) fn RovingFocusGroup(
     // ),
     (
       "data-orientation",
-      (move || {
-        orientation.map(|orientation| match orientation.get() {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-      })
-      .into_attribute(),
+      (move || orientation.map(|orientation| orientation.get().to_string())).into_attribute(),
     ),
   ];
 
@@ -298,13 +292,7 @@ pub(crate) fn RovingFocusGroupItem(
     // ),
     (
       "data-orientation",
-      (move || {
-        orientation.get().map(|orientation| match orientation {
-          Orientation::Horizontal => "horizontal",
-          Orientation::Vertical => "vertical",
-        })
-      })
-      .into_attribute(),
+      (move || orientation.get().map(|orientation| orientation.to_string())).into_attribute(),
     ),
   ];
 
