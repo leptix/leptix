@@ -19,7 +19,7 @@ use crate::{
   Attributes,
 };
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CheckedState {
   Checked(bool),
   Indeterminate,
@@ -153,7 +153,7 @@ pub fn CheckboxRoot(
   view! {
     <Primitive
       element=html::button
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       attrs=merged_attrs
       as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {

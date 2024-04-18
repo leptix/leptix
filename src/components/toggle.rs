@@ -61,7 +61,7 @@ pub fn ToggleRoot(
     <Primitive
       attrs=merged_attrs
       element=html::button
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
           on_click(ev.clone());

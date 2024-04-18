@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use leptos::{html::AnyElement, *};
-use web_sys::MouseEvent;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
+use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
 use crate::{
   components::primitive::Primitive,
@@ -77,7 +77,7 @@ pub fn CollapsibleRoot(
   view! {
     <Primitive
       element=html::div
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       as_child=as_child
       attrs=merged_attrs
     >
@@ -89,7 +89,7 @@ pub fn CollapsibleRoot(
 #[component]
 pub fn CollapsibleTrigger(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] node_ref: Option<NodeRef<AnyElement>>,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -171,19 +171,12 @@ pub fn CollapsibleContent(
 
   // let presence = create_presence(is_present);
   // let (present_state, set_present_state) = create_signal(presence.is_present.get());
-  let (present_state, set_present_state) = create_signal(is_present.get());
 
   let node_ref = NodeRef::<AnyElement>::new();
 
-  let width = StoredValue::<Option<f64>>::new(Some(0.));
-  let height = StoredValue::<Option<f64>>::new(Some(0.));
-
-  let (width_signal, set_width_signal) = create_signal::<Option<f64>>(Some(0.));
-  let (height_signal, set_height_signal) = create_signal::<Option<f64>>(Some(0.));
-
-  let is_open = Signal::derive(move || open.get() || present_state.get());
+  let is_open = Signal::derive(move || open.get() || is_present.get());
   let is_mount_animation_prevented = StoredValue::new(is_open.get());
-  let original_styles = StoredValue::<Option<HashMap<String, String>>>::new(None);
+  let original_styles = StoredValue::<Option<CssStyleDeclaration>>::new(None);
 
   Effect::new(move |_| {
     let Ok(animation_frame) = request_animation_frame_with_handle(move || {
@@ -197,73 +190,68 @@ pub fn CollapsibleContent(
     });
   });
 
-  Effect::new(move |_| {
-    let Some(node) = node_ref.get() else {
-      return;
-    };
+  let rect_size = Signal::derive(move || {
+    let node = node_ref.get()?;
 
-    let Ok(Some(node_style)) = window().get_computed_style(&node) else {
-      return;
-    };
+    let foob = node.get_bounding_client_rect();
+
+    logging::log!("foob: {} {}", foob.width(), foob.height());
+
+    let node_style = window().get_computed_style(&node).ok()?;
 
     if original_styles.get_value().is_none() {
-      if let Ok(transition_duration) = node_style.get_property_value("transition-duration") {
-        original_styles.update_value(|styles| {
-          if let Some(styles) = styles {
-            styles.insert(
-              "transition-duration".to_string(),
-              transition_duration.clone(),
-            );
-          }
-        })
+      let new_styles = CssStyleDeclaration::from(JsValue::from(Object::new()));
+
+      if let Some(node_style) = node_style {
+        if let Ok(transition_duration) = node_style.get_property_value("transition-duration") {
+          _ = new_styles.set_property("transition-duration", &transition_duration);
+        }
+
+        if let Ok(animation_name) = node_style.get_property_value("animation-name") {
+          _ = new_styles.set_property("animation-name", &animation_name);
+        }
       }
 
-      if let Ok(animation_name) = node_style.get_property_value("animation-name") {
-        original_styles.update_value(|styles| {
-          if let Some(styles) = styles {
-            styles.insert("animation-name".to_string(), animation_name.clone());
-          }
-        })
-      }
+      original_styles.set_value(Some(new_styles));
     }
 
-    _ = node.clone().style("transition-duration", "0s");
-    _ = node.clone().style("animation-name", "none");
+    _ = node
+      .clone()
+      .style("transition-duration", "0s")
+      .style("animation-name", "none");
 
     let rect = node.get_bounding_client_rect();
 
-    width.update_value(|width| {
-      *width = Some(rect.width());
-      set_width_signal(Some(rect.width()));
-    });
-
-    height.update_value(|height| {
-      *height = Some(rect.height());
-      set_height_signal(Some(rect.height()));
-    });
-
-    // width.set_value(Some(rect.width()));
-    // height.set_value(Some(rect.height()));
-
     if is_mount_animation_prevented.get_value() == false {
-      _ = node.clone().style(
-        "transition-duration",
-        original_styles
-          .get_value()
-          .map(|styles| styles.get("transition-duration").cloned())
-          .flatten(),
-      );
-      _ = node.clone().style(
-        "animation-name",
-        original_styles
-          .get_value()
-          .map(|styles| styles.get("animation-name").cloned())
-          .flatten(),
-      );
+      _ = node
+        .style(
+          "transition-duration",
+          original_styles
+            .get_value()
+            .map(|styles| styles.get_property_value("transition-duration").ok())
+            .flatten(),
+        )
+        .style(
+          "animation-name",
+          original_styles
+            .get_value()
+            .map(|styles| styles.get_property_value("animation-name").ok())
+            .flatten(),
+        );
     }
 
-    set_present_state(is_present.get());
+    logging::log!("{} {}", rect.width(), rect.height());
+
+    Some((rect.width(), rect.height()))
   });
+
+  let present_state = Signal::derive(move || {
+    rect_size
+      .get()
+      .map(|_| is_present.get())
+      .unwrap_or(is_present.get())
+  });
+  // let (present_state, set_present_state) = create_signal(is_present.get());
 
   view! {
     // {move || presence.is_present.get().then(|| {
@@ -286,11 +274,16 @@ pub fn CollapsibleContent(
             .into_attribute()
         ),
         ("id", Signal::derive(move || content_id.get()).into_attribute()),
-        ("hidden", Signal::derive(move || !is_open.get()).into_attribute()),
+        ("fart", "master".into_attribute()),
+        ("hidden", Signal::derive(move || !(is_open.get() || present_state.get())).into_attribute()),
         ("style", Signal::derive(move || {
+          let Some((width, height)) = rect_size.get() else {
+            return String::new();
+          };
+
           format!("{}{}",
-            height_signal.get().map(|height| format!("--primitive-collapsible-content-height: {height}px; ")).unwrap_or_default(),
-            width_signal.get().map(|width| format!("--primitive-collapsible-content-width: {width}px")).unwrap_or_default(),
+            format!("--primitive-collapsible-content-height: {height}px; "),
+            format!("--primitive-collapsible-content-width: {width}px"),
           )
         }).into_attribute())
       ];
@@ -303,10 +296,15 @@ pub fn CollapsibleContent(
             .map(|(name, attr)| {
               if name == "style" {
                 let attr = Signal::derive(move || {
-                  format!("{}{}{}",
-                    attr.as_nameless_value_string().map(|value| format!("{}; ", value.to_string())).unwrap_or_default(),
-                    height_signal.get().map(|height| format!("--primitive-collapsible-content-height: {height}px; ")).unwrap_or_default(),
-                    width_signal.get().map(|width| format!("--primitive-collapsible-content-width: {width}px")).unwrap_or_default(),
+                  let old_attr = attr.as_nameless_value_string().map(|value| format!("{value}; ")).unwrap_or_default();
+
+                  let Some((width, height)) = rect_size.get() else {
+                    return old_attr;
+                  };
+
+                  format!("{old_attr}{}{}",
+                    format!("--primitive-collapsible-content-height: {height}px; "),
+                    format!("--primitive-collapsible-content-width: {width}px"),
                   )
                 });
 
@@ -324,9 +322,20 @@ pub fn CollapsibleContent(
           element=html::div
           attrs=merged_attrs
           as_child=as_child
-          node_ref=Some(node_ref)
+          node_ref=node_ref
+          on:click=move |e| {
+            let foo = e.target().unwrap();
+            let bar = foo.dyn_ref::<web_sys::HtmlDivElement>().unwrap();
+            let baz = bar.get_bounding_client_rect();
+
+            let fizz = node_ref.get().unwrap();
+            let buzz = fizz.get_bounding_client_rect();
+
+            logging::log!("foo:  {} {}", baz.width(), baz.height());
+            logging::log!("fizz: {} {}", buzz.width(), buzz.height());
+          }
         >
-          {move || is_open.get().then(|| children())}
+          {move || (is_open.get() || present_state.get()).then(|| children())}
         </Primitive>
       }
     })}

@@ -52,7 +52,7 @@ pub fn Separator(
     <Primitive
       element=html::div
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {().into_view()}
     </Primitive>

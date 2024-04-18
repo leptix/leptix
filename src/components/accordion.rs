@@ -284,7 +284,7 @@ fn Accordion(
     <Primitive
       element=html::div
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
           on_key_down(ev.clone());
@@ -512,7 +512,7 @@ pub fn AccordionHeader(
     <Primitive
       element=html::h3
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {children()}
     </Primitive>
@@ -590,7 +590,7 @@ pub fn AccordionContent(
     ),
     ("role", "region".into_attribute()),
     (
-      "style", "--radix-accordion-content-height: var(--radix-collapsible-content-height); --radix-accordion-content-width: var(--radix-collapsible-content-width)".into_attribute()
+      "style", "--primitive-accordion-content-height: var(--primitive-collapsible-content-height); --primitive-accordion-content-width: var(--primitive-collapsible-content-width)".into_attribute()
     ),
   ];
 
@@ -598,7 +598,7 @@ pub fn AccordionContent(
     if name == "style" {
       let attr = Signal::derive(move || {
         format!(
-          "{}--radix-accordion-content-height: var(--radix-collapsible-content-height); --radix-accordion-content-width: var(--radix-collapsible-content-width)",
+          "{}--primitive-accordion-content-height: var(--primitive-collapsible-content-height); --primitive-accordion-content-width: var(--primitive-collapsible-content-width)",
           attr
             .as_nameless_value_string()
             .map(|value| format!("{}; ", value.to_string()))

@@ -89,7 +89,7 @@ pub fn TabsRoot(
     <Primitive
       element=html::div
       attrs=attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {children()}
     </Primitive>
@@ -133,7 +133,7 @@ pub fn TabsList(
       <Primitive
         element=html::div
         attrs=merged_attrs
-        node_ref=Some(node_ref)
+        node_ref=node_ref
       >
         {children()}
       </Primitive>
@@ -222,7 +222,7 @@ pub fn TabsTrigger(
       <Primitive
         element=html::button
         attrs=merged_attrs
-        node_ref=Some(node_ref)
+        node_ref=node_ref
         on:mousedown=move|ev: MouseEvent| {
           if let Some(on_mouse_down) = on_mouse_down {
             on_mouse_down(ev.clone());
@@ -377,7 +377,7 @@ pub fn TabsContent(
         <Primitive
           element=html::div
           attrs=attrs
-          node_ref=Some(node_ref)
+          node_ref=node_ref
         >
           {children()}
         </Primitive>

@@ -84,7 +84,7 @@ pub fn ToolbarRoot(
       <Primitive
         element=html::div
         attrs=merged_attrs
-        node_ref=Some(node_ref)
+        node_ref=node_ref
       >
         {children()}
       </Primitive>
@@ -136,7 +136,7 @@ pub fn ToolbarButton(
         element=html::button
         as_child=as_child
         attrs=merged_attrs
-        node_ref=Some(node_ref)
+        node_ref=node_ref
       >
         {children()}
       </Primitive>
@@ -159,7 +159,7 @@ pub fn ToolbarLink(
       <Primitive
         element=html::a
         attrs=attrs
-        node_ref=Some(node_ref)
+        node_ref=node_ref
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
             on_key_down(ev.clone());

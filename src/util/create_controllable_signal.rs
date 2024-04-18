@@ -1,13 +1,13 @@
 use leptos::*;
 
-pub(crate) struct CreateControllableSignalProps<T: Clone + PartialEq + 'static> {
-  pub(crate) value: Signal<Option<T>>,
-  pub(crate) default_value: Signal<Option<T>>,
-  pub(crate) on_change: Callback<T>,
+pub struct CreateControllableSignalProps<T: Clone + PartialEq + 'static> {
+  pub value: Signal<Option<T>>,
+  pub default_value: Signal<Option<T>>,
+  pub on_change: Callback<T>,
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct WriteControllableSignal<T: Clone + 'static> {
+pub struct WriteControllableSignal<T: Clone + 'static> {
   is_controlled: Signal<bool>,
   value: Signal<Option<T>>,
   pub(crate) set_uncontrolled_value: WriteSignal<Option<T>>,
@@ -15,33 +15,27 @@ pub(crate) struct WriteControllableSignal<T: Clone + 'static> {
 }
 
 impl<T: Clone + 'static> WriteControllableSignal<T> {
-  pub(crate) fn set(&self, value: T) {
-    // logging::log!("checking if is controlled");
-    if self.is_controlled.get_untracked() {
-      // logging::log!("controlled on_change");
+  pub fn set(&self, value: T) {
+    if self.is_controlled.get() {
       (self.on_change)(Some(value));
-      // logging::log!("finished controlled on_change");
     } else {
-      // logging::log!("uncontrolled set");
       let set_uncontrolled_value = self.set_uncontrolled_value.clone();
       let cloned_value = value.clone();
 
-      request_animation_frame(move || {
-        set_uncontrolled_value.set(Some(cloned_value));
-        // self.set_uncontrolled_value.set(Some(cloned_value));
-      });
-      // logging::log!("uncontrolled on_change");
+      // request_animation_frame(move || {
+      set_uncontrolled_value.set(Some(cloned_value));
+      // self.set_uncontrolled_value.set(Some(cloned_value));
+      // });
       (self.on_change)(Some(value));
-      // logging::log!("finished uncontrolled");
     }
-    // logging::log!("exiting controllable set");
   }
 
-  pub(crate) fn update(&self, callback: impl FnOnce(&mut Option<T>)) {
-    if self.is_controlled.get_untracked() {
+  pub fn update(&self, callback: impl FnOnce(&mut Option<T>)) {
+    if self.is_controlled.get() {
       let mut value = self.value.get();
 
       callback(&mut value);
+
       (self.on_change)(value);
     } else {
       self.set_uncontrolled_value.update(|value| {
@@ -52,7 +46,7 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
   }
 }
 
-pub(crate) fn create_controllable_signal<T: Clone + PartialEq + 'static>(
+pub fn create_controllable_signal<T: Clone + PartialEq + 'static>(
   CreateControllableSignalProps {
     value,
     default_value,

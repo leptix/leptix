@@ -26,7 +26,7 @@ pub fn AspectRatioRoot(
     >
       <Primitive
         element=html::div
-        node_ref=Some(node_ref)
+        node_ref=node_ref
         attrs=merged_attrs
       >
         {children()}

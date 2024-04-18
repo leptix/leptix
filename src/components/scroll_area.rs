@@ -134,7 +134,7 @@ pub fn ScrollAreaRoot(
     <Primitive
       element=html::div
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {children()}
     </Primitive>
@@ -246,7 +246,7 @@ fn ScrollAreaScrollbarHover(
 
   let (visible, set_visible) = create_signal(false);
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(scroll_area) = context.scroll_area.get() else {
       return;
     };
@@ -363,7 +363,7 @@ fn ScrollAreaScrollbarScroll(
     100.,
   );
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     if state.get() != ScrollAreaScrollbarScrollState::Idle {
       return;
     }
@@ -385,7 +385,7 @@ fn ScrollAreaScrollbarScroll(
     });
   });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(viewport) = context.viewport.get() else {
       return;
     };

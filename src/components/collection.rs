@@ -37,14 +37,17 @@ pub fn create_collection_item_ref<
   let (id, set_id) = create_signal::<Option<CollectionItemId>>(None);
   let item_ref = create_node_ref::<ItemElement>();
 
-  item_ref.on_load(move |el| {
-    let id = CollectionItemId::new();
-    _ = el.attr(
-      "data-primitive-collection-item",
-      id.0.clone().into_attribute(),
-    );
+  Effect::new(move |_| {
+    if let Some(node) = item_ref.get() {
+      let id = CollectionItemId::new();
 
-    set_id(Some(id));
+      _ = node.attr(
+        "data-primitive-collection-item",
+        id.0.clone().into_attribute(),
+      );
+
+      set_id(Some(id));
+    }
   });
 
   Effect::new(move |_| {

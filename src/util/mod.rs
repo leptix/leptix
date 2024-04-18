@@ -1,19 +1,23 @@
-pub(crate) mod create_controllable_signal;
+pub mod create_controllable_signal;
 pub(crate) mod create_id;
 pub(crate) mod create_previous;
-pub(crate) mod create_state_machine;
+pub mod create_state_machine;
 
-#[derive(Default, Clone, PartialEq, Copy)]
+#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
 pub enum Direction {
   #[default]
+  #[strum(to_string = "ltr")]
   LeftToRight,
+  #[strum(to_string = "rtl")]
   RightToLeft,
 }
 
-#[derive(Default, Clone, PartialEq, Copy)]
+#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
 pub enum Orientation {
   #[default]
+  #[strum(to_string = "horizontal")]
   Horizontal,
+  #[strum(to_string = "vertical")]
   Vertical,
 }
 

@@ -25,9 +25,11 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
 
   let (state, send) = create_state_machine(initial.into());
 
-  node_ref.on_load(move |el| {
-    if let Ok(Some(computed_style)) = window().get_computed_style(&el) {
-      styles.set_value(computed_style);
+  Effect::new(move |_| {
+    if let Some(node) = node_ref.get() {
+      if let Ok(Some(computed_style)) = window().get_computed_style(&node) {
+        styles.set_value(computed_style);
+      }
     }
   });
 

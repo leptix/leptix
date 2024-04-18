@@ -103,7 +103,7 @@ pub fn Radio(
     <Primitive
       element=html::button
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
           on_click(ev.clone());
@@ -186,7 +186,7 @@ pub fn RadioIndicator(
         view! {
           <Primitive
             element=html::span
-            node_ref=Some(node_ref)
+            node_ref=node_ref
             attrs=merged_attrs
           >
             {children()}

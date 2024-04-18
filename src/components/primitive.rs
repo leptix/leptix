@@ -14,31 +14,26 @@ pub fn Primitive<El: ElementDescriptor + 'static>(
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional_no_strip)] as_child: Option<bool>,
-  #[prop(optional_no_strip)] node_ref: Option<NodeRef<AnyElement>>,
+  #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
   // logging::log!("primitive attrs: {attrs:?}");
 
   if as_child.unwrap_or(false) {
     map_items_to_children(children().as_children(), attrs, node_ref)
   } else {
-    let el = element()
+    element()
       .attrs(attrs)
       .child(children().into_view())
-      .into_any();
-
-    if let Some(node_ref) = node_ref {
-      el.node_ref(node_ref)
-    } else {
-      el
-    }
-    .into_view()
+      .into_any()
+      .node_ref(node_ref)
+      .into_view()
   }
 }
 
 fn map_items_to_children(
   children: &[View],
   attrs: Attributes,
-  node_ref: Option<NodeRef<AnyElement>>,
+  node_ref: NodeRef<AnyElement>,
 ) -> View {
   if children.len() == 0 {
     None::<bool>.into_view()
@@ -66,12 +61,7 @@ fn map_items_to_children(
             }
           }
 
-          if let Some(node_ref) = node_ref {
-            el.node_ref(node_ref)
-          } else {
-            el
-          }
-          .into_view()
+          el.node_ref(node_ref).into_view()
         }
         View::Component(comp) => map_items_to_children(&comp.children, attrs.clone(), node_ref),
         _ => child.into_view(),

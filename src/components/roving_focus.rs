@@ -179,7 +179,7 @@ pub(crate) fn RovingFocusGroup(
     <Primitive element=html::div
       as_child=as_child
       attrs=merged_attrs
-      node_ref=Some(collection_ref)
+      node_ref=collection_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down(ev);
@@ -317,7 +317,7 @@ pub(crate) fn RovingFocusGroupItem(
     <Primitive element=html::span
       as_child=as_child
       attrs=merged_attrs
-      node_ref=Some(item_ref)
+      node_ref=item_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down(ev.clone());

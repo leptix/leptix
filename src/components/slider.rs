@@ -28,6 +28,7 @@ use crate::{
 
 #[derive(Clone)]
 struct SliderContextValue {
+  name: Signal<Option<String>>,
   disabled: Signal<bool>,
   min: Signal<f64>,
   max: Signal<f64>,
@@ -60,13 +61,13 @@ pub fn SliderRoot(
   let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
   let value_index_to_change = StoredValue::new(0usize);
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  // let is_form_control = Signal::derive(move || {
+  //   if let Some(node) = node_ref.get() {
+  //     node.closest("form").ok().flatten().is_some()
+  //   } else {
+  //     true
+  //   }
+  // });
 
   let (values, set_values) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.as_ref().map(|value| value.get())),
@@ -180,6 +181,7 @@ pub fn SliderRoot(
   });
 
   provide_context(SliderContextValue {
+    name: Signal::derive(move || name.as_ref().map(|name| name.get())),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
     min: Signal::derive(move || min.map(|min| min.get()).unwrap_or(0.)),
     max: Signal::derive(move || max.map(|max| max.get()).unwrap_or(100.)),
@@ -504,14 +506,16 @@ fn Slider(
 
   provide_context(orientation_context);
 
-  // node_ref.on_load(|node| {
-  //   _ = node.style("--primitive-slider-thumb-transform", "translateX(50%)");
-  // });
+  Effect::new(move |_| {
+    if let Some(node) = node_ref.get() {
+      _ = node.style("--primitive-slider-thumb-transform", "translateX(50%)");
+    }
+  });
 
   view! {
     <Primitive
       element=html::span
-      node_ref=Some(node_ref)
+      node_ref=node_ref
       attrs=merged_attrs
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
@@ -644,7 +648,7 @@ pub fn SliderTrack(
     <Primitive
       element=html::span
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {children()}
     </Primitive>
@@ -701,23 +705,25 @@ pub fn SliderRange(
     ),
   ]);
 
-  // node_ref.on_load(move |node| {
-  //   _ = node
-  //     .style(
-  //       orientation.start_edge.get().to_string().to_lowercase(),
-  //       format!("{}%", offset_start.get()),
-  //     )
-  //     .style(
-  //       orientation.end_edge.get().to_string().to_lowercase(),
-  //       format!("{}%", offset_end.get()),
-  //     );
-  // });
+  Effect::new(move |_| {
+    if let Some(node) = node_ref.get() {
+      _ = node
+        .style(
+          orientation.start_edge.get().to_string().to_lowercase(),
+          format!("{}%", offset_start.get()),
+        )
+        .style(
+          orientation.end_edge.get().to_string().to_lowercase(),
+          format!("{}%", offset_end.get()),
+        );
+    }
+  });
 
   view! {
     <Primitive
       element=html::span
       attrs=merged_attrs
-      node_ref=Some(node_ref)
+      node_ref=node_ref
     >
       {children()}
     </Primitive>
@@ -726,6 +732,7 @@ pub fn SliderRange(
 
 #[component]
 pub fn SliderThumb(
+  #[prop(optional)] name: Option<Signal<String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -737,6 +744,14 @@ pub fn SliderThumb(
     .expect("SliderThumb must be used in a SliderRoot component");
   let orientation = use_context::<OrientationContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
+
+  let is_form_control = Signal::derive(move || {
+    if let Some(node) = node_ref.get() {
+      node.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    }
+  });
 
   let size = use_element_size(node_ref);
 
@@ -772,28 +787,30 @@ pub fn SliderThumb(
     )
   });
 
-  // node_ref.on_load(move |node| {
-  //   let Some(index) = get_items().iter().position(|item| {
-  //     let Some(item) = item.0.get() else {
-  //       return false;
-  //     };
+  Effect::new(move |_| {
+    if let Some(node) = node_ref.get() {
+      let Some(index) = get_items().iter().position(|item| {
+        let Some(item) = item.0.get() else {
+          return false;
+        };
 
-  //     let item_el: &web_sys::Element = &item;
-  //     let node_el: &web_sys::Element = &node;
+        let item_el: &web_sys::Element = &item;
+        let node_el: &web_sys::Element = &node;
 
-  //     item_el == node_el
-  //   }) else {
-  //     return;
-  //   };
+        item_el == node_el
+      }) else {
+        return;
+      };
 
-  //   set_index(Some(index));
+      set_index(Some(index));
 
-  //   // if value.get().is_none() {
-  //   //   _ = node.style("display", "none");
-  //   // }
-  // });
+      if value.get().is_none() {
+        _ = node.style("display", "none");
+      }
+    }
+  });
 
-  create_effect(move |_| {
+  Effect::new(move |_| {
     let Some(node_ref) = node_ref.get() else {
       return;
     };
@@ -867,26 +884,36 @@ pub fn SliderThumb(
   );
 
   let span_ref = NodeRef::<Span>::new();
-  span_ref.on_load(move |node| {
-    _ = node.style(
-      orientation.start_edge.get().to_string().to_lowercase(),
-      format!(
-        "calc({}% + {}px)",
-        percent.get(),
-        thumbs_in_bound_offset.get()
-      ),
-    );
+
+  Effect::new(move |_| {
+    if let Some(node) = span_ref.get() {
+      _ = node.style(
+        orientation.start_edge.get().to_string().to_lowercase(),
+        format!(
+          "calc({}% + {}px)",
+          percent.get(),
+          thumbs_in_bound_offset.get()
+        ),
+      );
+    }
   });
 
   view! {
-    <span style="position: absolute" node_ref=span_ref>
+    <span style:position="absolute" node_ref=span_ref>
       <Primitive
         element=html::span
         attrs=merged_attrs
-        // node_ref=Some(node_ref)
+        node_ref=node_ref
       >
         {children()}
       </Primitive>
+
+      {move || is_form_control.get().then_some(view! {
+        <BubbleInput
+          name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
+          value=Signal::derive(move || value.get().unwrap_or_default())
+        />
+      })}
     </span>
   }
 }
@@ -932,9 +959,11 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
     })();
   });
 
-  // node_ref.on_load(move |node| {
-  //   node.set_default_value(&value.get().to_string());
-  // });
+  Effect::new(move |_| {
+    if let Some(node) = node_ref.get() {
+      node.set_default_value(&value.get().to_string());
+    }
+  });
 
   view! {
     <input
@@ -942,7 +971,7 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
       name=Signal::derive(move || name.get()).into_attribute()
       value=Signal::derive(move || value.get()).into_attribute()
       node_ref=node_ref
-      style:display="absolute"
+      style:display="none"
     />
   }
 }
