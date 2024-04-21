@@ -39,4 +39,4 @@ npx tailwindcss -i styles/input.css -o styles/output.css --watch
 cd styles && miniserve . -p 8081
 ```
 
-The last terminal command requires [miniserve](https://github.com/svenstaro/miniserve)
+The last terminal command requires [miniserve](https://github.com/svenstaro/miniserve) because Tailwind's CLI creates its output `.css` file when trunk strips old dist files. Instead of outputting Tailwind's .css file into the /dist folder made by trunk, I made a `styles` folder and have the output file emitted in there and run `miniserve` in the directory and use `https://localhost:8081/output.css` in the root `index.html` file to load styles
