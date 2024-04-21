@@ -34,6 +34,8 @@ leptos_primitives = { git = "https://github.com/Upbolt/leptos_primitives.git" }
 
 ## Available Components
 
+Note: Dialogs and components that require floating functionality are not yet implemented; tracking issues for them can be found [here](https://github.com/Upbolt/leptos_primitives/issues/4) and [here](https://github.com/Upbolt/leptos_primitives/issues/2) (respectively)
+
 | Component Name |
 | -------------- |
 | Accordion      |
