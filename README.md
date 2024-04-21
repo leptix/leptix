@@ -17,7 +17,7 @@
 ## What is this crate?
 
 leptos_primitives is a port of [radix-ui's primitives component library](https://github.com/radix-ui/primitives) for
-the [leptos](https://github.com/leptos-rs/leptos) full-stack framework for web development; everything is
+the [leptos](https://github.com/leptos-rs/leptos) full-stack web framework; everything is
 essentially ported one-to-one.
 
 ## Installation
