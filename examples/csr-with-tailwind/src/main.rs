@@ -32,7 +32,7 @@ use leptos_primitives::components::toolbar::{
 use leptos_primitives::util::Orientation;
 use leptos_primitives::Attributes;
 
-use leptos_use::{use_interval_fn, Pausable};
+use leptos_use::{use_interval_fn, utils::Pausable};
 
 fn main() {
   console_error_panic_hook::set_once();
