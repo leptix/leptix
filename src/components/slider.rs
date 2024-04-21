@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use leptos::{
+  ev::focus,
   html::{AnyElement, Input, Span},
   *,
 };
@@ -15,7 +16,7 @@ use web_sys::{
 
 use crate::{
   components::{
-    collection::{use_collection_context, CollectionContextValue},
+    collection::{use_collection_context, CollectionContextValue, create_collection_item_ref},
     primitive::Primitive,
   },
   util::{
@@ -33,7 +34,7 @@ struct SliderContextValue {
   min: Signal<f64>,
   max: Signal<f64>,
   values: Signal<Vec<f64>>,
-  value_index_to_change: StoredValue<usize>,
+  value_index_to_change: StoredValue<Option<usize>>,
   thumbs: StoredValue<Vec<HtmlElement<AnyElement>>>,
   orientation: Signal<Orientation>,
 }
@@ -57,9 +58,8 @@ pub fn SliderRoot(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<AnyElement>::new();
   let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
-  let value_index_to_change = StoredValue::new(0usize);
+  let value_index_to_change = StoredValue::new(Some(0usize));
 
   // let is_form_control = Signal::derive(move || {
   //   if let Some(node) = node_ref.get() {
@@ -83,9 +83,11 @@ pub fn SliderRoot(
       let thumbs = thumbs.get_value();
       let thumbs = Vec::from_iter(thumbs.iter());
 
-      thumbs
-        .get(value_index_to_change.get_value())
-        .map(|thumb| _ = thumb.focus());
+      if let Some(value_index) = value_index_to_change.get_value() {
+        if let Some(thumb) = thumbs.get(value_index) {
+          _ = thumb.focus();
+        }
+      }
 
       if let Some(on_value_change) = on_value_change {
         on_value_change(value);
@@ -107,24 +109,26 @@ pub fn SliderRoot(
     );
 
     set_values.update(move |values| {
+      let previous_values = values.as_ref().cloned().unwrap_or_default();
       let next_values =
-        get_next_sorted_values(values.as_ref().unwrap_or(&vec![]), next_value, at_index);
+        get_next_sorted_values(&previous_values, next_value, at_index);
 
       if has_min_steps_between_values(
-        values.as_ref().unwrap_or(&vec![]),
+        &previous_values,
         min_steps_between_thumbs
           .map(|min_steps| min_steps.get())
           .unwrap_or(0.)
           * step.map(|step| step.get()).unwrap_or(0.),
       ) {
-        if let Some(position) = next_values.iter().position(|value| value == &next_value) {
-          value_index_to_change.set_value(position);
-        }
+        value_index_to_change.set_value(next_values.iter().position(|value| value == &next_value));
 
-        let has_changed = next_values
+        let updated_count = next_values
           .iter()
-          .zip(values.as_ref().unwrap_or(&vec![]).iter())
-          .all(|(a, b)| a == b);
+          .zip(previous_values.iter())
+          .filter(|&(prev, curr)| prev == curr)
+          .count();
+
+        let has_changed = updated_count != next_values.len() || updated_count != previous_values.len();
 
         if has_changed {
           if commit {
@@ -141,36 +145,29 @@ pub fn SliderRoot(
 
   let start_update = update_values.clone();
   let handle_slide_start = Callback::new(move |value: f64| {
-    let Some(closest_index) = find_closest_index(&values.get().unwrap_or_default(), value) else {
-      return;
-    };
-
-    let req_update = start_update.clone();
-    request_animation_frame(move || {
-      // start_update(value, closest_index, false);
-      req_update(value, closest_index, false);
-    });
+    if let Some(closest_index) = find_closest_index(&values.get().unwrap_or_default(), value) {
+      start_update(value, closest_index, false);
+    }
   });
 
   let move_update = update_values.clone();
   let handle_slide_move = Callback::new(move |value: f64| {
-    let req_update = move_update.clone();
-
-    request_animation_frame(move || {
-      req_update(value, value_index_to_change.get_value(), false);
-      // move_update(value, value_index_to_change.get_value(), false);
-    });
+    if let Some(value_index) = value_index_to_change.get_value() {
+      move_update(value, value_index, false);
+    }
   });
 
   let handle_slide_end = Callback::new(move |_: ()| {
     let prev_value = values_before_slide_start
       .get_value()
-      .map(|values| values.get(value_index_to_change.get_value()).cloned())
+      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
       .flatten();
+
     let next_value = values
       .get()
-      .map(|values| values.get(value_index_to_change.get_value()).cloned())
+      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
       .flatten();
+
     let has_changed = next_value != prev_value;
 
     if has_changed {
@@ -196,7 +193,7 @@ pub fn SliderRoot(
   });
 
   provide_context(CollectionContextValue::<SliderCollectionItem, AnyElement> {
-    collection_ref: NodeRef::new(),
+    collection_ref: node_ref,
     item_map: RwSignal::new(HashMap::new()),
   });
 
@@ -205,7 +202,7 @@ pub fn SliderRoot(
     [
       (
         "aria-disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
+        disabled.into_attribute(),
       ),
       (
         "data-disabled",
@@ -241,7 +238,7 @@ pub fn SliderRoot(
       })
       on_end_key_down=Callback::new(move |_| {
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
-          end_key_down_update(min.map(|min| min.get()).unwrap_or(0.), values.get().unwrap_or_default().len() - 1, true);
+          end_key_down_update(max.map(|max| max.get()).unwrap_or(0.), values.get().unwrap_or_default().len() - 1, true);
         }
       })
       on_step_key_down=Callback::new(move |Step{ event, direction }| {
@@ -252,7 +249,11 @@ pub fn SliderRoot(
         let is_page_key = ["PageUp", "PageDown"].contains(&event.key().as_str());
         let is_skip_key = is_page_key || (event.shift_key() && ["ArrowUp", "ArrowLeft", "ArrowRight", "ArrowDown"].contains(&event.key().as_str()));
         let multiplier = if is_skip_key { 10.0f64 } else { 1.0f64 };
-        let at_index = value_index_to_change.get_value();
+
+        let Some(at_index) = value_index_to_change.get_value() else {
+          return;
+        };
+
         let value = values.get().unwrap_or_default().get(at_index).cloned().unwrap_or(0.);
         let step_in_direction = step.map(|step| step.get()).unwrap_or(1.) * multiplier * match direction { OrientationDirection::Forward => 1.0f64, OrientationDirection::Backward => -1.0f64 };
 
@@ -428,17 +429,17 @@ fn Slider(
           .get_value()
           .unwrap_or(node_ref.get().unwrap().get_bounding_client_rect());
 
-        let input = (0., rect.width());
+        let input = (0., rect.height());
         let output = if is_sliding_from_bottom.get() {
-          (min.get(), max.get())
-        } else {
           (max.get(), min.get())
+        } else {
+          (min.get(), max.get())
         };
         let value = linear_scale(input, output);
 
         dom_rect.set_value(Some(rect.clone()));
 
-        value(pointer as f64 - rect.left())
+        value(pointer as f64 - rect.top())
       });
 
       (
@@ -586,7 +587,7 @@ fn Slider(
 
         if target_el.has_pointer_capture(ev.pointer_id()) {
           if let Some(on_slide_move) = on_slide_move {
-            on_slide_move(pointer_value(ev.client_x()));
+            on_slide_move(pointer_value(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
           }
         }
       }
@@ -682,7 +683,7 @@ pub fn SliderRange(
     }
   });
   let offset_end =
-    Signal::derive(move || 100.0f64 - percentages.get().iter().fold(0.0f64, |max, &x| max.max(x)));
+    Signal::derive(move || 100.0f64 - percentages.get().iter().fold(f64::NEG_INFINITY, |max, &x| max.max(x)));
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
@@ -728,8 +729,8 @@ pub fn SliderThumb(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
+  let item_ref = create_collection_item_ref::<html::AnyElement, SliderCollectionItem>(SliderCollectionItem);
   let get_items = use_collection_context::<SliderCollectionItem, AnyElement>();
-  let (index, set_index) = create_signal::<Option<usize>>(None);
 
   let context = use_context::<SliderContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
@@ -737,16 +738,37 @@ pub fn SliderThumb(
     .expect("SliderThumb must be used in a SliderRoot component");
 
   let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
+    if let Some(node) = item_ref.get() {
       node.closest("form").ok().flatten().is_some()
     } else {
       true
     }
   });
 
-  let size = use_element_size(node_ref);
+  let size = use_element_size(item_ref);
 
-  let value = Signal::derive(move || Some(*context.values.get().get(index.get()?)?));
+  let index = Signal::derive(move || {
+    let node = item_ref.get()?;
+    let items = get_items();
+
+    let index = items.iter().position(|item| {
+      let Some(item) = item.0.get() else {
+        return false;
+      };
+
+      let item_el: &web_sys::Element = &item;
+      let node_el: &web_sys::Element = &node;
+
+      item_el == node_el
+    })?;
+
+    Some(index)
+  });
+
+  let value = Signal::derive(move || {
+    let result = *context.values.get().get(index.get()?)?;
+    Some(result)
+  });
 
   let percent = Signal::derive(move || {
     value
@@ -779,42 +801,19 @@ pub fn SliderThumb(
   });
 
   Effect::new(move |_| {
-    if let Some(node) = node_ref.get() {
-      let Some(index) = get_items().iter().position(|item| {
-        let Some(item) = item.0.get() else {
-          return false;
-        };
-
-        let item_el: &web_sys::Element = &item;
-        let node_el: &web_sys::Element = &node;
-
-        item_el == node_el
-      }) else {
-        return;
-      };
-
-      set_index(Some(index));
-
-      if value.get().is_none() {
-        _ = node.style("display", "none");
-      }
-    }
-  });
-
-  Effect::new(move |_| {
-    let Some(node_ref) = node_ref.get() else {
+    let Some(node) = item_ref.get() else {
       return;
     };
 
     context.thumbs.update_value(|thumbs| {
-      thumbs.push(node_ref.clone());
+      thumbs.push(node.clone());
     });
 
     on_cleanup(move || {
       context.thumbs.update_value(|thumbs| {
         if let Some(position) = thumbs.iter().position(|thumb| {
           let thumb_el: &web_sys::Element = thumb;
-          let node_el: &web_sys::Element = &node_ref.clone();
+          let node_el: &web_sys::Element = &node.clone();
 
           thumb_el == node_el
         }) {
@@ -822,6 +821,20 @@ pub fn SliderThumb(
         }
       });
     });
+  });
+
+  Effect::new(move |_| {
+    let Some(node) = item_ref.get() else {
+      return;
+    };
+
+    let node = node.on(focus, move |_| {
+      context.value_index_to_change.set_value(index.get());
+    });
+
+    if value.get().is_none() {
+      _ = node.clone().style("display", "none");
+    }
   });
 
   let mut merged_attrs = attrs.clone();
@@ -842,7 +855,10 @@ pub fn SliderThumb(
         "aria-valuemin",
         (move || context.min.get()).into_attribute(),
       ),
-      ("aria-valuenow", (move || value.get()).into_attribute()),
+      (
+        "aria-valuenow",
+        (move || value.get().unwrap_or_default()).into_attribute(),
+      ),
       (
         "aria-valuemax",
         (move || context.max.get()).into_attribute(),
@@ -859,6 +875,7 @@ pub fn SliderThumb(
         "data-disabled",
         (move || context.disabled.get().then_some("")).into_attribute(),
       ),
+      ("tabindex", (move || (!context.disabled.get()).then_some(0)).into_attribute())
     ]
     .into_iter(),
   );
@@ -883,7 +900,8 @@ pub fn SliderThumb(
       <Primitive
         element=html::span
         attrs=merged_attrs
-        node_ref=node_ref
+        // node_ref=node_ref
+        node_ref=item_ref
       >
         {children()}
       </Primitive>
@@ -978,8 +996,10 @@ fn convert_value_to_percentage(value: f64, min: f64, max: f64) -> f64 {
 
 fn get_next_sorted_values(prev_values: &Vec<f64>, next_value: f64, at_index: usize) -> Vec<f64> {
   let mut next_values = prev_values.clone();
+  if let Some(next_values) = next_values.get_mut(at_index) {
+    *next_values = next_value;
+  };
 
-  next_values.insert(at_index, next_value);
   next_values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
   next_values
 }

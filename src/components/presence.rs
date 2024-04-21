@@ -1,4 +1,9 @@
-use leptos::{html::AnyElement, *};
+use leptos::{
+  ev::{animationcancel, animationend, animationstart},
+  html::AnyElement,
+  *,
+};
+use leptos_use::use_event_listener;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::{js_sys::Object, AnimationEvent, CssStyleDeclaration};
 
@@ -104,8 +109,29 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
       return;
     }
 
+    let handle_start_node = node.clone();
+    let remove_animation_start =
+      use_event_listener(node_ref, animationstart, move |ev: AnimationEvent| {
+        let Some(target) = ev.target() else {
+          return;
+        };
+
+        let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
+          return;
+        };
+
+        if target_el.eq(&handle_start_node) {
+          prev_animation_name.set_value(
+            styles
+              .get_value()
+              .get_property_value("animation-name")
+              .unwrap_or("none".to_string()),
+          );
+        }
+      });
+
     let handle_end_node = node.clone();
-    let handle_animation_end = Closure::<dyn FnMut(_)>::new(move |ev: AnimationEvent| {
+    let handle_animation_end = move |ev: AnimationEvent| {
       let current_animation_name = styles
         .get_value()
         .get_property_value("animation-name")
@@ -124,57 +150,18 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
       if target_el.eq(&handle_end_node) && is_current_animation {
         send(PresenceEvent::AnimationEnd);
       }
-    });
+    };
 
-    let handle_start_node = node.clone();
-    let handle_animation_start = Closure::<dyn FnMut(_)>::new(move |ev: AnimationEvent| {
-      let Some(target) = ev.target() else {
-        return;
-      };
+    let remove_animation_end =
+      use_event_listener(node_ref, animationend, handle_animation_end.clone());
 
-      let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
-        return;
-      };
-
-      if target_el.eq(&handle_start_node) {
-        prev_animation_name.set_value(
-          styles
-            .get_value()
-            .get_property_value("animation-name")
-            .unwrap_or("none".to_string()),
-        );
-      }
-    });
-
-    _ = node.add_event_listener_with_callback(
-      "animationstart",
-      handle_animation_start.as_ref().unchecked_ref(),
-    );
-    _ = node.add_event_listener_with_callback(
-      "animationend",
-      handle_animation_end.as_ref().unchecked_ref(),
-    );
-    _ = node.add_event_listener_with_callback(
-      "animationcancel",
-      handle_animation_end.as_ref().unchecked_ref(),
-    );
+    let remove_animation_cancel =
+      use_event_listener(node_ref, animationcancel, handle_animation_end);
 
     on_cleanup(move || {
-      _ = node.remove_event_listener_with_callback(
-        "animationstart",
-        handle_animation_start.as_ref().unchecked_ref(),
-      );
-      _ = node.remove_event_listener_with_callback(
-        "animationend",
-        handle_animation_end.as_ref().unchecked_ref(),
-      );
-      _ = node.remove_event_listener_with_callback(
-        "animationcancel",
-        handle_animation_end.as_ref().unchecked_ref(),
-      );
-
-      handle_animation_end.forget();
-      handle_animation_start.forget();
+      remove_animation_start();
+      remove_animation_end();
+      remove_animation_cancel();
     });
   });
 

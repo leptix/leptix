@@ -1,10 +1,17 @@
+use std::time::Duration;
+
 use leptos::{
+  ev::{pointerdown, pointerenter, pointerleave, pointermove, pointerup, scroll, wheel},
   html::{AnyElement, Div},
+  leptos_dom::helpers::TimeoutHandle,
   *,
 };
-use leptos_use::{use_debounce_fn, use_resize_observer};
-use wasm_bindgen::{closure::Closure, JsCast};
-use web_sys::{CssStyleDeclaration, WheelEvent};
+use leptos_use::{
+  use_debounce_fn, use_document, use_event_listener, use_event_listener_with_options, use_raf_fn,
+  use_resize_observer, utils::Pausable, UseEventListenerOptions,
+};
+use wasm_bindgen::JsCast;
+use web_sys::{CssStyleDeclaration, DomRect, PointerEvent, WheelEvent};
 
 use crate::{
   components::{presence::create_presence, primitive::Primitive},
@@ -17,19 +24,19 @@ use crate::{
 
 #[derive(Clone, Default)]
 struct Scrollbar {
-  size: i32,
-  padding_start: i32,
-  padding_end: i32,
+  size: f64,
+  padding_start: f64,
+  padding_end: f64,
 }
 
 #[derive(Clone, Default)]
 struct Sizes {
-  content: i32,
-  viewport: i32,
+  content: f64,
+  viewport: f64,
   scrollbar: Scrollbar,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub enum ScrollAreaKind {
   Auto,
   Always,
@@ -45,9 +52,9 @@ pub struct ScrollAreaContextValue {
   scroll_hide_delay: Signal<u32>,
   scroll_area: NodeRef<AnyElement>,
   viewport: NodeRef<AnyElement>,
-  // on_viewport_change: Callback<Option<NodeRef<AnyElement>>>,
+  // on_viewport_change: Callback<NodeRef<AnyElement>>,
   content: NodeRef<Div>,
-  // on_content_change: Callback<Option<NodeRef<AnyElement>>>,
+  // on_content_change: Callback<NodeRef<AnyElement>>,
   scrollbar_x: NodeRef<AnyElement>,
   // on_scrollbar_x_change: Callback<Option<NodeRef<AnyElement>>>,
   scrollbar_x_enabled: Signal<bool>,
@@ -70,7 +77,6 @@ pub fn ScrollAreaRoot(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let scroll_area = NodeRef::<AnyElement>::new();
   let viewport = NodeRef::<AnyElement>::new();
   let content = NodeRef::<Div>::new();
   let scrollbar_x = NodeRef::<AnyElement>::new();
@@ -96,7 +102,7 @@ pub fn ScrollAreaRoot(
         .map(|scroll_hide_delay| scroll_hide_delay.get())
         .unwrap_or(600)
     }),
-    scroll_area,
+    scroll_area: node_ref,
     viewport,
     content,
     scrollbar_x,
@@ -125,6 +131,21 @@ pub fn ScrollAreaRoot(
     )]
     .into_iter(),
   );
+
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    _ = node
+      .style("position", "relative")
+      .style("--primitive-scroll-area-corner-width", move || {
+        format!("{}px", corner_width.get())
+      })
+      .style("--primitive-scroll-area-corner-height", move || {
+        format!("{}px", corner_height.get())
+      });
+  });
 
   view! {
     <Primitive
@@ -177,6 +198,22 @@ pub fn ScrollAreaViewport(
 
   let content_ref = context.content;
 
+  // Effect::new(move |_| {
+  //   let Some(node) = node_ref.get() else {
+  //     return;
+  //   };
+
+  //   (context.on_viewport_change)(node);
+  // });
+
+  // Effect::new(move |_| {
+  //   let Some(content) = context.content.get() else {
+  //     return;
+  //   };
+
+  //   (context.on_content_change)(content);
+  // });
+
   view! {
     <>
       <style
@@ -185,7 +222,8 @@ pub fn ScrollAreaViewport(
       />
       <Primitive
         element=html::div
-        attrs=attrs
+        attrs=merged_attrs
+        node_ref=context.viewport
       >
         <div
           node_ref=content_ref
@@ -207,7 +245,7 @@ pub fn ScrollAreaScrollbar(
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  children: ChildrenFn,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbar must be used in a ScrollAreaRoot component");
@@ -218,20 +256,77 @@ pub fn ScrollAreaScrollbar(
     ..
   } = context;
 
-  match context.kind.get() {
-    ScrollAreaKind::Always => view! {},
-    ScrollAreaKind::Scroll => view! {},
-    ScrollAreaKind::Auto => view! {},
-    ScrollAreaKind::Hover => view! {},
-  };
+  Effect::new(move |_| {
+    if orientation.get() == Orientation::Horizontal {
+      on_scrollbar_x_enabled_change(true);
+    } else {
+      on_scrollbar_y_enabled_change(true);
+    }
 
-  view! {}
+    on_cleanup(move || {
+      if orientation.get() == Orientation::Horizontal {
+        on_scrollbar_x_enabled_change(false);
+      } else {
+        on_scrollbar_y_enabled_change(false);
+      }
+    });
+  });
+
+  match context.kind.get() {
+    ScrollAreaKind::Hover => {
+      view! {
+        <ScrollAreaScrollbarHover
+          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+          orientation=orientation
+          attrs=attrs
+          node_ref=node_ref
+        >
+          {children()}
+        </ScrollAreaScrollbarHover>
+      }
+    }
+    ScrollAreaKind::Scroll => {
+      view! {
+        <ScrollAreaScrollbarScroll
+          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+          orientation=orientation
+          attrs=attrs
+          node_ref=node_ref
+        >
+          {children()}
+        </ScrollAreaScrollbarScroll>
+      }
+    }
+    ScrollAreaKind::Auto => {
+      view! {
+        <ScrollAreaScrollbarAuto
+          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+          orientation=orientation
+          attrs=attrs
+          node_ref=node_ref
+        >
+          {children()}
+        </ScrollAreaScrollbarAuto>
+      }
+    }
+    ScrollAreaKind::Always => {
+      view! {
+        <ScrollAreaScrollbarVisible
+          orientation=orientation
+          attrs=attrs
+          node_ref=node_ref
+        >
+          {children()}
+        </ScrollAreaScrollbarVisible>
+      }
+    }
+  }
 }
 
 #[component]
 fn ScrollAreaScrollbarHover(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  force_mount: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -243,68 +338,47 @@ fn ScrollAreaScrollbarHover(
   let (visible, set_visible) = create_signal(false);
 
   Effect::new(move |_| {
-    let Some(scroll_area) = context.scroll_area.get() else {
-      return;
-    };
+    let timer_handle_value = StoredValue::<Option<TimeoutHandle>>::new(None);
 
-    let timer_handle_value = StoredValue::new(0);
+    let remove_pointer_enter = use_event_listener(context.scroll_area, pointerenter, move |_| {
+      if let Some(timeout_handle) = timer_handle_value.get_value() {
+        timeout_handle.clear();
+        timer_handle_value.set_value(None);
+      }
 
-    let handle_pointer_enter = Closure::<dyn FnMut()>::new(move || {
-      window().clear_timeout_with_handle(timer_handle_value.get_value());
       set_visible(true);
     });
 
-    let handle_pointer_leave = Closure::<dyn FnMut()>::new(move || {
-      let hide = Closure::<dyn Fn()>::new(move || {
-        set_visible(false);
-      });
-
-      let Ok(timer_handle) = window().set_timeout_with_callback_and_timeout_and_arguments_0(
-        hide.as_ref().unchecked_ref(),
-        context.scroll_hide_delay.get() as i32,
+    let remove_pointer_leave = use_event_listener(context.scroll_area, pointerleave, move |_| {
+      let Ok(timer_handle) = set_timeout_with_handle(
+        move || {
+          set_visible(false);
+        },
+        Duration::from_millis(context.scroll_hide_delay.get().into()),
       ) else {
         return;
       };
 
-      timer_handle_value.set_value(timer_handle);
+      timer_handle_value.set_value(Some(timer_handle));
     });
-
-    _ = scroll_area.add_event_listener_with_callback(
-      "pointerenter",
-      handle_pointer_enter.as_ref().unchecked_ref(),
-    );
-    _ = scroll_area.add_event_listener_with_callback(
-      "pointerleave",
-      handle_pointer_leave.as_ref().unchecked_ref(),
-    );
 
     on_cleanup(move || {
-      window().clear_timeout_with_handle(timer_handle_value.get_value());
+      if let Some(timeout_handle) = timer_handle_value.get_value() {
+        timeout_handle.clear();
+        timer_handle_value.set_value(None);
+      }
 
-      _ = scroll_area.add_event_listener_with_callback(
-        "pointerenter",
-        handle_pointer_enter.as_ref().unchecked_ref(),
-      );
-      _ = scroll_area.add_event_listener_with_callback(
-        "pointerleave",
-        handle_pointer_leave.as_ref().unchecked_ref(),
-      );
-
-      handle_pointer_enter.forget();
-      handle_pointer_leave.forget();
+      remove_pointer_enter();
+      remove_pointer_leave();
     });
   });
 
-  let is_present = Signal::derive(move || {
-    force_mount
-      .map(|force_mount| force_mount.get())
-      .unwrap_or(visible.get())
-  });
+  let is_present = move || force_mount.get() || visible.get();
 
   // let presence = create_presence(is_present);
 
   view! {
-    {move || is_present.get().then(|| {
+    {move || is_present().then(|| {
       let mut merged_attrs = attrs.clone();
       merged_attrs.extend(
         [(
@@ -318,8 +392,8 @@ fn ScrollAreaScrollbarHover(
 
       view!{
         <ScrollAreaScrollbarAuto
-          force_mount=Signal::derive(move || force_mount.map(|force_mount| force_mount.get()).unwrap_or(false)).into()
-          orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default()).into()
+          force_mount=force_mount
+          orientation=orientation
           attrs=merged_attrs
           node_ref=node_ref
         >
@@ -332,8 +406,8 @@ fn ScrollAreaScrollbarHover(
 
 #[component]
 fn ScrollAreaScrollbarScroll(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  force_mount: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -342,12 +416,7 @@ fn ScrollAreaScrollbarScroll(
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarAuto must be used in a ScrollAreaRoot component");
 
-  let is_horizontal = Signal::derive(move || {
-    orientation
-      .map(|orientation| orientation.get())
-      .unwrap_or_default()
-      == Orientation::Horizontal
-  });
+  let is_horizontal = Signal::derive(move || orientation.get() == Orientation::Horizontal);
 
   let (state, send) = create_state_machine::<
     ScrollAreaScrollbarScrollState,
@@ -364,20 +433,17 @@ fn ScrollAreaScrollbarScroll(
       return;
     }
 
-    let hide = Closure::<dyn Fn()>::new(move || {
-      send(ScrollAreaScrollbarScrollEvent::Hide);
-    });
-
-    let Ok(handle) = window().set_timeout_with_callback_and_timeout_and_arguments_0(
-      hide.as_ref().unchecked_ref(),
-      context.scroll_hide_delay.get() as i32,
+    let Ok(handle) = set_timeout_with_handle(
+      move || {
+        send(ScrollAreaScrollbarScrollEvent::Hide);
+      },
+      Duration::from_millis(context.scroll_hide_delay.get().into()),
     ) else {
       return;
     };
 
     on_cleanup(move || {
-      window().clear_timeout_with_handle(handle);
-      hide.forget();
+      handle.clear();
     });
   });
 
@@ -392,7 +458,8 @@ fn ScrollAreaScrollbarScroll(
       viewport.scroll_top()
     });
 
-    let handle_scroll = Closure::<dyn FnMut()>::new(move || {
+    let viewport_scroll_end = scroll_end.clone();
+    let remove_viewport_scroll = use_event_listener(context.viewport, scroll, move |_| {
       let scroll_position = if is_horizontal.get() {
         viewport.scroll_left()
       } else {
@@ -403,16 +470,17 @@ fn ScrollAreaScrollbarScroll(
 
       if has_scroll_in_direction_changed {
         send(ScrollAreaScrollbarScrollEvent::Scroll);
+        viewport_scroll_end();
       }
+    });
+
+    on_cleanup(move || {
+      remove_viewport_scroll();
     });
   });
 
-  let is_present = move || {
-    force_mount
-      .map(|force_mount| force_mount.get())
-      .unwrap_or(false)
-      || state.get() == ScrollAreaScrollbarScrollState::Hidden
-  };
+  let is_present =
+    move || force_mount.get() || state.get() == ScrollAreaScrollbarScrollState::Hidden;
 
   // let presence = create_presence(is_present);
 
@@ -428,6 +496,8 @@ fn ScrollAreaScrollbarScroll(
 
       view! {
         <ScrollAreaScrollbarVisible
+          orientation=orientation
+          node_ref=node_ref
           attrs=merged_attrs
           on_pointer_enter=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerEnter))
           on_pointer_leave=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerLeave))
@@ -441,8 +511,8 @@ fn ScrollAreaScrollbarScroll(
 
 #[component]
 fn ScrollAreaScrollbarAuto(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  force_mount: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -453,12 +523,7 @@ fn ScrollAreaScrollbarAuto(
 
   let (visible, set_visible) = create_signal(false);
 
-  let is_horizontal = Signal::derive(move || {
-    orientation
-      .map(|orientation| orientation.get())
-      .unwrap_or_default()
-      == Orientation::Horizontal
-  });
+  let is_horizontal = move || orientation.get() == Orientation::Horizontal;
 
   let handle_resize = use_debounce_fn(
     move || {
@@ -466,7 +531,7 @@ fn ScrollAreaScrollbarAuto(
         return;
       };
 
-      set_visible(if is_horizontal.get() {
+      set_visible(if is_horizontal() {
         viewport.offset_width() < viewport.scroll_width()
       } else {
         viewport.offset_height() < viewport.scroll_height()
@@ -485,12 +550,7 @@ fn ScrollAreaScrollbarAuto(
     content_resize();
   });
 
-  let is_present = Signal::derive(move || {
-    force_mount
-      .map(|force_mount| force_mount.get())
-      .unwrap_or(false)
-      || visible.get()
-  });
+  let is_present = Signal::derive(move || force_mount.get() || visible.get());
 
   // let presence = create_presence(is_present);
 
@@ -505,7 +565,7 @@ fn ScrollAreaScrollbarAuto(
 
       view! {
         <ScrollAreaScrollbarVisible
-          orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or(Orientation::Vertical)).into()
+          orientation=orientation
           attrs=merged_attrs
           node_ref=node_ref
         >
@@ -518,8 +578,7 @@ fn ScrollAreaScrollbarAuto(
 
 #[component]
 fn ScrollAreaScrollbarVisible(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
+  orientation: MaybeSignal<Orientation>,
   #[prop(optional)] on_pointer_enter: Option<Callback<()>>,
   #[prop(optional)] on_pointer_leave: Option<Callback<()>>,
 
@@ -532,11 +591,11 @@ fn ScrollAreaScrollbarVisible(
 
   let thumb_ref = RwSignal::<Option<HtmlElement<AnyElement>>>::new(None);
 
-  let pointer_offset = StoredValue::new(0);
+  let pointer_offset = StoredValue::new(0.0f64);
   let (sizes, set_sizes) = create_signal(Sizes::default());
   let thumb_ratio = Signal::derive(move || sizes.get().viewport / sizes.get().content);
 
-  let get_scroll_position = move |pointer_position: i32, direction: Direction| {
+  let get_scroll_position = move |pointer_position: f64, direction: Direction| {
     get_scroll_position_from_pointer(
       pointer_position,
       pointer_offset.get_value(),
@@ -550,7 +609,7 @@ fn ScrollAreaScrollbarVisible(
       let merged_attrs = attrs.clone();
       let children = children.clone();
 
-      match orientation.map(|orientation| orientation.get()).unwrap_or_default() {
+      match orientation.get() {
         Orientation::Horizontal => view! {
           <ScrollAreaScrollbarX
             attrs=merged_attrs
@@ -558,15 +617,17 @@ fn ScrollAreaScrollbarVisible(
             on_sizes_change=Callback::new(move |sizes| {
               set_sizes(sizes);
             })
+            on_pointer_enter=on_pointer_enter
+            on_pointer_leave=on_pointer_leave
             sizes=Signal::derive(move || sizes.get()).into()
-            has_thumb=Signal::derive(move || thumb_ratio.get() > 0 && thumb_ratio.get() < 1).into()
+            has_thumb=Signal::derive(move || thumb_ratio.get() > 0. && thumb_ratio.get() < 1.).into()
             on_thumb_change=Callback::new(move |thumb| {
               thumb_ref.set(Some(thumb));
             })
             on_thumb_pointer_up=Callback::new(move |_| {
-              pointer_offset.set_value(0)
+              pointer_offset.set_value(0.)
             })
-            on_thumb_pointer_down=Callback::new(move |pointer_position| {
+            on_thumb_pointer_down=Callback::new(move |pointer_position: f64| {
               pointer_offset.set_value(pointer_position);
             })
             on_thumb_position_change=Callback::new(move |_| {
@@ -574,17 +635,17 @@ fn ScrollAreaScrollbarVisible(
                 return;
               };
 
-              let scroll_position = viewport.scroll_left();
+              let scroll_position = viewport.scroll_left() as f64;
               let offset = get_thumb_offset_from_scroll(scroll_position, &sizes.get(), context.direction.get());
 
-              _ = thumb_el.style("transform", format!("translate3d(0, {offset}px, 0)"));
+              _ = thumb_el.style("transform", format!("translate3d({offset}px, 0, 0)"));
             })
-            on_wheel_scroll=Callback::new(move |scroll_position| {
+            on_wheel_scroll=Callback::new(move |scroll_position: f64| {
               if let Some(viewport) = context.viewport.get() {
-                viewport.set_scroll_top(scroll_position);
+                viewport.set_scroll_top(scroll_position as i32);
               }
             })
-            on_drag_scroll=Callback::new(move |pointer_position| {
+            on_drag_scroll=Callback::new(move |pointer_position: f64| {
               if let Some(viewport) = context.viewport.get() {
                 viewport.set_scroll_top(get_scroll_position(pointer_position, context.direction.get()) as i32);
               }
@@ -600,13 +661,15 @@ fn ScrollAreaScrollbarVisible(
             on_sizes_change=Callback::new(move |sizes| {
               set_sizes(sizes);
             })
+            on_pointer_enter=on_pointer_enter
+            on_pointer_leave=on_pointer_leave
             sizes=Signal::derive(move || sizes.get()).into()
-            has_thumb=Signal::derive(move || thumb_ratio.get() > 0 && thumb_ratio.get() < 1).into()
+            has_thumb=Signal::derive(move || thumb_ratio.get() > 0. && thumb_ratio.get() < 1.).into()
             on_thumb_change=Callback::new(move |thumb| {
               thumb_ref.set(Some(thumb));
             })
             on_thumb_pointer_up=Callback::new(move |_| {
-              pointer_offset.set_value(0)
+              pointer_offset.set_value(0.)
             })
             on_thumb_pointer_down=Callback::new(move |pointer_position| {
               pointer_offset.set_value(pointer_position);
@@ -616,14 +679,14 @@ fn ScrollAreaScrollbarVisible(
                 return;
               };
 
-              let scroll_position = viewport.scroll_left();
+              let scroll_position = viewport.scroll_top() as f64;
               let offset = get_thumb_offset_from_scroll(scroll_position, &sizes.get(), context.direction.get());
 
               _ = thumb_el.style("transform", format!("translate3d(0, {offset}px, 0)"));
             })
-            on_wheel_scroll=Callback::new(move |scroll_position| {
+            on_wheel_scroll=Callback::new(move |scroll_position: f64| {
               if let Some(viewport) = context.viewport.get() {
-                viewport.set_scroll_top(scroll_position);
+                viewport.set_scroll_top(scroll_position as i32);
               }
             })
             on_drag_scroll=Callback::new(move |pointer_position| {
@@ -640,19 +703,20 @@ fn ScrollAreaScrollbarVisible(
   }
 }
 
-type NodeSignal = RwSignal<Option<HtmlElement<AnyElement>>>;
-
 #[component]
 fn ScrollAreaScrollbarX(
+  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
+  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
   on_sizes_change: Callback<Sizes>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
   on_thumb_pointer_up: Callback<()>,
-  on_thumb_pointer_down: Callback<i32>,
+  on_thumb_pointer_down: Callback<f64>,
   on_thumb_position_change: Callback<()>,
-  on_wheel_scroll: Callback<i32>,
-  on_drag_scroll: Callback<i32>,
+  on_wheel_scroll: Callback<f64>,
+  on_drag_scroll: Callback<f64>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -663,35 +727,66 @@ fn ScrollAreaScrollbarX(
 
   let (computed_style, set_computed_style) = create_signal::<Option<CssStyleDeclaration>>(None);
 
-  let node_ref = NodeSignal::new(None);
-
+  let effect_sizes = sizes.clone();
   Effect::new(move |_| {
-    if let Some(node_el) = node_ref.get() {
-      if let Ok(computed_style) = window().get_computed_style(&node_el) {
-        set_computed_style(computed_style);
-      }
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    if let Ok(computed_style) = window().get_computed_style(&node) {
+      set_computed_style(computed_style);
     }
+
+    _ = node
+      .style(
+        "right",
+        if context.direction.get() == Direction::LeftToRight {
+          "var(--primitive-scroll-area-corner-width)"
+        } else {
+          "0"
+        },
+      )
+      .style(
+        "left",
+        if context.direction.get() == Direction::RightToLeft {
+          "var(--primitive-scroll-area-corner-width)"
+        } else {
+          "0"
+        },
+      )
+      .style("bottom", 0)
+      .style(
+        "--primitive-scroll-area-thumb-width",
+        format!("{}px", get_thumb_size(&effect_sizes.get()).trunc()),
+      );
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-state", "horizontal".into_attribute())].into_iter());
+  merged_attrs.extend([("data-orientation", "horizontal".into_attribute())].into_iter());
 
   view! {
     <ScrollAreaScrollbarImpl
       sizes=Signal::derive(move || sizes.get())
 
+      on_pointer_enter=on_pointer_enter
+      on_pointer_leave=on_pointer_leave
+
+      has_thumb=has_thumb.into_signal()
+      on_thumb_pointer_up=on_thumb_pointer_up
+      on_thumb_change=on_thumb_change
       on_thumb_pointer_down=Callback::new(move |Pointer{x, ..}| {
         on_thumb_pointer_down(x);
       })
+      on_thumb_position_change=on_thumb_position_change
       on_drag_scroll=Callback::new(move |Pointer { y, .. }| {
         on_drag_scroll(y);
       })
-      on_wheel_scroll=Callback::new(move |(event, max_scroll_pos): (WheelEvent, i32)| {
+      on_wheel_scroll=Callback::new(move |(event, max_scroll_pos): (WheelEvent, f64)| {
         let Some(viewport) = context.viewport.get() else {
           return;
         };
 
-        let scroll_pos = viewport.scroll_top() + event.delta_y() as i32;
+        let scroll_pos = viewport.scroll_top() as f64 + event.delta_y();
         on_wheel_scroll(scroll_pos);
 
         if is_scrolling_within_scrollbar_bounds(scroll_pos, max_scroll_pos) {
@@ -704,19 +799,19 @@ fn ScrollAreaScrollbarX(
         };
 
         on_sizes_change(Sizes {
-          content: viewport.scroll_height(),
-          viewport: viewport.offset_height(),
+          content: viewport.scroll_height() as f64,
+          viewport: viewport.offset_height() as f64,
           scrollbar: Scrollbar {
-            size: node_el.client_height(),
+            size: node_el.client_height() as f64,
             padding_start: computed_style
               .get_property_value("padding-top")
               .expect("no padding top")
-              .parse::<i32>()
+              .parse::<f64>()
               .unwrap(),
             padding_end: computed_style
               .get_property_value("padding-bottom")
               .expect("no padding bottom")
-              .parse::<i32>()
+              .parse::<f64>()
               .unwrap(),
           }
         });
@@ -732,15 +827,18 @@ fn ScrollAreaScrollbarX(
 
 #[component]
 fn ScrollAreaScrollbarY(
+  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
+  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
   on_sizes_change: Callback<Sizes>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
   on_thumb_pointer_up: Callback<()>,
-  on_thumb_pointer_down: Callback<i32>,
+  on_thumb_pointer_down: Callback<f64>,
   on_thumb_position_change: Callback<()>,
-  on_wheel_scroll: Callback<i32>,
-  on_drag_scroll: Callback<i32>,
+  on_wheel_scroll: Callback<f64>,
+  on_drag_scroll: Callback<f64>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -751,35 +849,59 @@ fn ScrollAreaScrollbarY(
 
   let (computed_style, set_computed_style) = create_signal::<Option<CssStyleDeclaration>>(None);
 
-  let node_ref = NodeSignal::new(None);
-
+  let effect_sizes = sizes.clone();
   Effect::new(move |_| {
-    if let Some(node_el) = node_ref.get() {
-      if let Ok(computed_style) = window().get_computed_style(&node_el) {
-        set_computed_style(computed_style);
-      }
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    if let Ok(computed_style) = window().get_computed_style(&node) {
+      set_computed_style(computed_style);
     }
+
+    _ = node
+      .style("top", 0)
+      .style(
+        "right",
+        (context.direction.get() == Direction::LeftToRight).then_some(0),
+      )
+      .style(
+        "left",
+        (context.direction.get() == Direction::RightToLeft).then_some(0),
+      )
+      .style("bottom", "var(--primitive-scroll-area-corner-height)")
+      .style(
+        "--primitive-scroll-area-thumb-height",
+        format!("{}px", get_thumb_size(&effect_sizes.get()).trunc()),
+      );
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-state", "vertical".into_attribute())].into_iter());
+  merged_attrs.extend([("data-orientation", "vertical".into_attribute())].into_iter());
 
   view! {
     <ScrollAreaScrollbarImpl
-      sizes=Signal::derive(move || sizes.get())
+      sizes=sizes.into_signal()
 
+      on_pointer_enter=on_pointer_enter
+      on_pointer_leave=on_pointer_leave
+
+      has_thumb=has_thumb.into_signal()
+      on_thumb_pointer_up=on_thumb_pointer_up
+      on_thumb_change=on_thumb_change
       on_thumb_pointer_down=Callback::new(move |Pointer{x, ..}| {
         on_thumb_pointer_down(x);
       })
+      on_thumb_position_change=on_thumb_position_change
       on_drag_scroll=Callback::new(move |Pointer { y, .. }| {
         on_drag_scroll(y);
       })
-      on_wheel_scroll=Callback::new(move |(event, max_scroll_pos): (WheelEvent, i32)| {
+      on_wheel_scroll=Callback::new(move |(event, max_scroll_pos): (WheelEvent, f64)| {
         let Some(viewport) = context.viewport.get() else {
           return;
         };
 
-        let scroll_pos = viewport.scroll_top() + event.delta_y() as i32;
+        let scroll_pos = viewport.scroll_top() as f64 + event.delta_y();
         on_wheel_scroll(scroll_pos);
 
         if is_scrolling_within_scrollbar_bounds(scroll_pos, max_scroll_pos) {
@@ -792,20 +914,20 @@ fn ScrollAreaScrollbarY(
         };
 
         on_sizes_change(Sizes {
-          content: viewport.scroll_height(),
-          viewport: viewport.offset_height(),
+          content: viewport.scroll_height() as f64,
+          viewport: viewport.offset_height() as f64,
           scrollbar: Scrollbar {
-            size: node_el.client_height(),
+            size: node_el.client_height() as f64,
             padding_start: computed_style
               .get_property_value("padding-top")
               .expect("no padding top")
-              .parse::<i32>()
-              .unwrap(),
+              .parse::<f64>()
+              .unwrap_or_default(),
             padding_end: computed_style
               .get_property_value("padding-bottom")
               .expect("no padding bottom")
-              .parse::<i32>()
-              .unwrap(),
+              .parse::<f64>()
+              .unwrap_or_default(),
           }
         });
       })
@@ -818,44 +940,313 @@ fn ScrollAreaScrollbarY(
   }
 }
 
-fn is_scrolling_within_scrollbar_bounds(scroll_pos: i32, max_scroll_pos: i32) -> bool {
-  scroll_pos > 0 && scroll_pos < max_scroll_pos
+fn is_scrolling_within_scrollbar_bounds(scroll_pos: f64, max_scroll_pos: f64) -> bool {
+  scroll_pos > 0. && scroll_pos < max_scroll_pos
 }
 
 #[derive(Clone)]
 struct ScrollbarContextValue {
   has_thumb: Signal<bool>,
-  scrollbar: RwSignal<Option<HtmlElement<AnyElement>>>,
-  on_thumb_change: Callback<RwSignal<Option<HtmlElement<AnyElement>>>>,
+  scrollbar: NodeRef<AnyElement>,
+  on_thumb_change: Callback<HtmlElement<AnyElement>>,
+  on_thumb_pointer_up: Callback<()>,
+  on_thumb_pointer_down: Callback<Pointer>,
+  on_thumb_position_change: Callback<()>,
 }
 
 struct Pointer {
-  x: i32,
-  y: i32,
+  x: f64,
+  y: f64,
 }
 
 #[component]
-pub fn ScrollAreaScrollbarImpl(
+fn ScrollAreaScrollbarImpl(
   sizes: Signal<Sizes>,
 
+  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
+  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+
+  has_thumb: Signal<bool>,
+  on_thumb_change: Callback<HtmlElement<AnyElement>>,
+  on_thumb_pointer_up: Callback<()>,
   on_thumb_pointer_down: Callback<Pointer>,
+  on_thumb_position_change: Callback<()>,
   on_drag_scroll: Callback<Pointer>,
-  on_wheel_scroll: Callback<(WheelEvent, i32)>,
+  on_wheel_scroll: Callback<(WheelEvent, f64)>,
   on_resize: Callback<()>,
 
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] node_ref: NodeSignal,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
-  view! {}
+  let context = use_context::<ScrollAreaContextValue>()
+    .expect("ScrollAreaScrollbarImpl must be used in a ScrollArea component");
+
+  let rect_ref = StoredValue::<Option<DomRect>>::new(None);
+  let previous_webkit_user_select_ref = StoredValue::new(String::new());
+  let max_scroll_position = move || sizes.get().content - sizes.get().viewport;
+
+  Effect::new(move |_| {
+    let document = use_document();
+    let Some(document) = document.as_ref().map(|document| document) else {
+      return;
+    };
+
+    let remove_wheel_event = use_event_listener_with_options(
+      document.clone(),
+      wheel,
+      move |ev: WheelEvent| {
+        let Some(target) = ev.target() else {
+          return;
+        };
+
+        let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
+          return;
+        };
+
+        let is_scroll_wheel = node_ref
+          .get()
+          .map(|scrollbar| scrollbar.contains(Some(&target_el)))
+          .unwrap_or(false);
+
+        if is_scroll_wheel {
+          on_wheel_scroll((ev, max_scroll_position()));
+        }
+      },
+      UseEventListenerOptions::default().passive(false),
+    );
+
+    on_cleanup(move || {
+      remove_wheel_event();
+    });
+  });
+
+  _ = watch(
+    move || {
+      _ = sizes.get();
+    },
+    move |_, _, _| {
+      on_thumb_position_change(());
+    },
+    true,
+  );
+
+  use_resize_observer(node_ref, move |_, _| {
+    on_resize(());
+  });
+
+  use_resize_observer(context.content, move |_, _| {
+    on_resize(());
+  });
+
+  let handle_drag_scroll = move |ev: PointerEvent| {
+    let Some(rect) = rect_ref.get_value() else {
+      return;
+    };
+
+    on_drag_scroll(Pointer {
+      x: ev.client_x() as f64 - rect.left(),
+      y: ev.client_y() as f64 - rect.top(),
+    })
+  };
+
+  Effect::new(move |_| {
+    let Some(el) = node_ref.get() else {
+      return;
+    };
+
+    _ = el
+      .style("position", "absolute")
+      .on(pointerdown, move |ev: PointerEvent| {
+        let main_pointer = 0;
+
+        if ev.button() != main_pointer {
+          return;
+        }
+        let Some(target) = ev.target() else {
+          return;
+        };
+
+        let Some(el) = target.dyn_ref::<web_sys::HtmlElement>() else {
+          return;
+        };
+
+        rect_ref.set_value(Some(el.get_bounding_client_rect()));
+
+        let Some(body) = document().body() else {
+          return;
+        };
+
+        // body.style.webkitUserSelect = "none";
+
+        let Ok(webkit_user_select) = body.style().get_property_value("webkitUserSelect") else {
+          return;
+        };
+
+        previous_webkit_user_select_ref.set_value(webkit_user_select);
+
+        if let Some(viewport) = context.viewport.get() {
+          _ = viewport.style("scroll-behavior", "auto");
+        }
+
+        handle_drag_scroll(ev);
+      })
+      .on(pointermove, move |ev: PointerEvent| {
+        handle_drag_scroll(ev);
+      })
+      .on(pointerup, move |ev: PointerEvent| {
+        let Some(target) = ev.target() else {
+          return;
+        };
+
+        let Some(el) = target.dyn_ref::<web_sys::HtmlElement>() else {
+          return;
+        };
+
+        if el.has_pointer_capture(ev.pointer_id()) {
+          _ = el.release_pointer_capture(ev.pointer_id());
+        }
+
+        let Some(body) = document().body() else {
+          return;
+        };
+
+        // body.style.webkitUserSelect = previous_webkit_user_select_ref.get_value();
+
+        if let Some(viewport) = context.viewport.get() {
+          _ = viewport.style("scroll-behavior", "");
+        }
+
+        rect_ref.set_value(None);
+      })
+      .on(pointerenter, move |_| {
+        logging::log!("pointer entered");
+
+        if let Some(on_pointer_enter) = on_pointer_enter {
+          on_pointer_enter(());
+        }
+      })
+      .on(pointerleave, move |_| {
+        logging::log!("pointer left");
+        if let Some(on_pointer_leave) = on_pointer_leave {
+          on_pointer_leave(());
+        }
+      });
+  });
+
+  provide_context(ScrollbarContextValue {
+    scrollbar: node_ref,
+    on_thumb_change,
+    has_thumb,
+    on_thumb_pointer_up,
+    on_thumb_pointer_down,
+    on_thumb_position_change,
+  });
+
+  view! {
+    <Primitive
+      attrs=attrs
+      element=html::div
+      node_ref=node_ref
+    >
+      {children()}
+    </Primitive>
+  }
 }
 
 #[component]
 pub fn ScrollAreaThumb(
+  #[prop(optional)] force_mount: bool,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
-  view! {}
+  let context = use_context::<ScrollAreaContextValue>()
+    .expect("ScrollAreaThumb must be used in a ScrollArea component");
+  let scrollbar_context = use_context::<ScrollbarContextValue>()
+    .expect("ScrollAreaThumb must be used in a ScrollAreaScrollbarImpl component");
+
+  let remove_unlinked_scroll_listener_ref = StoredValue::<Option<Callback<()>>>::new(None);
+
+  let debounce_scroll_end = use_debounce_fn(
+    move || {
+      let Some(remove_unlinked_scroll_listener) = remove_unlinked_scroll_listener_ref.get_value()
+      else {
+        return;
+      };
+
+      remove_unlinked_scroll_listener(());
+      remove_unlinked_scroll_listener_ref.set_value(None);
+    },
+    100.0,
+  );
+
+  Effect::new(move |_| {
+    let scroll_listener_debounce_end = debounce_scroll_end.clone();
+    let remove_viewport_scroll = use_event_listener(context.viewport, scroll, move |_| {
+      scroll_listener_debounce_end();
+
+      if remove_unlinked_scroll_listener_ref.get_value().is_some() {
+        return;
+      }
+
+      let Some(viewport) = context.viewport.get() else {
+        return;
+      };
+
+      let listener =
+        add_unlinked_scroll_listener(viewport, scrollbar_context.on_thumb_position_change);
+      remove_unlinked_scroll_listener_ref.set_value(Some(listener));
+
+      (scrollbar_context.on_thumb_position_change)(());
+    });
+
+    (scrollbar_context.on_thumb_position_change)(());
+
+    on_cleanup(move || {
+      remove_viewport_scroll();
+    });
+  });
+
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    let node = node
+      .style("width", "var(--primitive-scroll-area-thumb-width)")
+      .style("height", "var(--primitive-scroll-area-thumb-height)")
+      // onPointerDownCapture?
+      .on(pointerdown, move |ev: PointerEvent| {
+        let Some(target) = ev.target() else {
+          return;
+        };
+
+        let Some(node) = target.dyn_ref::<web_sys::HtmlElement>() else {
+          return;
+        };
+
+        let rect = node.get_bounding_client_rect();
+        let x = ev.client_x() as f64 - rect.left();
+        let y = ev.client_y() as f64 - rect.top();
+
+        (scrollbar_context.on_thumb_pointer_down)(Pointer { x, y });
+      })
+      .on(pointerup, move |_| {
+        (scrollbar_context.on_thumb_pointer_up)(());
+      });
+
+    (scrollbar_context.on_thumb_change)(node);
+  });
+
+  view! {
+    <Primitive
+      element=html::div
+      node_ref=node_ref
+      attrs=attrs
+    >
+      {().into_view()}
+    </Primitive>
+  }
 }
 
 #[component]
@@ -863,26 +1254,90 @@ pub fn ScrollAreaCorner(
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
-  view! {}
+  let context = use_context::<ScrollAreaContextValue>()
+    .expect("ScrollAreaCorner must be used in a ScrollArea component");
+
+  let has_both_scrollbars_visible =
+    move || context.scrollbar_x.get().is_some() && context.scrollbar_y.get().is_some();
+  let has_corner =
+    move || context.kind.get() != ScrollAreaKind::Scroll && has_both_scrollbars_visible();
+
+  let (width, set_width) = create_signal(0);
+  let (height, set_height) = create_signal(0);
+  let has_size = move || width.get() != 0 && height.get() != 0;
+
+  use_resize_observer(context.scrollbar_x, move |_, _| {
+    let height = match context.scrollbar_x.get() {
+      Some(scrollbar_x) => scrollbar_x.offset_height(),
+      None => 0,
+    };
+
+    (context.on_corner_height_change)(height as u32);
+    set_height(height);
+  });
+
+  use_resize_observer(context.scrollbar_y, move |_, _| {
+    let width = match context.scrollbar_y.get() {
+      Some(scrollbar_y) => scrollbar_y.offset_width(),
+      None => 0,
+    };
+
+    (context.on_corner_width_change)(width as u32);
+    set_width(width);
+  });
+
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    _ = node
+      .style("width", width.get())
+      .style("height", height.get())
+      .style("position", "absolute")
+      .style(
+        "right",
+        (context.direction.get() == Direction::LeftToRight).then_some(0),
+      )
+      .style(
+        "left",
+        (context.direction.get() == Direction::RightToLeft).then_some(0),
+      )
+      .style("bottom", 0);
+  });
+
+  if has_corner() || has_size() {
+    view! {
+      <Primitive
+        attrs=attrs
+        element=html::div
+        node_ref=node_ref
+      >
+        {().into_view()}
+      </Primitive>
+    }
+  } else {
+    ().into_view()
+  }
 }
 
-fn get_thumb_size(sizes: &Sizes) -> i32 {
+fn get_thumb_size(sizes: &Sizes) -> f64 {
   let ratio = sizes.viewport / sizes.content;
   let scrollbar_padding = sizes.scrollbar.padding_start - sizes.scrollbar.padding_end;
   let thumb_size = (sizes.scrollbar.size - scrollbar_padding) * ratio;
 
-  thumb_size.max(18)
+  thumb_size.max(18.)
 }
 
 fn get_scroll_position_from_pointer(
-  pointer_position: i32,
-  pointer_offset: i32,
+  pointer_position: f64,
+  pointer_offset: f64,
   sizes: &Sizes,
   direction: Direction,
 ) -> f64 {
   let thumb_size_px = get_thumb_size(sizes);
-  let offset = if pointer_offset == 0 {
-    thumb_size_px / 2
+  let offset = if pointer_offset == 0. {
+    thumb_size_px / 2.
   } else {
     pointer_offset
   };
@@ -891,33 +1346,54 @@ fn get_scroll_position_from_pointer(
   let max_pointer_pos = sizes.scrollbar.size - sizes.scrollbar.padding_end - thumb_offset_from_end;
   let max_scroll_pos = sizes.content - sizes.viewport;
   let scroll_range = if direction == Direction::LeftToRight {
-    (0., max_scroll_pos as f64)
+    (0., max_scroll_pos)
   } else {
-    ((max_scroll_pos * -1) as f64, 0.)
+    (max_scroll_pos * -1., 0.)
   };
-  let interpolate = linear_scale(
-    (min_pointer_pos as f64, max_pointer_pos as f64),
-    scroll_range,
-  );
+  let interpolate = linear_scale((min_pointer_pos, max_pointer_pos), scroll_range);
 
-  interpolate(pointer_position as f64)
+  interpolate(pointer_position)
 }
 
-fn get_thumb_offset_from_scroll(scroll_position: i32, sizes: &Sizes, direction: Direction) -> f64 {
+fn get_thumb_offset_from_scroll(scroll_position: f64, sizes: &Sizes, direction: Direction) -> f64 {
   let thumb_size_px = get_thumb_size(sizes);
   let scrollbar_padding = sizes.scrollbar.padding_start + sizes.scrollbar.padding_end;
   let scrollbar = sizes.scrollbar.size - scrollbar_padding;
   let max_scroll_pos = sizes.content - sizes.viewport;
   let max_thumb_pos = scrollbar - thumb_size_px;
   let scroll_clamp_range = if direction == Direction::LeftToRight {
-    (0., max_scroll_pos as f64)
+    (0., max_scroll_pos)
   } else {
-    ((max_scroll_pos * -1) as f64, 0.)
+    (max_scroll_pos * -1., 0.)
   };
 
-  let interpolate = linear_scale((0., max_scroll_pos as f64), (0., max_thumb_pos as f64));
+  let interpolate = linear_scale((0., max_scroll_pos), (0., max_thumb_pos));
 
-  interpolate((scroll_position as f64).clamp(scroll_clamp_range.0, scroll_clamp_range.1))
+  interpolate((scroll_position).clamp(scroll_clamp_range.0, scroll_clamp_range.1))
+}
+
+fn add_unlinked_scroll_listener(
+  node: HtmlElement<AnyElement>,
+  handler: Callback<()>,
+) -> Callback<()> {
+  let previous_position = StoredValue::new((node.scroll_left(), node.scroll_top()));
+
+  let Pausable { pause, .. } = use_raf_fn(move |_| {
+    let position = (node.scroll_left(), node.scroll_top());
+
+    let is_horizontal_scroll = previous_position.get_value().0 != position.0;
+    let is_vertical_scroll = previous_position.get_value().1 != position.1;
+
+    if is_horizontal_scroll || is_vertical_scroll {
+      handler(());
+    }
+
+    previous_position.set_value(position);
+  });
+
+  Callback::new(move |_| {
+    pause();
+  })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
