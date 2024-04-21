@@ -194,7 +194,7 @@ fn ToggleGroupMultiple(
         if let Some(value) = value {
           value.push(item);
         } else {
-          *value = Some(vec![]);
+          *value = Some(vec![item]);
         }
       });
     }),

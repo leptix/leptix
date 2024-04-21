@@ -42,9 +42,9 @@ pub fn CheckboxRoot(
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<AnyElement>::new();
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
   let is_form_control = Signal::derive(move || {
@@ -170,10 +170,16 @@ pub fn CheckboxRoot(
           on_click(ev.clone());
         }
 
-        set_checked.clone().update(|checked| *checked = Some(match checked.as_ref().unwrap_or(&CheckedState::Checked(false)) {
-          CheckedState::Checked(checked) => CheckedState::Checked(!checked),
-          CheckedState::Indeterminate => CheckedState::Checked(true),
-        }));
+        set_checked.update(|checked| {
+          logging::log!("before mutation: {checked:?}");
+
+          *checked = Some(match checked.as_ref().unwrap_or(&CheckedState::Checked(false)) {
+            CheckedState::Checked(checked) => CheckedState::Checked(!checked),
+            CheckedState::Indeterminate => CheckedState::Checked(true),
+          });
+
+          logging::log!("after mutation: {checked:?}");
+      });
 
         if is_form_control.get() {
           // if !ev.is_propagation_stopped()

@@ -143,7 +143,7 @@ pub fn CollapsibleTrigger(
 pub fn CollapsibleContent(
   #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(optional)] as_child: Option<bool>,
-  // #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 ) -> impl IntoView {
@@ -164,8 +164,6 @@ pub fn CollapsibleContent(
 
   // let presence = create_presence(is_present);
   // let (present_state, set_present_state) = create_signal(presence.is_present.get());
-
-  let node_ref = NodeRef::<AnyElement>::new();
 
   let is_open = Signal::derive(move || open.get() || is_present.get());
   let is_mount_animation_prevented = StoredValue::new(is_open.get());
@@ -246,6 +244,20 @@ pub fn CollapsibleContent(
   });
   // let (present_state, set_present_state) = create_signal(is_present.get());
 
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    let Some((width, height)) = rect_size.get() else {
+      return;
+    };
+
+    _ = node
+      .style("--primitive-collapsible-content-width", format!("{width}px"))
+      .style("--primitive-collapsible-content-height", format!("{height}px"));
+  });
+
   view! {
     // {move || presence.is_present.get().then(|| {
     {move || is_present.get().then(|| {
@@ -269,44 +281,9 @@ pub fn CollapsibleContent(
         ("id", (move || content_id.get()).into_attribute()),
         ("fart", "master".into_attribute()),
         ("hidden", (move || !(is_open.get() || present_state.get())).into_attribute()),
-        ("style", (move || {
-          let Some((width, height)) = rect_size.get() else {
-            return String::new();
-          };
-
-          format!("{}{}",
-            format!("--primitive-collapsible-content-height: {height}px; "),
-            format!("--primitive-collapsible-content-width: {width}px"),
-          )
-        }).into_attribute())
       ];
 
-      merged_attrs
-        .extend(
-          attrs
-            .clone()
-            .into_iter()
-            .map(|(name, attr)| {
-              if name == "style" {
-                let attr = Signal::derive(move || {
-                  let old_attr = attr.as_nameless_value_string().map(|value| format!("{value}; ")).unwrap_or_default();
-
-                  let Some((width, height)) = rect_size.get() else {
-                    return old_attr;
-                  };
-
-                  format!("{old_attr}{}{}",
-                    format!("--primitive-collapsible-content-height: {height}px; "),
-                    format!("--primitive-collapsible-content-width: {width}px"),
-                  )
-                });
-
-                (name, attr.into_attribute())
-              } else {
-                (name, attr)
-              }
-            })
-        );
+      merged_attrs.extend(attrs.clone().into_iter());
 
       let children = children.clone();
 
