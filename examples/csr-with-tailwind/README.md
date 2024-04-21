@@ -5,7 +5,7 @@
 <h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptos Primitives (CSR Tailwind Example)</h1>
 
 <p align="center" dir="auto">
-    This example showcases every currently implemented component
+    This example showcases every currently implemented component using TailwindCSS for styling
 </p>
 
 <hr />
