@@ -3,7 +3,6 @@
 </p>
 
 <h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptos Primitives</h1>
-<hr />
 
 <p align="center">
     Accessible and unstyled components for Leptos
