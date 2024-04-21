@@ -32,6 +32,8 @@ use leptos_primitives::components::toolbar::{
 use leptos_primitives::util::Orientation;
 use leptos_primitives::Attributes;
 
+use leptos_use::{use_interval_fn, Pausable};
+
 fn main() {
   console_error_panic_hook::set_once();
 
@@ -290,31 +292,27 @@ fn ProgressDemo() -> impl IntoView {
     create_signal(format!("transform: translateX(-{}%)", 100 - progress.get()));
 
   Effect::new(move |_| {
-    let progress_callback = Closure::<dyn FnMut()>::new(move || {
-      set_progress.update(|progress| {
-        if *progress < 100 {
-          *progress = *progress + 25;
-        } else {
-          *progress = 0;
-        }
-      });
+    let Pausable { pause, .. } = use_interval_fn(
+      move || {
+        set_progress.update(|progress| {
+          if *progress < 100 {
+            *progress = *progress + 25;
+          } else {
+            *progress = 0;
+          }
+        });
 
-      set_indicator_style(format!(
-        "transform: translateX(-{}%)",
-        100 - (progress.get_untracked() % 101)
-      ));
+        set_indicator_style(format!(
+          "transform: translateX(-{}%)",
+          100 - (progress.get_untracked() % 101)
+        ));
+      },
+      1000,
+    );
+
+    on_cleanup(move || {
+      pause();
     });
-
-    let progress_handle = window()
-      .set_interval_with_callback_and_timeout_and_arguments_0(
-        progress_callback.as_ref().unchecked_ref(),
-        1000,
-      )
-      .expect("could not apply interval on progress indicator");
-
-    progress_callback.forget();
-
-    on_cleanup(move || window().clear_interval_with_handle(progress_handle));
   });
 
   view! {
