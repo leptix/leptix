@@ -1,0 +1,8 @@
+{
+	"devDependencies": {
+		"tailwindcss": "^3.4.1"
+	},
+	"dependencies": {
+		"@radix-ui/colors": "^3.0.0"
+	}
+}

@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.AccordionContent {
+  overflow: hidden;
+}
+.AccordionContent[data-state='open'] {
+  animation: slideDown 300ms ease-out;
+}
+.AccordionContent[data-state='closed'] {
+  animation: slideUp 300ms ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    /*height: var(--primitive-accordion-content-height);*/
+    height: 75px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    /*height: var(--primitive-accordion-content-height);*/
+    height: 75px;
+  }
+  to {
+    height: 0;
+  }
+}
