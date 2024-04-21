@@ -296,8 +296,6 @@ fn Accordion(
           let target_el = target.dyn_ref::<web_sys::HtmlButtonElement>()?;
           let items = get_items();
 
-          logging::log!("accordion items: {}", items.len());
-
           let triggers = items.iter().filter_map(|(node, _)| {
             let node = node.get()?;
             let node = node.dyn_ref::<web_sys::HtmlButtonElement>()?;

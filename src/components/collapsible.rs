@@ -183,11 +183,6 @@ pub fn CollapsibleContent(
 
   let rect_size = Signal::derive(move || {
     let node = node_ref.get()?;
-
-    let foob = node.get_bounding_client_rect();
-
-    logging::log!("foob: {} {}", foob.width(), foob.height());
-
     let node_style = window().get_computed_style(&node).ok()?;
 
     if original_styles.get_value().is_none() {
@@ -293,17 +288,6 @@ pub fn CollapsibleContent(
           attrs=merged_attrs
           as_child=as_child
           node_ref=node_ref
-          on:click=move |e| {
-            let foo = e.target().unwrap();
-            let bar = foo.dyn_ref::<web_sys::HtmlDivElement>().unwrap();
-            let baz = bar.get_bounding_client_rect();
-
-            let fizz = node_ref.get().unwrap();
-            let buzz = fizz.get_bounding_client_rect();
-
-            logging::log!("foo:  {} {}", baz.width(), baz.height());
-            logging::log!("fizz: {} {}", buzz.width(), buzz.height());
-          }
         >
           {move || (is_open.get() || present_state.get()).then(|| children())}
         </Primitive>

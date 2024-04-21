@@ -63,9 +63,7 @@ pub fn TabsRoot(
     base_id: create_id(),
     value: Signal::derive(move || value.get()),
     on_value_change: Callback::new(move |value| {
-      // logging::log!("setting tab value");
       set_value.set(value);
-      // logging::log!("tab value set");
     }),
     direction: Signal::derive(move || {
       direction
@@ -224,17 +222,11 @@ pub fn TabsTrigger(
             on_mouse_down(ev.clone());
           }
 
-          // logging::log!("selecting tab");
-
           if !mousedown_disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
-            // logging::log!("firing on_value_change");
             (context.on_value_change)(value.get());
-            // logging::log!("fired on_value_change");
           } else {
             ev.prevent_default();
           }
-
-          // logging::log!("tab click event done");
         }
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {

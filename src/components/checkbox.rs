@@ -171,14 +171,10 @@ pub fn CheckboxRoot(
         }
 
         set_checked.update(|checked| {
-          logging::log!("before mutation: {checked:?}");
-
           *checked = Some(match checked.as_ref().unwrap_or(&CheckedState::Checked(false)) {
             CheckedState::Checked(checked) => CheckedState::Checked(!checked),
             CheckedState::Indeterminate => CheckedState::Checked(true),
           });
-
-          logging::log!("after mutation: {checked:?}");
       });
 
         if is_form_control.get() {

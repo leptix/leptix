@@ -1120,14 +1120,11 @@ fn ScrollAreaScrollbarImpl(
         rect_ref.set_value(None);
       })
       .on(pointerenter, move |_| {
-        logging::log!("pointer entered");
-
         if let Some(on_pointer_enter) = on_pointer_enter {
           on_pointer_enter(());
         }
       })
       .on(pointerleave, move |_| {
-        logging::log!("pointer left");
         if let Some(on_pointer_leave) = on_pointer_leave {
           on_pointer_leave(());
         }
