@@ -14,7 +14,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{CssStyleDeclaration, DomRect, PointerEvent, WheelEvent};
 
 use crate::{
-  components::{presence::create_presence, primitive::Primitive},
+  components::{/*presence::create_presence,*/ primitive::Primitive},
   util::{
     create_state_machine::{create_state_machine, InvalidState, MachineState},
     linear_scale, Direction, Orientation,

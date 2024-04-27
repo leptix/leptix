@@ -1,5 +1,4 @@
 use leptos::{html::AnyElement, *};
-use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
@@ -12,7 +11,7 @@ use crate::{
   Attributes,
 };
 
-use super::presence::create_presence;
+// use super::presence::create_presence;
 
 #[derive(Clone)]
 struct CollapsibleContextValue {
