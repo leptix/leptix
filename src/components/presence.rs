@@ -9,16 +9,10 @@ use web_sys::{js_sys::Object, AnimationEvent, CssStyleDeclaration};
 
 use crate::util::create_state_machine::{create_state_machine, InvalidState, MachineState};
 
-pub(crate) struct CreatePresenceResult {
-  pub(crate) is_present: Signal<bool>,
-  pub(crate) node_ref: NodeRef<AnyElement>,
-}
-
-pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult {
+pub(crate) fn create_presence(is_present: Signal<bool>, node_ref: NodeRef<AnyElement>) -> Signal<bool> {
   let styles = StoredValue::new(CssStyleDeclaration::from(JsValue::from(Object::new())));
   let prev_present = StoredValue::new(is_present.get());
   let prev_animation_name = StoredValue::new(String::from("none"));
-  let node_ref = NodeRef::<AnyElement>::new();
 
   let initial = Signal::derive(move || {
     if is_present.get() {
@@ -165,12 +159,9 @@ pub(crate) fn create_presence(is_present: Signal<bool>) -> CreatePresenceResult 
     });
   });
 
-  CreatePresenceResult {
-    is_present: Signal::derive(move || {
-      state.get() == PresenceState::Mounted || state.get() == PresenceState::UnmountSuspended
-    }),
-    node_ref,
-  }
+  Signal::derive(move || {
+    state.get() == PresenceState::Mounted || state.get() == PresenceState::UnmountSuspended
+  })
 }
 
 #[derive(Debug, Clone, PartialEq)]
