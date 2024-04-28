@@ -206,28 +206,25 @@ pub fn CheckboxRoot(
 pub fn CheckboxIndicator(
   #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
   let CheckboxValueContext { state, disabled } = use_context::<CheckboxValueContext>()
     .expect("CheckboxIndicator must be used inside of a CheckboxRoot component");
 
   let is_present = Signal::derive(move || {
-    let foo = force_mount
+    force_mount
       .map(|force_mount| force_mount.get())
       .unwrap_or(false)
       || state.get() == CheckedState::Indeterminate
-      || state.get() == CheckedState::Checked(true);
-
-    // logging::log!("is_present: {foo}");
-
-    foo
+      || state.get() == CheckedState::Checked(true)
   });
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
 
   view! {
-    // {move || presence.is_present.get().then_some({
-    {move || is_present.get().then_some({
+    {move || presence.get().then_some({
+    // {move || is_present.get().then_some({
       let mut merged_attrs = vec![    (
         "data-state",
         Signal::derive(move || {
@@ -257,7 +254,7 @@ pub fn CheckboxIndicator(
         <Primitive
           element=html::span
           attrs=merged_attrs
-          // node_ref=Some(presence.node_ref)
+          node_ref=node_ref
         >
           {cloned_children()}
         </Primitive>
@@ -309,13 +306,10 @@ fn BubbleInput(
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter(
-            [JsValue::from_bool(match checked.get() {
-              CheckedState::Indeterminate => false,
-              CheckedState::Checked(checked) => checked,
-            })]
-            .into_iter(),
-          ),
+          &Array::from_iter([JsValue::from_bool(match checked.get() {
+            CheckedState::Indeterminate => false,
+            CheckedState::Checked(checked) => checked,
+          })]),
         );
 
         _ = input.dispatch_event(&ev);

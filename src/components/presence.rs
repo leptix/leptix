@@ -9,7 +9,10 @@ use web_sys::{js_sys::Object, AnimationEvent, CssStyleDeclaration};
 
 use crate::util::create_state_machine::{create_state_machine, InvalidState, MachineState};
 
-pub(crate) fn create_presence(is_present: Signal<bool>, node_ref: NodeRef<AnyElement>) -> Signal<bool> {
+pub(crate) fn create_presence(
+  is_present: Signal<bool>,
+  node_ref: NodeRef<AnyElement>,
+) -> Signal<bool> {
   let styles = StoredValue::new(CssStyleDeclaration::from(JsValue::from(Object::new())));
   let prev_present = StoredValue::new(is_present.get());
   let prev_animation_name = StoredValue::new(String::from("none"));
