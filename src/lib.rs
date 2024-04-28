@@ -1,6 +1,3 @@
-#![feature(trait_alias)]
-#![feature(iter_partition_in_place)]
-
 pub mod components;
 pub mod util;
 
