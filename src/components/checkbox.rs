@@ -216,11 +216,14 @@ pub fn CheckboxIndicator(
     force_mount
       .map(|force_mount| force_mount.get())
       .unwrap_or(false)
-      || state.get() == CheckedState::Indeterminate
-      || state.get() == CheckedState::Checked(true)
+      || state.get() != CheckedState::Checked(false)
   });
 
   let presence = create_presence(is_present, node_ref);
+
+  Effect::new(move |_| {
+    logging::log!("{}", presence.get());
+  });
 
   view! {
     {move || presence.get().then_some({

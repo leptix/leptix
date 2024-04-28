@@ -18,11 +18,15 @@ pub(crate) fn create_presence(
   let prev_animation_name = StoredValue::new(String::from("none"));
 
   let initial = Signal::derive(move || {
-    if is_present.get() {
+    let foo = if is_present.get() {
       PresenceState::Mounted
     } else {
       PresenceState::Unmounted
-    }
+    };
+
+    logging::log!("initial: {foo:?}");
+
+    foo
   });
 
   let (state, send) = create_state_machine(initial.into());
@@ -49,7 +53,10 @@ pub(crate) fn create_presence(
 
   Effect::new(move |_| {
     let was_present = prev_present.get_value();
-    let has_present_changed = was_present == is_present.get();
+    let has_present_changed = was_present != is_present.get();
+
+    logging::log!("was_present: {was_present}");
+    logging::log!("is_present: {}", is_present.get());
 
     if has_present_changed == false {
       return;
@@ -60,9 +67,8 @@ pub(crate) fn create_presence(
       .get_property_value("animation-name")
       .unwrap_or("none".to_string());
 
-    logging::log!("checking present states");
     if is_present.get() {
-      logging::log!("is_present");
+      // logging::log!("is_present");
       send(PresenceEvent::Mount);
     } else if current_animation_name == "none"
       || styles
@@ -71,28 +77,27 @@ pub(crate) fn create_presence(
         .map(|display| display == "none")
         .unwrap_or(false)
     {
-      logging::log!("display was none");
+      logging::log!("no animation or display");
       send(PresenceEvent::Unmount);
     } else {
       logging::log!("checking if animating");
       let is_animating = prev_animation_name.get_value() != current_animation_name;
 
-      logging::log!("check if present and animating");
       if was_present && is_animating {
-        logging::log!("anim out");
         send(PresenceEvent::AnimationOut);
-        logging::log!("anim out done");
+        logging::log!("anim out");
       } else {
-        logging::log!("unm");
         send(PresenceEvent::Unmount);
         logging::log!("unm done");
       }
-      logging::log!("done checking present states");
     }
-    logging::log!("setting prev present");
 
     prev_present.set_value(is_present.get());
-    logging::log!("prev present set");
+    logging::log!(
+      "prev present set: {}, is_present: {}",
+      prev_present.get_value(),
+      is_present.get()
+    );
   });
 
   Effect::new(move |_| {
