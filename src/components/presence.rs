@@ -4,7 +4,7 @@ use leptos::{
   *,
 };
 use leptos_use::use_event_listener;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{js_sys::Object, AnimationEvent, CssStyleDeclaration};
 
 use crate::util::create_state_machine::{create_state_machine, InvalidState, MachineState};
@@ -18,15 +18,11 @@ pub(crate) fn create_presence(
   let prev_animation_name = StoredValue::new(String::from("none"));
 
   let initial = Signal::derive(move || {
-    let foo = if is_present.get() {
+    if is_present.get() {
       PresenceState::Mounted
     } else {
       PresenceState::Unmounted
-    };
-
-    logging::log!("initial: {foo:?}");
-
-    foo
+    }
   });
 
   let (state, send) = create_state_machine(initial.into());
@@ -55,10 +51,7 @@ pub(crate) fn create_presence(
     let was_present = prev_present.get_value();
     let has_present_changed = was_present != is_present.get();
 
-    logging::log!("was_present: {was_present}");
-    logging::log!("is_present: {}", is_present.get());
-
-    if has_present_changed == false {
+    if !has_present_changed {
       return;
     }
 
@@ -68,7 +61,6 @@ pub(crate) fn create_presence(
       .unwrap_or("none".to_string());
 
     if is_present.get() {
-      // logging::log!("is_present");
       send(PresenceEvent::Mount);
     } else if current_animation_name == "none"
       || styles
@@ -77,27 +69,18 @@ pub(crate) fn create_presence(
         .map(|display| display == "none")
         .unwrap_or(false)
     {
-      logging::log!("no animation or display");
       send(PresenceEvent::Unmount);
     } else {
-      logging::log!("checking if animating");
       let is_animating = prev_animation_name.get_value() != current_animation_name;
 
       if was_present && is_animating {
         send(PresenceEvent::AnimationOut);
-        logging::log!("anim out");
       } else {
         send(PresenceEvent::Unmount);
-        logging::log!("unm done");
       }
     }
 
     prev_present.set_value(is_present.get());
-    logging::log!(
-      "prev present set: {}, is_present: {}",
-      prev_present.get_value(),
-      is_present.get()
-    );
   });
 
   Effect::new(move |_| {
@@ -189,17 +172,13 @@ enum PresenceEvent {
 
 impl MachineState<Self, PresenceEvent> for PresenceState {
   fn send(&self, event: PresenceEvent) -> Result<Self, InvalidState> {
-    let foo = match (self, event) {
+    match (self, event) {
       (Self::Mounted, PresenceEvent::Unmount) => Ok(Self::Unmounted),
       (Self::Mounted, PresenceEvent::AnimationOut) => Ok(Self::UnmountSuspended),
       (Self::Unmounted, PresenceEvent::Mount) => Ok(Self::Mounted),
       (Self::UnmountSuspended, PresenceEvent::AnimationEnd) => Ok(Self::Unmounted),
       (Self::UnmountSuspended, PresenceEvent::Mount) => Ok(Self::Mounted),
-      _ => return Err(InvalidState),
-    };
-
-    logging::log!("{foo:?}");
-
-    foo
+      _ => Err(InvalidState),
+    }
   }
 }

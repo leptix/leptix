@@ -1,5 +1,4 @@
 use leptos::{html::AnyElement, *};
-use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
@@ -158,6 +157,7 @@ pub fn CollapsibleContent(
   });
 
   let presence = create_presence(is_present, node_ref);
+  let children = StoredValue::new(children);
 
   view! {
     <Show when=presence>
@@ -166,8 +166,9 @@ pub fn CollapsibleContent(
             attrs=attrs.clone()
             node_ref=node_ref
             is_present=presence
-            children=children.clone()
-        />
+        >
+            {children.with_value(|children| children())}
+        </CollapsibleContentImpl>
     </Show>
   }
 }
@@ -206,7 +207,7 @@ fn CollapsibleContentImpl(
   });
 
   let rect_size = Signal::derive(move || {
-    let node = node_ref.get()?;
+    let mut node = node_ref.get()?;
     let node_style = window().get_computed_style(&node).ok()?;
 
     if original_styles.get_value().is_none() {
@@ -225,28 +226,25 @@ fn CollapsibleContentImpl(
       original_styles.set_value(Some(new_styles));
     }
 
-    _ = node
-      .clone()
+    node = node
       .style("transition-duration", "0s")
       .style("animation-name", "none");
 
     let rect = node.get_bounding_client_rect();
 
-    if is_mount_animation_prevented.get_value() == false {
+    if !is_mount_animation_prevented.get_value() {
       _ = node
         .style(
           "transition-duration",
           original_styles
             .get_value()
-            .map(|styles| styles.get_property_value("transition-duration").ok())
-            .flatten(),
+            .and_then(|styles| styles.get_property_value("transition-duration").ok()),
         )
         .style(
           "animation-name",
           original_styles
             .get_value()
-            .map(|styles| styles.get_property_value("animation-name").ok())
-            .flatten(),
+            .and_then(|styles| styles.get_property_value("animation-name").ok()),
         );
     }
 
@@ -261,7 +259,6 @@ fn CollapsibleContentImpl(
       .map(|_| is_present.get())
       .unwrap_or(is_present.get())
   });
-  // let (present_state, set_present_state) = create_signal(is_present.get());
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {

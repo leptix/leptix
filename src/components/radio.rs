@@ -161,39 +161,42 @@ pub fn RadioIndicator(
       || context.checked.get()
   });
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
+  let mut merged_attrs = attrs.clone();
+
+  merged_attrs.extend(
+    [
+      (
+        "data-state",
+        Signal::derive(move || {
+          if context.checked.get() {
+            "checked"
+          } else {
+            "unchecked"
+          }
+        })
+        .into_attribute(),
+      ),
+      (
+        "data-disabled",
+        Signal::derive(move || context.disabled.get()).into_attribute(),
+      ),
+    ]
+    .into_iter(),
+  );
+
+  let children = StoredValue::new(children);
 
   view! {
-    <>
-      {move || is_present.get().then(|| {
-        let children = children.clone();
-        let mut merged_attrs = attrs.clone();
-
-        merged_attrs.extend(
-          [
-            (
-              "data-state",
-              Signal::derive(move || if context.checked.get() { "checked" } else { "unchecked"} ).into_attribute()
-            ),
-            (
-              "data-disabled",
-              Signal::derive(move || context.disabled.get()).into_attribute()
-            ),
-          ]
-          .into_iter()
-        );
-
-        view! {
-          <Primitive
+    <Show when=presence>
+        <Primitive
             element=html::span
             node_ref=node_ref
-            attrs=merged_attrs
-          >
-            {children()}
-          </Primitive>
-        }
-      })}
-    </>
+            attrs=merged_attrs.clone()
+        >
+            {children.with_value(|children| children())}
+        </Primitive>
+    </Show>
   }
 }
 
