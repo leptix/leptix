@@ -3,7 +3,7 @@ use web_sys::{FocusEvent, KeyboardEvent, MouseEvent};
 
 use crate::{
   components::{
-    //presence::create_presence,
+    presence::create_presence,
     primitive::Primitive,
     roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
   },

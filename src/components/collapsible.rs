@@ -11,7 +11,7 @@ use crate::{
   Attributes,
 };
 
-// use super::presence::create_presence;
+use super::presence::create_presence;
 
 #[derive(Clone)]
 struct CollapsibleContextValue {
