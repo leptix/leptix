@@ -184,20 +184,14 @@ pub fn CheckboxRoot(
       }
     >
       {children()}
-      {move || {
-        is_form_control
-          .get()
-          .then(|| {
-            view! {
-              <BubbleInput
-                checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
-                bubbles=Signal::derive(move || false)
-                control=node_ref
-              />
-            }
-          }
-        )
-      }}
+
+      <Show when=is_form_control>
+        <BubbleInput
+            checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
+            bubbles=Signal::derive(move || false)
+            control=node_ref
+        />
+      </Show>
     </Primitive>
   }
 }

@@ -203,14 +203,12 @@ pub fn TabsTrigger(
     .into_iter(),
   );
 
-  let inner_disabled = disabled.clone();
   let keydown_value = value.clone();
   let focus_value = value.clone();
-  let mousedown_disabled = disabled.clone();
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || !inner_disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
+      focusable=Signal::derive(move || !disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
       active=Signal::derive(move || is_selected.get()).into()
     >
       <Primitive
@@ -222,7 +220,7 @@ pub fn TabsTrigger(
             on_mouse_down(ev.clone());
           }
 
-          if !mousedown_disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
+          if !disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
             (context.on_value_change)(value.get());
           } else {
             ev.prevent_default();

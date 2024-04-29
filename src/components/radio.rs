@@ -30,7 +30,7 @@ pub fn Radio(
   #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
 
   #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] name: Option<MaybeSignal<Option<String>>>,
+  #[prop(optional_no_strip)] name: Option<MaybeSignal<String>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -125,21 +125,18 @@ pub fn Radio(
       }
     >
       {children()}
-      {move || is_form_control.get().then(|| {
-        let inner_name = name.clone();
 
-        view! {
-          <BubbleInput
+      <Show when=is_form_control>
+        <BubbleInput
             checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=Signal::derive(move || inner_name.as_ref().map(|name| name.get()).flatten())
+            name=name.clone().map(|name| name.into_signal())
             value=Signal::derive(move || value.get())
             required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
             disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
             control=node_ref
-          />
-        }
-      })}
+        />
+      </Show>
     </Primitive>
   }
 }
@@ -204,7 +201,7 @@ pub fn RadioIndicator(
 fn BubbleInput(
   checked: Signal<bool>,
   bubbles: Signal<bool>,
-  name: Signal<Option<String>>,
+  name: Option<Signal<String>>,
   value: Signal<String>,
   required: Signal<bool>,
   disabled: Signal<bool>,
@@ -255,7 +252,7 @@ fn BubbleInput(
     <input
       type="checkbox"
       aria-hidden
-      name=Signal::derive(move || name.get()).into_attribute()
+      name=name.into_attribute()
       value=Signal::derive(move || value.get()).into_attribute()
       required=Signal::derive(move || required.get()).into_attribute()
       disabled=Signal::derive(move || disabled.get()).into_attribute()

@@ -130,22 +130,18 @@ pub fn SwitchRoot(
       }
     >
       {children()}
-      {move || is_form_control.get().then(|| {
-        let inner_name = inner_name.clone();
-        let inner_value = inner_value.clone();
 
-        view! {
-          <BubbleInput
+      <Show when=is_form_control>
+        <BubbleInput
             checked=Signal::derive(move || checked.get().unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=Signal::derive(move || inner_name.as_ref().map(|name| name.get()))
-            value=Signal::derive(move || inner_value.as_ref().map(|name| name.get()).unwrap_or("on".to_string()))
+            name=name.clone().map(|name| name.into_signal())
+            value=value.clone().map(|value| value.into_signal()).unwrap_or(Signal::derive(|| "on".to_string()))
             disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
             required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
             control=node_ref
-          />
-        }
-      })}
+        />
+      </Show>
     </Primitive>
   }
 }
@@ -195,7 +191,7 @@ pub fn SwitchThumb(
 pub fn BubbleInput(
   checked: Signal<bool>,
   bubbles: Signal<bool>,
-  name: Signal<Option<String>>,
+  name: Option<Signal<String>>,
   value: Signal<String>,
   disabled: Signal<bool>,
   required: Signal<bool>,
@@ -249,7 +245,7 @@ pub fn BubbleInput(
       checked=Signal::derive(move || checked.get()).into_attribute()
       tabindex=(-1).into_attribute()
       node_ref=node_ref
-      name=Signal::derive(move || name.get()).into_attribute()
+      name=name.into_attribute()
       value=Signal::derive(move || value.get()).into_attribute()
       disabled=Signal::derive(move || disabled.get()).into_attribute()
       required=Signal::derive(move || required.get()).into_attribute()

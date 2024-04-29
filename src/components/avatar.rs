@@ -33,16 +33,12 @@ pub fn AvatarImage(
   let context = use_context::<AvatarContextValue>()
     .expect("AvatarImage needs to be in an AvatarRoot component");
 
-  let src = attrs
-    .iter()
-    .find(|item| item.0 == "src")
-    .map(|item| {
-      item
-        .1
-        .as_nameless_value_string()
-        .map(|value| Signal::derive(move || value.to_string()))
-    })
-    .flatten();
+  let src = attrs.iter().find(|item| item.0 == "src").and_then(|item| {
+    item
+      .1
+      .as_nameless_value_string()
+      .map(|value| Signal::derive(move || value.to_string()))
+  });
 
   let image_loading_status = use_image_loading_status(src);
 
