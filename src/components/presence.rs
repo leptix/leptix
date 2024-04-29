@@ -7,13 +7,24 @@ use leptos_use::use_event_listener;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{js_sys::Object, AnimationEvent, CssStyleDeclaration};
 
+use derive_more::{Deref, From};
+
 use crate::util::create_state_machine::{create_state_machine, InvalidState, MachineState};
+
+#[derive(Deref, From, Clone)]
+struct StyleDeclaration(CssStyleDeclaration);
+
+impl Default for StyleDeclaration {
+  fn default() -> Self {
+    Self(CssStyleDeclaration::from(JsValue::from(Object::new())))
+  }
+}
 
 pub(crate) fn create_presence(
   is_present: Signal<bool>,
   node_ref: NodeRef<AnyElement>,
 ) -> Signal<bool> {
-  let styles = StoredValue::new(CssStyleDeclaration::from(JsValue::from(Object::new())));
+  let styles = StoredValue::<Option<StyleDeclaration>>::new(None);
   let prev_present = StoredValue::new(is_present.get());
   let prev_animation_name = StoredValue::new(String::from("none"));
 
@@ -30,7 +41,7 @@ pub(crate) fn create_presence(
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
       if let Ok(Some(computed_style)) = window().get_computed_style(&node) {
-        styles.set_value(computed_style);
+        styles.set_value(Some(computed_style.into()));
       }
     }
   });
@@ -38,6 +49,7 @@ pub(crate) fn create_presence(
   Effect::new(move |_| {
     let current_animation_name = styles
       .get_value()
+      .unwrap_or_default()
       .get_property_value("animation-name")
       .unwrap_or("none".to_string());
 
@@ -55,8 +67,13 @@ pub(crate) fn create_presence(
       return;
     }
 
+    if styles.get_value().is_none() {
+      styles.set_value(Some(StyleDeclaration::default()));
+    }
+
+    let styles = styles.get_value().unwrap_or_default();
+
     let current_animation_name = styles
-      .get_value()
       .get_property_value("animation-name")
       .unwrap_or("none".to_string());
 
@@ -64,7 +81,6 @@ pub(crate) fn create_presence(
       send(PresenceEvent::Mount);
     } else if current_animation_name == "none"
       || styles
-        .get_value()
         .get_property_value("display")
         .map(|display| display == "none")
         .unwrap_or(false)
@@ -106,9 +122,14 @@ pub(crate) fn create_presence(
         };
 
         if target_el.eq(&handle_start_node) {
+          if styles.get_value().is_none() {
+            styles.set_value(Some(StyleDeclaration::default()));
+          }
+
           prev_animation_name.set_value(
             styles
               .get_value()
+              .unwrap_or_default()
               .get_property_value("animation-name")
               .unwrap_or("none".to_string()),
           );
@@ -117,8 +138,13 @@ pub(crate) fn create_presence(
 
     let handle_end_node = node.clone();
     let handle_animation_end = move |ev: AnimationEvent| {
+      if styles.get_value().is_none() {
+        styles.set_value(Some(StyleDeclaration::default()));
+      }
+
       let current_animation_name = styles
         .get_value()
+        .unwrap_or_default()
         .get_property_value("animation-name")
         .unwrap_or("none".to_string());
 
