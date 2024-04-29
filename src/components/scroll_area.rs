@@ -373,34 +373,29 @@ fn ScrollAreaScrollbarHover(
     });
   });
 
-  let is_present = move || force_mount.get() || visible.get();
+  let is_present = Signal::derive(move || force_mount.get() || visible.get());
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
+
+  let mut merged_attrs = attrs.clone();
+  merged_attrs.extend([(
+    "data-state",
+    Signal::derive(move || if visible.get() { "visible" } else { "hidden" }).into_attribute(),
+  )]);
+
+  let children = StoredValue::new(children);
 
   view! {
-    {move || is_present().then(|| {
-      let mut merged_attrs = attrs.clone();
-      merged_attrs.extend(
-        [(
-          "data-state",
-          Signal::derive(move || if visible.get() { "visible" } else { "hidden" }).into_attribute(),
-        )]
-        .into_iter(),
-      );
-
-      let children = children.clone();
-
-      view!{
+    <Show when=presence>
         <ScrollAreaScrollbarAuto
-          force_mount=force_mount
-          orientation=orientation
-          attrs=merged_attrs
-          node_ref=node_ref
+            force_mount=force_mount
+            orientation=orientation
+            attrs=merged_attrs.clone()
+            node_ref=node_ref
         >
-          {children()}
+            {children.with_value(|children| children())}
         </ScrollAreaScrollbarAuto>
-        }
-    })}
+    </Show>
   }
 }
 
@@ -479,33 +474,39 @@ fn ScrollAreaScrollbarScroll(
     });
   });
 
-  let is_present =
-    move || force_mount.get() || state.get() == ScrollAreaScrollbarScrollState::Hidden;
+  let is_present = Signal::derive(move || {
+    force_mount.get() || state.get() == ScrollAreaScrollbarScrollState::Hidden
+  });
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
+
+  let mut merged_attrs = attrs.clone();
+  merged_attrs.extend([(
+    "data-state",
+    (move || {
+      if state.get() == ScrollAreaScrollbarScrollState::Hidden {
+        "hidden"
+      } else {
+        "visible"
+      }
+    })
+    .into_attribute(),
+  )]);
+
+  let children = StoredValue::new(children);
 
   view! {
-    {move || is_present().then(|| {
-      let mut merged_attrs = attrs.clone();
-
-      merged_attrs.extend([
-        ("data-state", (move || if state.get() == ScrollAreaScrollbarScrollState::Hidden { "hidden" } else { "visible" }).into_attribute())
-      ].into_iter());
-
-      let children = children.clone();
-
-      view! {
+    <Show when=presence>
         <ScrollAreaScrollbarVisible
-          orientation=orientation
-          node_ref=node_ref
-          attrs=merged_attrs
-          on_pointer_enter=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerEnter))
-          on_pointer_leave=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerLeave))
+            orientation=orientation
+            node_ref=node_ref
+            attrs=merged_attrs.clone()
+            on_pointer_enter=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerEnter))
+            on_pointer_leave=Callback::new(move |_| send(ScrollAreaScrollbarScrollEvent::PointerLeave))
         >
-          {children()}
+            {children.with_value(|children| children())}
         </ScrollAreaScrollbarVisible>
-      }
-    })}
+    </Show>
   }
 }
 
@@ -552,27 +553,26 @@ fn ScrollAreaScrollbarAuto(
 
   let is_present = Signal::derive(move || force_mount.get() || visible.get());
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
+
+  let mut merged_attrs = attrs.clone();
+  merged_attrs.extend([(
+    "data-state",
+    (move || if visible.get() { "visible" } else { "hidden" }).into_attribute(),
+  )]);
+
+  let children = StoredValue::new(children);
 
   view! {
-    {move || is_present.get().then(|| {
-      let mut merged_attrs = attrs.clone();
-      merged_attrs.extend([
-        ("data-state", (move || if visible.get() { "visible" } else { "hidden" }).into_attribute())
-      ].into_iter());
-
-      let children = children.clone();
-
-      view! {
+    <Show when=presence>
         <ScrollAreaScrollbarVisible
-          orientation=orientation
-          attrs=merged_attrs
-          node_ref=node_ref
+            orientation=orientation
+            attrs=merged_attrs.clone()
+            node_ref=node_ref
         >
-          {children()}
+            {children.with_value(|children| children())}
         </ScrollAreaScrollbarVisible>
-      }
-    })}
+    </Show>
   }
 }
 
@@ -988,7 +988,7 @@ fn ScrollAreaScrollbarImpl(
 
   Effect::new(move |_| {
     let document = use_document();
-    let Some(document) = document.as_ref().map(|document| document) else {
+    let Some(document) = document.as_ref() else {
       return;
     };
 
@@ -1006,7 +1006,7 @@ fn ScrollAreaScrollbarImpl(
 
         let is_scroll_wheel = node_ref
           .get()
-          .map(|scrollbar| scrollbar.contains(Some(&target_el)))
+          .map(|scrollbar| scrollbar.contains(Some(target_el)))
           .unwrap_or(false);
 
         if is_scroll_wheel {
@@ -1153,7 +1153,37 @@ fn ScrollAreaScrollbarImpl(
 
 #[component]
 pub fn ScrollAreaThumb(
-  #[prop(optional)] force_mount: bool,
+  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional)] as_child: Option<bool>,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+) -> impl IntoView {
+  let ScrollbarContextValue { has_thumb, .. } = use_context::<ScrollbarContextValue>()
+    .expect("ScrollAreaThumb must be used in a ScrollAreaScrollbarImpl component");
+
+  let is_present = Signal::derive(move || {
+    has_thumb.get()
+      || force_mount
+        .map(|force_mount| force_mount.get())
+        .unwrap_or(false)
+  });
+
+  let presence = create_presence(is_present, node_ref);
+
+  view! {
+    <Show when=presence>
+        <ScrollAreaThumbImpl
+            as_child=as_child
+            attrs=attrs.clone()
+            node_ref=node_ref
+        />
+    </Show>
+  }
+}
+
+#[component]
+fn ScrollAreaThumbImpl(
+  as_child: Option<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
@@ -1238,6 +1268,7 @@ pub fn ScrollAreaThumb(
   view! {
     <Primitive
       element=html::div
+      as_child=as_child
       node_ref=node_ref
       attrs=attrs
     >
