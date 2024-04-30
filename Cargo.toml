@@ -2,6 +2,7 @@
 name = "leptos_primitives"
 version = "0.1.0"
 edition = "2021"
+exclude = ["/examples", "/assets", "CONTRIBUTING.md", "rustfmt.toml"]
 
 [dependencies]
 derive_more = "0.99.17"
