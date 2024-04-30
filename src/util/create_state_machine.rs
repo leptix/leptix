@@ -16,9 +16,9 @@ where
 
   let send = move |event: Event| {
     set_state.update(|state| {
-      if let Ok(result) = state.send(event) {
-        *state = result;
-      }
+      // if let Ok(result) = state.send(event) {
+      //   *state = result;
+      // }
 
       match state.send(event) {
         Ok(result) => {

@@ -148,7 +148,7 @@ pub fn CheckboxRoot(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -184,20 +184,14 @@ pub fn CheckboxRoot(
       }
     >
       {children()}
-      {move || {
-        is_form_control
-          .get()
-          .then(|| {
-            view! {
-              <BubbleInput
-                checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
-                bubbles=Signal::derive(move || false)
-                control=node_ref
-              />
-            }
-          }
-        )
-      }}
+
+      <Show when=is_form_control>
+        <BubbleInput
+            checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
+            bubbles=Signal::derive(move || false)
+            control=node_ref
+        />
+      </Show>
     </Primitive>
   }
 }
@@ -206,63 +200,56 @@ pub fn CheckboxRoot(
 pub fn CheckboxIndicator(
   #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
   let CheckboxValueContext { state, disabled } = use_context::<CheckboxValueContext>()
     .expect("CheckboxIndicator must be used inside of a CheckboxRoot component");
 
   let is_present = Signal::derive(move || {
-    let foo = force_mount
+    force_mount
       .map(|force_mount| force_mount.get())
       .unwrap_or(false)
-      || state.get() == CheckedState::Indeterminate
-      || state.get() == CheckedState::Checked(true);
-
-    // logging::log!("is_present: {foo}");
-
-    foo
+      || state.get() != CheckedState::Checked(false)
   });
 
-  // let presence = create_presence(is_present);
+  let presence = create_presence(is_present, node_ref);
+
+  let mut merged_attrs = vec![
+    (
+      "data-state",
+      Signal::derive(move || match state.get() {
+        CheckedState::Checked(checked) => {
+          if checked {
+            "checked"
+          } else {
+            "unchecked"
+          }
+        }
+        CheckedState::Indeterminate => "indeterminate",
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.get()).into_attribute(),
+    ),
+  ];
+
+  merged_attrs.extend(attrs.clone());
+
+  let children = StoredValue::new(children);
 
   view! {
-    // {move || presence.is_present.get().then_some({
-    {move || is_present.get().then_some({
-      let mut merged_attrs = vec![    (
-        "data-state",
-        Signal::derive(move || {
-          match state.get() {
-            CheckedState::Checked(checked) => {
-              if checked {
-                "checked"
-              } else {
-                "unchecked"
-              }
-            }
-            CheckedState::Indeterminate => "indeterminate",
-          }
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || disabled.get()).into_attribute(),
-      )];
-
-      merged_attrs.extend(attrs.clone().into_iter());
-
-      let cloned_children = children.clone();
-
-      view!{
+      <Show when=presence>
         <Primitive
-          element=html::span
-          attrs=merged_attrs
-          // node_ref=Some(presence.node_ref)
+            element=html::span
+            attrs=merged_attrs.clone()
+            node_ref=node_ref
         >
-          {cloned_children()}
+            {children.with_value(|children| children())}
         </Primitive>
-      }
-    })}
+      </Show>
   }
 }
 
@@ -309,13 +296,10 @@ fn BubbleInput(
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter(
-            [JsValue::from_bool(match checked.get() {
-              CheckedState::Indeterminate => false,
-              CheckedState::Checked(checked) => checked,
-            })]
-            .into_iter(),
-          ),
+          &Array::from_iter([JsValue::from_bool(match checked.get() {
+            CheckedState::Indeterminate => false,
+            CheckedState::Checked(checked) => checked,
+          })]),
         );
 
         _ = input.dispatch_event(&ev);

@@ -1,5 +1,4 @@
 use leptos::{html::AnyElement, *};
-use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
@@ -147,12 +146,7 @@ pub fn CollapsibleContent(
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 ) -> impl IntoView {
-  let CollapsibleContextValue {
-    content_id,
-    disabled,
-    open,
-    ..
-  } = use_context::<CollapsibleContextValue>()
+  let CollapsibleContextValue { open, .. } = use_context::<CollapsibleContextValue>()
     .expect("CollapsibleContent must be used in a CollapsibleRoot component");
 
   let is_present = Signal::derive(move || {
@@ -162,11 +156,42 @@ pub fn CollapsibleContent(
         .unwrap_or(false)
   });
 
-  // let presence = create_presence(is_present);
-  // let (present_state, set_present_state) = create_signal(presence.is_present.get());
+  let presence = create_presence(is_present, node_ref);
+  let children = StoredValue::new(children);
+
+  view! {
+    <Show when=presence>
+        <CollapsibleContentImpl
+            as_child=as_child
+            attrs=attrs.clone()
+            node_ref=node_ref
+            is_present=presence
+        >
+            {children.with_value(|children| children())}
+        </CollapsibleContentImpl>
+    </Show>
+  }
+}
+
+#[component]
+fn CollapsibleContentImpl(
+  as_child: Option<bool>,
+  #[prop(attrs)] attrs: Attributes,
+  node_ref: NodeRef<AnyElement>,
+  is_present: Signal<bool>,
+  children: ChildrenFn,
+) -> impl IntoView {
+  let CollapsibleContextValue {
+    content_id,
+    disabled,
+    open,
+    ..
+  } = use_context::<CollapsibleContextValue>()
+    .expect("CollapsibleContentImpl must be used in a CollapsibleRoot component");
 
   let is_open = Signal::derive(move || open.get() || is_present.get());
   let is_mount_animation_prevented = StoredValue::new(is_open.get());
+
   let original_styles = StoredValue::<Option<CssStyleDeclaration>>::new(None);
 
   Effect::new(move |_| {
@@ -182,7 +207,7 @@ pub fn CollapsibleContent(
   });
 
   let rect_size = Signal::derive(move || {
-    let node = node_ref.get()?;
+    let mut node = node_ref.get()?;
     let node_style = window().get_computed_style(&node).ok()?;
 
     if original_styles.get_value().is_none() {
@@ -201,28 +226,25 @@ pub fn CollapsibleContent(
       original_styles.set_value(Some(new_styles));
     }
 
-    _ = node
-      .clone()
+    node = node
       .style("transition-duration", "0s")
       .style("animation-name", "none");
 
     let rect = node.get_bounding_client_rect();
 
-    if is_mount_animation_prevented.get_value() == false {
+    if !is_mount_animation_prevented.get_value() {
       _ = node
         .style(
           "transition-duration",
           original_styles
             .get_value()
-            .map(|styles| styles.get_property_value("transition-duration").ok())
-            .flatten(),
+            .and_then(|styles| styles.get_property_value("transition-duration").ok()),
         )
         .style(
           "animation-name",
           original_styles
             .get_value()
-            .map(|styles| styles.get_property_value("animation-name").ok())
-            .flatten(),
+            .and_then(|styles| styles.get_property_value("animation-name").ok()),
         );
     }
 
@@ -237,7 +259,6 @@ pub fn CollapsibleContent(
       .map(|_| is_present.get())
       .unwrap_or(is_present.get())
   });
-  // let (present_state, set_present_state) = create_signal(is_present.get());
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
@@ -249,49 +270,51 @@ pub fn CollapsibleContent(
     };
 
     _ = node
-      .style("--primitive-collapsible-content-width", format!("{width}px"))
-      .style("--primitive-collapsible-content-height", format!("{height}px"));
+      .style(
+        "--primitive-collapsible-content-width",
+        format!("{width}px"),
+      )
+      .style(
+        "--primitive-collapsible-content-height",
+        format!("{height}px"),
+      );
   });
 
+  let mut merged_attrs = vec![
+    (
+      "data-state",
+      (move || {
+        if open.get() {
+          "open"
+        } else {
+          "closed"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      (move || disabled.get().unwrap_or(false)).into_attribute(),
+    ),
+    ("id", (move || content_id.get()).into_attribute()),
+    (
+      "hidden",
+      (move || !(is_open.get() || present_state.get())).into_attribute(),
+    ),
+  ];
+
+  merged_attrs.extend(attrs);
+
   view! {
-    // {move || presence.is_present.get().then(|| {
-    {move || is_present.get().then(|| {
-      let mut merged_attrs = vec![
-        (
-          "data-state",
-          (move || {
-            if open.get() {
-              "open"
-            } else {
-              "closed"
-            }
-          })
-          .into_attribute(),
-        ),
-        (
-          "data-disabled",
-          (move || disabled.get().unwrap_or(false))
-            .into_attribute()
-        ),
-        ("id", (move || content_id.get()).into_attribute()),
-        ("fart", "master".into_attribute()),
-        ("hidden", (move || !(is_open.get() || present_state.get())).into_attribute()),
-      ];
-
-      merged_attrs.extend(attrs.clone().into_iter());
-
-      let children = children.clone();
-
-      view! {
-        <Primitive
-          element=html::div
-          attrs=merged_attrs
-          as_child=as_child
-          node_ref=node_ref
-        >
-          {move || (is_open.get() || present_state.get()).then(|| children())}
-        </Primitive>
-      }
-    })}
+    <Primitive
+      element=html::div
+      attrs=merged_attrs
+      as_child=as_child
+      node_ref=node_ref
+    >
+      <Show when=is_open>
+        {children()}
+      </Show>
+    </Primitive>
   }
 }

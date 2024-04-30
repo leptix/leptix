@@ -17,7 +17,7 @@ use crate::{
 
 #[derive(Clone)]
 struct RadioGroupContextValue {
-  name: Signal<Option<String>>,
+  name: Option<Signal<String>>,
   required: Signal<bool>,
   disabled: Signal<bool>,
   value: Signal<Option<String>>,
@@ -54,7 +54,7 @@ pub fn RadioGroupRoot(
   });
 
   provide_context(RadioGroupContextValue {
-    name: Signal::derive(move || name.as_ref().map(|name| name.get())),
+    name: name.map(|name| name.into_signal()),
     required: Signal::derive(move || required.map(|required| required.get()).unwrap_or(false)),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
     value: Signal::derive(move || value.get()),
@@ -178,7 +178,7 @@ pub fn RadioGroupItem(
         disabled=Signal::derive(move || is_disabled.get()).into()
         required=Signal::derive(move || context.required.get()).into()
         checked=Signal::derive(move || is_checked.get()).into()
-        name=Signal::derive(move || context.name.get()).into()
+        name=context.name.map(|name| name.into())
         node_ref=node_ref
         attrs=attrs
         on_check=Callback::new(move |_| (context.on_value_change)(on_check_value.get()))

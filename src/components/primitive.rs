@@ -5,8 +5,6 @@ use leptos::{
 
 use crate::Attributes;
 
-use super::slot::merge_attrs;
-
 #[component]
 pub fn Primitive<El: ElementDescriptor + 'static>(
   element: fn() -> HtmlElement<El>,
@@ -16,8 +14,6 @@ pub fn Primitive<El: ElementDescriptor + 'static>(
   #[prop(optional_no_strip)] as_child: Option<bool>,
   #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
-  // logging::log!("primitive attrs: {attrs:?}");
-
   if as_child.unwrap_or(false) {
     map_items_to_children(children().as_children(), attrs, node_ref)
   } else {
@@ -35,32 +31,18 @@ fn map_items_to_children(
   attrs: Attributes,
   node_ref: NodeRef<AnyElement>,
 ) -> View {
-  if children.len() == 0 {
+  if children.is_empty() {
     None::<bool>.into_view()
   } else {
     children
-      .into_iter()
+      .iter()
       .map(|child| match child {
-        View::Element(el) => {
-          let el = el.clone().into_html_element();
-
-          let child_attrs = el
-            .get_attribute_names()
-            .iter()
-            .filter_map(|name| {
-              let name = name.as_string()?;
-              Some((name.clone(), el.get_attribute(&name)?.into_attribute()))
-            })
-            .collect::<Vec<_>>();
-
-          for (name, attr) in child_attrs {
-            if let Some(attr) = attr.as_nameless_value_string() {
-              _ = el.set_attribute(&name, &attr);
-            }
-          }
-
-          el.node_ref(node_ref).attrs(attrs.clone()).into_view()
-        }
+        View::Element(el) => el
+          .clone()
+          .into_html_element()
+          .node_ref(node_ref)
+          .attrs(attrs.clone())
+          .into_view(),
         View::Component(comp) => map_items_to_children(&comp.children, attrs.clone(), node_ref),
         _ => child.into_view(),
       })
