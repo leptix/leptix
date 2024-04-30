@@ -163,38 +163,14 @@ pub fn ScrollAreaViewport(
   #[prop(optional)] nonce: Option<MaybeSignal<String>>,
 
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  //#[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaViewport must be used in a ScrollAreaRoot component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("data-primitive-scroll-area-viewport", "".into_attribute()),
-      (
-        "style",
-        Signal::derive(move || {
-          format!(
-            "overflow-x: {}; overflow-y: {}; ",
-            if context.scrollbar_x_enabled.get() {
-              "scroll"
-            } else {
-              "hidden"
-            },
-            if context.scrollbar_y_enabled.get() {
-              "scroll"
-            } else {
-              "hidden"
-            }
-          )
-        })
-        .into_attribute(),
-      ),
-    ]
-    .into_iter(),
-  );
+  merged_attrs.extend([("data-primitive-scroll-area-viewport", "".into_attribute())]);
 
   let content_ref = context.content;
 
@@ -214,12 +190,44 @@ pub fn ScrollAreaViewport(
   //   (context.on_content_change)(content);
   // });
 
+  Effect::new(move |_| {
+    let Some(viewport) = context.viewport.get() else {
+      return;
+    };
+
+    _ = viewport
+      .style(
+        "overflow-x",
+        if context.scrollbar_x_enabled.get() {
+          "scroll"
+        } else {
+          "hidden"
+        },
+      )
+      .style(
+        "overflow-y",
+        if context.scrollbar_y_enabled.get() {
+          "scroll"
+        } else {
+          "hidden"
+        },
+      );
+  });
+
   view! {
     <>
-      <style
-        inner_html="[data-primitive-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-primitive-scroll-area-viewport]::-webkit-scrollbar{display:none}"
-        nonce=nonce.into_attribute()
-      />
+      <style nonce=nonce.into_attribute()>
+        r"[data-primitive-scroll-area-viewport] {
+            scrollbar-width:none;
+            -ms-overflow-style:none;
+            -webkit-overflow-scrolling:touch;
+        }
+
+        [data-primitive-scroll-area-viewport]::-webkit-scrollbar{
+            display:none
+        }"
+      </style>
+
       <Primitive
         element=html::div
         attrs=merged_attrs
