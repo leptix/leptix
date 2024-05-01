@@ -21,7 +21,7 @@ thiserror = "1"
 tracing = { version = "0.1", optional = true }
 http = "1"
 leptos-use = { version = "0.10.4" }
-leptos_primitives = { path = "D:/Projects/leptos-ecosystem/leptos_primitives" }
+leptix_primitives = { path = "../../crates/primitives" }
 axum-extra = { version = "0.9.3", features = ["cookie"] }
 time = "0.3.36"
 

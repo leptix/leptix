@@ -2,7 +2,6 @@ use crate::error_template::{AppError, ErrorTemplate};
 use crate::primitives::PrimitivesShowcase;
 use leptos::*;
 use leptos_meta::*;
-use leptos_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
 use leptos_router::*;
 use leptos_use::{use_cookie, utils::FromToStringCodec};
 

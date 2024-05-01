@@ -2,10 +2,10 @@
     <img src="assets/logo.svg" alt="logo"/>
 </p>
 
-<h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptos Primitives</h1>
+<h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptix</h1>
 
 <p align="center">
-    Accessible and unstyled components for Leptos
+    Accessible components for Leptos
 </p>
 
 <p align="center" dir="auto">
@@ -18,27 +18,21 @@
 
 <hr />
 
-## What is this crate?
-
-leptos_primitives is a port of [radix-ui's primitives component library](https://github.com/radix-ui/primitives) for
-the [leptos](https://github.com/leptos-rs/leptos) full-stack web framework; everything is
-essentially ported one-to-one.
-
 ## Installation
 
-leptos_primitives is not the final decided name of this library, so it's yet to be uploaded to [crates.io](https://crates.io)
+leptix packages have not yet been published to [crates.io](https://crates.io)
 
 ```toml
 # Add the following to your Cargo.toml file under [dependencies]
 
 [dependencies]
 # ...
-leptos_primitives = { git = "https://github.com/Upbolt/leptos_primitives.git" }
+leptix_primitives = { git = "https://github.com/leptix/leptix.git" }
 ```
 
 ## Available Components
 
-Note: Dialogs and components that require floating functionality are not yet implemented; tracking issues for them can be found [here](https://github.com/Upbolt/leptos_primitives/issues/4) and [here](https://github.com/Upbolt/leptos_primitives/issues/2) (respectively)
+Note: Dialogs and components that require floating functionality are not yet implemented; tracking issues for them can be found [here](https://github.com/leptix/leptix/issues/4) and [here](https://github.com/leptix/leptix/issues/2) (respectively)
 
 | Component Name |
 | -------------- |
@@ -95,7 +89,7 @@ You would have this in Rust using Leptos:
 
 ```rust
 use leptos::*;
-use leptos_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
+use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
 
 #[component]
 fn CheckboxDemo() -> impl IntoView {
@@ -121,11 +115,13 @@ fn CheckboxDemo() -> impl IntoView {
 }
 ```
 
-You may see the full example with all available components right below.
+## Examples
 
-## Example
+* [Trunk + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/csr-with-tailwind)
 
-See the full client-side rendered example using TailwindCSS [here](https://github.com/Upbolt/leptos_primitives/tree/master/examples/csr-with-tailwind)
+* [Actix + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-actix-tailwind)
+
+* [Axum + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-axum-tailwind)
 
 ## Contributing
 

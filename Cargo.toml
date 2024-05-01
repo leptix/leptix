@@ -1,16 +1,11 @@
-[package]
-name = "leptos_primitives"
-version = "0.1.0"
-edition = "2021"
-exclude = ["/examples", "/assets", "CONTRIBUTING.md", "rustfmt.toml"]
+[workspace]
+resolver = "2"
+members = ["crates/primitives"]
+exclude = ["examples"]
 
-[dependencies]
-derive_more = "0.99.17"
-itertools = "0.12.1"
-leptos = { version = "0.6", features = ["nightly"] }
-leptos-use = "0.10.4"
-nanoid = "0.4.0"
-strum = { version = "0.26.2", features = ["derive"] }
-strum_macros = "0.26.2"
-wasm-bindgen = "=0.2.92"
-web-sys = { version = "0.3.65", features = ["CustomEventInit", "EventInit"] }
+[workspace.package]
+authors = ["Upbolt", "DanielleHuisman"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/leptix/leptix"
+version = "0.1.0"
