@@ -54,7 +54,7 @@ pub fn TabsRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -217,33 +217,33 @@ pub fn TabsTrigger(
         node_ref=node_ref
         on:mousedown=move|ev: MouseEvent| {
           if let Some(on_mouse_down) = on_mouse_down {
-            on_mouse_down(ev.clone());
+            on_mouse_down.call(ev.clone());
           }
 
           if !disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
-            (context.on_value_change)(value.get());
+            context.on_value_change.call(value.get());
           } else {
             ev.prevent_default();
           }
         }
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
-            on_key_down(ev.clone());
+            on_key_down.call(ev.clone());
           }
 
           if [" ", "Enter"].contains(&ev.key().as_str()) {
-            (context.on_value_change)(keydown_value.get());
+            context.on_value_change.call(keydown_value.get());
           }
         }
         on:focus=move |ev: FocusEvent| {
           if let Some(on_focus) = on_focus {
-            on_focus(ev.clone());
+            on_focus.call(ev.clone());
           }
 
           let is_automatic_activation = context.activation_mode.get() != ActivationMode::Manual;
 
           if !is_selected.get() && !disabled.map(|disabled| disabled.get()).unwrap_or(false) && is_automatic_activation {
-            (context.on_value_change)(focus_value.get());
+            context.on_value_change.call(focus_value.get());
           }
         }
       >
@@ -340,7 +340,7 @@ pub fn TabsContent(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=presence>
+      <Show when=move || presence.get()>
         <Primitive
             element=html::div
             attrs=merged_attrs.clone()

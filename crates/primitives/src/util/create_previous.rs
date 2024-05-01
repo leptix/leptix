@@ -12,7 +12,7 @@ pub(crate) fn create_previous<T: Clone + PartialEq + 'static>(initial: Signal<T>
     previous: initial.get(),
   });
 
-  Signal::derive(create_memo(move |_| {
+  create_memo(move |_| {
     if prev.get_value().value != initial.get() {
       prev.set_value(Previous {
         previous: prev.get_value().value,
@@ -21,5 +21,6 @@ pub(crate) fn create_previous<T: Clone + PartialEq + 'static>(initial: Signal<T>
     }
 
     prev.get_value().value
-  }))
+  })
+  .into()
 }

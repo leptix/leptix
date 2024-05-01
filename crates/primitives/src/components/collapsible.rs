@@ -38,7 +38,7 @@ pub fn CollapsibleRoot(
     default_value: Signal::derive(move || default_open.map(|default_open| default_open.get())),
     on_change: Callback::new(move |value| {
       if let Some(on_open_change) = on_open_change {
-        on_open_change(value);
+        on_open_change.call(value);
       }
     }),
   });
@@ -127,10 +127,10 @@ pub fn CollapsibleTrigger(
       as_child=as_child
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev);
+          on_click.call(ev);
         }
 
-        on_open_toggle(());
+        on_open_toggle.call(());
       }
     >
       {children()}
@@ -160,7 +160,7 @@ pub fn CollapsibleContent(
   let children = StoredValue::new(children);
 
   view! {
-    <Show when=presence>
+    <Show when=move || presence.get()>
         <CollapsibleContentImpl
             as_child=as_child
             attrs=attrs.clone()
@@ -312,7 +312,7 @@ fn CollapsibleContentImpl(
       as_child=as_child
       node_ref=node_ref
     >
-      <Show when=is_open>
+      <Show when=move || is_open.get()>
         {children()}
       </Show>
     </Primitive>

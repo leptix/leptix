@@ -24,8 +24,9 @@ pub fn ProgressRoot(
 
   let value_label = value
     .map(|value| {
-      get_value_label
-        .map(|get_value_label| Signal::derive(move || get_value_label((value.get(), max.get()))))
+      get_value_label.map(|get_value_label| {
+        Signal::derive(move || get_value_label.call((value.get(), max.get())))
+      })
     })
     .flatten();
 

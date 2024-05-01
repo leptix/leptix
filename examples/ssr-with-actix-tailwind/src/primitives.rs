@@ -340,7 +340,7 @@ fn ProgressDemo() -> impl IntoView {
           }
         });
 
-        set_indicator_style(format!(
+        set_indicator_style.set(format!(
           "transform: translateX(-{}%)",
           100 - (progress.get_untracked() % 101)
         ));
@@ -427,7 +427,7 @@ fn CollapsibleDemo() -> impl IntoView {
     <CollapsibleRoot
       attr:class="w-[300px]"
       open=open.into()
-      on_open_change=Callback::new(move |open: bool| set_open(open))
+      on_open_change=Callback::new(move |open: bool| set_open.set(open))
     >
       <div class="flex items-center justify-between">
         <span class="dark:text-white text-[15px] leading-[25px] dark:text-white">

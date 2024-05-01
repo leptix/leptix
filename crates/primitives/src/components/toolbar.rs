@@ -156,7 +156,7 @@ pub fn ToolbarLink(
         node_ref=node_ref
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
-            on_key_down(ev.clone());
+            on_key_down.call(ev.clone());
           }
 
           if ev.key() == " " {

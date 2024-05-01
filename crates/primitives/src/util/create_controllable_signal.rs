@@ -17,7 +17,7 @@ pub struct WriteControllableSignal<T: Clone + 'static> {
 impl<T: Clone + 'static> WriteControllableSignal<T> {
   pub fn set(&self, value: T) {
     if self.is_controlled.get() {
-      (self.on_change)(Some(value));
+      self.on_change.call(Some(value));
     } else {
       let set_uncontrolled_value = self.set_uncontrolled_value.clone();
       let cloned_value = value.clone();
@@ -26,7 +26,7 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
       set_uncontrolled_value.set(Some(cloned_value));
       // self.set_uncontrolled_value.set(Some(cloned_value));
       // });
-      (self.on_change)(Some(value));
+      self.on_change.call(Some(value));
     }
   }
 
@@ -36,11 +36,11 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
 
       callback(&mut value);
 
-      (self.on_change)(value);
+      self.on_change.call(value);
     } else {
       self.set_uncontrolled_value.update(|value| {
         callback(value);
-        (self.on_change)(value.clone());
+        self.on_change.call(value.clone());
       });
     }
   }
@@ -61,7 +61,7 @@ pub fn create_controllable_signal<T: Clone + PartialEq + 'static>(
 
   let is_controlled = Signal::derive(move || value.get().is_some());
   let value = Signal::derive(move || {
-    if is_controlled() {
+    if is_controlled.get() {
       value.get()
     } else {
       uncontrolled_value.get()
@@ -76,7 +76,7 @@ pub fn create_controllable_signal<T: Clone + PartialEq + 'static>(
       set_uncontrolled_value,
       on_change: Callback::new(move |value| {
         if let Some(value) = value {
-          on_change(value);
+          on_change.call(value);
         }
       }),
     },
@@ -101,7 +101,7 @@ fn create_uncontrolled_signal<T: Clone + PartialEq + 'static>(
   Effect::new(move |_| {
     if prev_value.get_value() != uncontrolled_value.get() {
       if let Some(value) = uncontrolled_value.get() {
-        on_change(value);
+        on_change.call(value);
       }
 
       prev_value.set_value(uncontrolled_value.get());

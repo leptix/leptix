@@ -62,7 +62,7 @@ pub fn CheckboxRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_checked_change) = on_checked_change {
-        on_checked_change(value);
+        on_checked_change.call(value);
       }
     }),
   });
@@ -158,7 +158,7 @@ pub fn CheckboxRoot(
       as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
-          on_key_down(ev.clone());
+          on_key_down.call(ev.clone());
         }
 
         if ev.key() == "Enter" {
@@ -167,7 +167,7 @@ pub fn CheckboxRoot(
       }
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
         set_checked.update(|checked| {
@@ -185,7 +185,7 @@ pub fn CheckboxRoot(
     >
       {children()}
 
-      <Show when=is_form_control>
+      <Show when=move || is_form_control.get()>
         <BubbleInput
             checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
             bubbles=Signal::derive(move || false)
@@ -241,7 +241,7 @@ pub fn CheckboxIndicator(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=presence>
+      <Show when=move || presence.get()>
         <Primitive
             element=html::span
             attrs=merged_attrs.clone()
