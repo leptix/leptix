@@ -2,7 +2,7 @@
     <img src="assets/logos.svg"/>
 </p>
 
-<h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptos Primitives (CSR Tailwind Example)</h1>
+<h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptix Primitives (CSR Tailwind Example)</h1>
 
 <p align="center" dir="auto">
     This example showcases every currently implemented component using TailwindCSS for styling
@@ -15,8 +15,8 @@
 1. Clone this repository
 
 ```
-git clone https://github.com/Upbolt/leptos_primitives.git
-cd leptos_primitives/examples/csr-with-tailwind
+git clone https://github.com/leptix/leptix.git
+cd leptix/examples/csr-with-tailwind
 ```
 
 2. To use TailwindCSS, you'll need [Node.js](https://nodejs.org) installed (npm & npx)
