@@ -2,6 +2,22 @@
 name = "leptix_primitives"
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+repository = "https://github.com/leptix/leptix"
+description = "Accessible and unstyled components for Leptos"
+license = "MIT"
+homepage = "https://upbolt.github.io/leptos_primitives"
+authors = ["Upbolt", "DanielleHuisman"]
+keywords = [
+  "leptos",
+  "components",
+  "radix-ui",
+  "accessibility",
+  "unstyled",
+  "accessible",
+]
+exclude = ["README.md", "assets/*"]
+categories = ["accessibility", "web-programming"]
 
 [dependencies]
 leptos = { version = "0.6", features = ["nightly"] }
