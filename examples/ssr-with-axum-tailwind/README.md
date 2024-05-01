@@ -19,7 +19,13 @@ git clone https://github.com/leptix/leptix.git
 cd leptix/examples/ssr-with-axum-tailwind
 ```
 
-2. Run [cargo-leptos](https://github.com/leptos-rs/cargo-leptos)
+2. Install npm packages (radix-ui/colors)
+
+```
+npm i
+```
+
+3. Run [cargo-leptos](https://github.com/leptos-rs/cargo-leptos)
 
 ```
 cargo leptos serve
