@@ -1160,6 +1160,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "leptix_primitives"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "itertools",
+ "leptos",
+ "leptos-use",
+ "nanoid",
+ "strum",
+ "strum_macros",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "leptos"
 version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1335,21 +1350,6 @@ dependencies = [
  "indexmap",
  "leptos",
  "tracing",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "leptos_primitives"
-version = "0.1.0"
-dependencies = [
- "derive_more",
- "itertools",
- "leptos",
- "leptos-use",
- "nanoid",
- "strum",
- "strum_macros",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -2146,11 +2146,11 @@ dependencies = [
  "actix-web",
  "console_error_panic_hook",
  "http 1.1.0",
+ "leptix_primitives",
  "leptos",
  "leptos-use",
  "leptos_actix",
  "leptos_meta",
- "leptos_primitives",
  "leptos_router",
  "wasm-bindgen",
 ]

@@ -1,4 +1,4 @@
-# Contributing to Leptos Primitives
+# Contributing to Leptix
 
 Contributions are of course always welcome. Unfortunately web technology is volatile and sometimes lacks desired
 features/behavior that you have to end up implementing yourself.
@@ -13,20 +13,7 @@ There aren't any super strict or formal guidelines, the only things we ask of yo
 
 ## Working Locally
 
-See our [example](https://github.com/Upbolt/leptos_primitives/tree/master/examples/csr-with-tailwind) (with TailwindCSS)
-
-There's probably a better way of handling the resulting CSS file from Tailwind, but what I currently do is:
-
-(Assuming your current directory is already in leptos_primitives)
-
-1. `cd examples/csr-with-tailwind` (for all three processes)
-2. `trunk serve` (in one terminal process)
-3. `npx tailwindcss -i styles/input.css -o styles/output.css --watch` (in another terminal process)
-4. `cd styles && miniserve . -p 8081` (in yet another terminal process)
-
-Find [miniserve](https://github.com/svenstaro/miniserve) here
-
-(If you have a better way of handling styles instead of using miniserve, don't hesitate to let me know in an issue!)
+See our examples [here](https://github.com/leptix/leptix/tree/master/examples)
 
 ## Preparing Pull Requests
 

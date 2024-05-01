@@ -17,7 +17,7 @@ leptos_actix = { version = "0.6", optional = true }
 leptos_router = { version = "0.6", features = ["nightly"] }
 wasm-bindgen = "=0.2.92"
 leptos-use = { version = "0.10.4" }
-leptos_primitives = { path = "../../" }
+leptix_primitives = { path = "../../crates/primitives" }
 
 [features]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]

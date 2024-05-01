@@ -1,36 +1,36 @@
 use leptos::html::Input;
 use leptos::*;
 
-use leptos_primitives::components::accordion::{
+use leptix_primitives::components::accordion::{
   AccordionContent, AccordionHeader, AccordionItem, AccordionKind, AccordionRoot, AccordionTrigger,
 };
-use leptos_primitives::components::aspect_ratio::AspectRatioRoot;
-use leptos_primitives::components::avatar::{AvatarFallback, AvatarImage, AvatarRoot};
-use leptos_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
-use leptos_primitives::components::collapsible::{
+use leptix_primitives::components::aspect_ratio::AspectRatioRoot;
+use leptix_primitives::components::avatar::{AvatarFallback, AvatarImage, AvatarRoot};
+use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
+use leptix_primitives::components::collapsible::{
   CollapsibleContent, CollapsibleRoot, CollapsibleTrigger,
 };
-use leptos_primitives::components::label::LabelRoot;
-use leptos_primitives::components::progress::{ProgressIndicator, ProgressRoot};
-use leptos_primitives::components::radio_group::{
+use leptix_primitives::components::label::LabelRoot;
+use leptix_primitives::components::progress::{ProgressIndicator, ProgressRoot};
+use leptix_primitives::components::radio_group::{
   RadioGroupIndicator, RadioGroupItem, RadioGroupRoot,
 };
-use leptos_primitives::components::scroll_area::{
+use leptix_primitives::components::scroll_area::{
   ScrollAreaCorner, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport,
 };
-use leptos_primitives::components::separator::Separator;
-use leptos_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
-use leptos_primitives::components::switch::{SwitchRoot, SwitchThumb};
-use leptos_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
-use leptos_primitives::components::toggle::ToggleRoot;
-use leptos_primitives::components::toggle_group::{
+use leptix_primitives::components::separator::Separator;
+use leptix_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
+use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
+use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
+use leptix_primitives::components::toggle::ToggleRoot;
+use leptix_primitives::components::toggle_group::{
   ToggleGroupItem, ToggleGroupKind, ToggleGroupRoot,
 };
-use leptos_primitives::components::toolbar::{
+use leptix_primitives::components::toolbar::{
   ToolbarButton, ToolbarLink, ToolbarRoot, ToolbarSeparator, ToolbarToggleGroup, ToolbarToggleItem,
 };
-use leptos_primitives::util::Orientation;
-use leptos_primitives::Attributes;
+use leptix_primitives::util::Orientation;
+use leptix_primitives::Attributes;
 
 use leptos_use::{use_interval_fn, utils::Pausable};
 
@@ -411,7 +411,7 @@ fn CollapsibleDemo() -> impl IntoView {
       </div>
 
       <div class="bg-white rounded my-[10px] p-[10px] shadow-[0_2px_10px] shadow-blackA4">
-        <span class="text-violet11 text-[15px] leading-[25px]">"leptos_primitives"</span>
+        <span class="text-violet11 text-[15px] leading-[25px]">"leptix/primitives"</span>
       </div>
 
       <CollapsibleContent>
@@ -584,9 +584,9 @@ fn LabelDemo() -> impl IntoView {
 fn SeparatorDemo() -> impl IntoView {
   view! {
     <div class="w-full max-w-[300px]">
-      <div class="dark:text-white text-[15px] leading-5 font-medium">"Leptos Primitives"</div>
+      <div class="dark:text-white text-[15px] leading-5 font-medium">"Leptix Primitives"</div>
       <div class="dark:text-white text-[15px] leading-5">
-        "An open-source UI component library."
+        "Accessible and unstyled components for Leptos"
       </div>
       <Separator attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px my-[15px]"/>
       <div class="flex h-5 items-center">
