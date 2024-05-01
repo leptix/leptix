@@ -8,14 +8,7 @@ description = "Accessible and unstyled components for Leptos"
 license = "MIT"
 homepage = "https://upbolt.github.io/leptos_primitives"
 authors = ["Upbolt", "DanielleHuisman"]
-keywords = [
-  "leptos",
-  "components",
-  "radix-ui",
-  "accessibility",
-  "unstyled",
-  "accessible",
-]
+keywords = ["leptos", "components", "radix-ui", "accessibility", "unstyled"]
 exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
 
