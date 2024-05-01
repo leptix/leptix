@@ -20,7 +20,7 @@ exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
 
 [dependencies]
-leptos = { version = "0.6", features = ["nightly"] }
+leptos = "0.6"
 leptos-use = "0.10.4"
 derive_more = "0.99.17"
 nanoid = "0.4.0"
@@ -34,3 +34,4 @@ web-sys = { version = "0.3.65", features = ["CustomEventInit", "EventInit"] }
 csr = ["leptos/csr"]
 ssr = ["leptos/ssr", "leptos-use/ssr"]
 hydrate = ["leptos/hydrate"]
+nightly = ["leptos/nightly"]

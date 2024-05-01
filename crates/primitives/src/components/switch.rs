@@ -57,7 +57,7 @@ pub fn SwitchRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_checked_change) = on_checked_change {
-        on_checked_change(value);
+        on_checked_change.call(value);
       }
     }),
   });
@@ -115,7 +115,7 @@ pub fn SwitchRoot(
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
         set_checked.update(|checked| *checked = Some(!checked.unwrap_or(false)));
@@ -131,12 +131,12 @@ pub fn SwitchRoot(
     >
       {children()}
 
-      <Show when=is_form_control>
+      <Show when=move || is_form_control.get()>
         <BubbleInput
             checked=Signal::derive(move || checked.get().unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone().map(|name| name.into_signal())
-            value=value.clone().map(|value| value.into_signal()).unwrap_or(Signal::derive(|| "on".to_string()))
+            name=name.clone().map(|name| Signal::derive(move || name.get()))
+            value=value.clone().map(|value| Signal::derive(move || value.get())).unwrap_or(Signal::derive(|| "on".to_string()))
             disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
             required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
             control=node_ref

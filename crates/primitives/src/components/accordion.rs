@@ -117,7 +117,7 @@ fn AccordionSingle(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -179,7 +179,7 @@ fn AccordionMultiple(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -284,7 +284,7 @@ fn Accordion(
       node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
-          on_key_down(ev.clone());
+          on_key_down.call(ev.clone());
         }
 
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
@@ -294,7 +294,7 @@ fn Accordion(
         (|| {
           let target = ev.target()?;
           let target_el = target.dyn_ref::<web_sys::HtmlButtonElement>()?;
-          let items = get_items();
+          let items = get_items.get();
 
           let triggers = items.iter().filter_map(|(node, _)| {
             let node = node.get()?;
@@ -451,9 +451,9 @@ pub fn AccordionItem(
       node_ref=node_ref
       on_open_change=Callback::new(move |open| {
         if open {
-          (value_context.on_item_open)(open_value.get());
+          value_context.on_item_open.call(open_value.get());
         } else {
-          (value_context.on_item_close)(open_value.get());
+          value_context.on_item_close.call(open_value.get());
         }
       })
     >

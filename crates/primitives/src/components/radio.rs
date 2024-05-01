@@ -106,12 +106,12 @@ pub fn Radio(
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
         if checked.map(|checked| checked.get()).unwrap_or(false) == false {
           if let Some(on_check) = on_check {
-            on_check(())
+            on_check.call(())
           }
         }
 
@@ -126,11 +126,11 @@ pub fn Radio(
     >
       {children()}
 
-      <Show when=is_form_control>
+      <Show when=move || is_form_control.get()>
         <BubbleInput
             checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone().map(|name| name.into_signal())
+            name=name.clone().map(|name| Signal::derive(move || name.get()))
             value=Signal::derive(move || value.get())
             required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
             disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
@@ -185,7 +185,7 @@ pub fn RadioIndicator(
   let children = StoredValue::new(children);
 
   view! {
-    <Show when=presence>
+    <Show when=move || presence.get()>
         <Primitive
             element=html::span
             node_ref=node_ref

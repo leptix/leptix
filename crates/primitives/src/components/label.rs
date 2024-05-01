@@ -24,7 +24,7 @@ pub fn LabelRoot(
       node_ref=node_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
-          on_mouse_down(ev.clone());
+          on_mouse_down.call(ev.clone());
         }
 
         if ev.default_prevented() && ev.detail() > 1 {
