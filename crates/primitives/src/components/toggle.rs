@@ -26,7 +26,7 @@ pub fn ToggleRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_pressed_changed) = on_pressed_changed {
-        on_pressed_changed(value);
+        on_pressed_changed.call(value);
       }
     }),
   });
@@ -64,7 +64,7 @@ pub fn ToggleRoot(
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
         if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {

@@ -46,7 +46,7 @@ pub fn create_collection_item_ref<
         id.0.clone().into_attribute(),
       );
 
-      set_id(Some(id));
+      set_id.set(Some(id));
     }
   });
 

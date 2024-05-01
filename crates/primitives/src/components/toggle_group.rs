@@ -123,7 +123,7 @@ fn ToggleGroupSingle(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -179,7 +179,7 @@ fn ToggleGroupMultiple(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -346,9 +346,9 @@ pub fn ToggleGroupItem(
               node_ref=node_ref
               on_pressed_changed=Callback::new(move |pressed| {
                 if pressed {
-                  (value_context.on_item_activate)(on_pressed_value.get());
+                  value_context.on_item_activate.call(on_pressed_value.get());
                 } else {
-                  (value_context.on_item_deactivate)(on_pressed_value.get());
+                  value_context.on_item_deactivate.call(on_pressed_value.get());
                 }
               })
             >
@@ -365,9 +365,9 @@ pub fn ToggleGroupItem(
             node_ref=node_ref
             on_pressed_changed=Callback::new(move |pressed| {
               if pressed {
-                (value_context.on_item_activate)(on_pressed_value.get());
+                value_context.on_item_activate.call(on_pressed_value.get());
               } else {
-                (value_context.on_item_deactivate)(on_pressed_value.get());
+                value_context.on_item_deactivate.call(on_pressed_value.get());
               }
             })
           >

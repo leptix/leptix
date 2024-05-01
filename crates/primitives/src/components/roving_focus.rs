@@ -86,7 +86,7 @@ pub(crate) fn RovingFocusGroup(
       default_value,
       on_change: Callback::new(move |value| {
         if let Some(on_current_tab_stop_id_change) = on_current_tab_stop_id_change {
-          on_current_tab_stop_id_change(Some(value))
+          on_current_tab_stop_id_change.call(Some(value))
         }
       }),
     });
@@ -106,7 +106,7 @@ pub(crate) fn RovingFocusGroup(
       let listen_entry_focus =
         Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
           if let Some(on_entry_focus) = on_entry_focus {
-            on_entry_focus(ev);
+            on_entry_focus.call(ev);
           }
         });
 
@@ -135,7 +135,7 @@ pub(crate) fn RovingFocusGroup(
       set_current_tab_stop_id.set(item);
     }),
     on_item_shift_tab: Callback::new(move |_| {
-      set_is_tabbing_back_out(true);
+      set_is_tabbing_back_out.set(true);
     }),
     on_focusable_item_add: Callback::new(move |_| {
       set_focusable_items_count.update(|count| {
@@ -176,14 +176,14 @@ pub(crate) fn RovingFocusGroup(
       node_ref=collection_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
-          on_mouse_down(ev);
+          on_mouse_down.call(ev);
         }
 
         is_click_focus.set_value(true);
       }
       on:focus=move |ev: FocusEvent| {
         if let Some(on_focus) = on_focus {
-          on_focus(ev.clone());
+          on_focus.call(ev.clone());
         }
 
         let is_keyboard_focus = !is_click_focus.get_value();
@@ -200,7 +200,7 @@ pub(crate) fn RovingFocusGroup(
             return;
           }
 
-          let items = get_items();
+          let items = get_items.get();
 
           let items = items
             .iter()
@@ -223,10 +223,10 @@ pub(crate) fn RovingFocusGroup(
       }
       on:blur=move |ev: FocusEvent| {
         if let Some(on_blur) = on_blur {
-          on_blur(ev);
+          on_blur.call(ev);
         }
 
-        set_is_tabbing_back_out(false);
+        set_is_tabbing_back_out.set(false);
       }
     >
       {children()}
@@ -278,9 +278,9 @@ pub(crate) fn RovingFocusGroupItem(
 
   Effect::new(move |_| {
     if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
-      on_focusable_item_add(());
+      on_focusable_item_add.call(());
       on_cleanup(move || {
-        on_focusable_item_remove(());
+        on_focusable_item_remove.call(());
       });
     }
   });
@@ -308,29 +308,29 @@ pub(crate) fn RovingFocusGroupItem(
       node_ref=item_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
-          on_mouse_down(ev.clone());
+          on_mouse_down.call(ev.clone());
         }
 
         if focusable.map(|focusable| focusable.get()).unwrap_or(false) == false {
           ev.prevent_default();
         } else {
-          on_item_focus(mousedown_id());
+          on_item_focus.call(mousedown_id());
         }
       }
       on:focus=move |ev: FocusEvent| {
         if let Some(on_focus) = on_focus {
-          on_focus(ev);
+          on_focus.call(ev);
         }
 
-        on_item_focus(focus_id());
+        on_item_focus.call(focus_id());
       }
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
-          on_key_down(ev.clone());
+          on_key_down.call(ev.clone());
         }
 
         if ev.key() == "Tab" && ev.shift_key() {
-          on_item_shift_tab(());
+          on_item_shift_tab.call(());
           return;
         }
 
@@ -347,7 +347,7 @@ pub(crate) fn RovingFocusGroupItem(
 
           ev.prevent_default();
 
-          let items = get_items();
+          let items = get_items.get();
           let candidate_nodes = items.iter().filter_map(|(node, data)| data.focusable.get().then_some(node));
 
           let candidate_nodes = if focus_intent == FocusIntent::Last || focus_intent == FocusIntent::Prev {

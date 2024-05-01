@@ -48,13 +48,13 @@ pub fn RadioGroupRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
 
   provide_context(RadioGroupContextValue {
-    name: name.map(|name| name.into_signal()),
+    name: name.map(|name| Signal::derive(move || name.get())),
     required: Signal::derive(move || required.map(|required| required.get()).unwrap_or(false)),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
     value: Signal::derive(move || value.get()),
@@ -181,10 +181,10 @@ pub fn RadioGroupItem(
         name=context.name.map(|name| name.into())
         node_ref=node_ref
         attrs=attrs
-        on_check=Callback::new(move |_| (context.on_value_change)(on_check_value.get()))
+        on_check=Callback::new(move |_| context.on_value_change.call(on_check_value.get()))
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
-            on_key_down(ev.clone());
+            on_key_down.call(ev.clone());
           }
 
           if ev.key() == "Enter" {
@@ -193,7 +193,7 @@ pub fn RadioGroupItem(
         }
         on:focus=move |ev: FocusEvent| {
           if let Some(on_focus) = on_focus {
-            on_focus(ev.clone());
+            on_focus.call(ev.clone());
           }
 
           if is_arrow_key_pressed.get_value() {
