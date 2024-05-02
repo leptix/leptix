@@ -94,7 +94,7 @@ fn create_uncontrolled_signal<T: Clone + PartialEq + 'static>(
     on_change,
   }: CreateUncontrolledSignalProps<T>,
 ) -> (ReadSignal<Option<T>>, WriteSignal<Option<T>>) {
-  let (uncontrolled_value, set_uncontrolled_value) = create_signal(default_value.get());
+  let (uncontrolled_value, set_uncontrolled_value) = create_signal(default_value.get_untracked());
 
   let prev_value = StoredValue::new(uncontrolled_value.get_untracked());
 
