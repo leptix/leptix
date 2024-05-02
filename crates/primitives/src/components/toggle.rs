@@ -55,7 +55,7 @@ pub fn ToggleRoot(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -67,7 +67,7 @@ pub fn ToggleRoot(
           on_click.call(ev.clone());
         }
 
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           set_pressed.update(|pressed| *pressed = Some(!pressed.unwrap_or(false)));
         }
       }

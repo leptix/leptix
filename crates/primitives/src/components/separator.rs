@@ -30,7 +30,7 @@ pub fn Separator(
     ]
   };
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
   merged_attrs.extend([(
     "data-orientation",
     Signal::derive(move || {
