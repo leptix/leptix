@@ -20,14 +20,30 @@
 
 ## Installation
 
-leptix packages have not yet been published to [crates.io](https://crates.io)
-
 ```toml
 # Add the following to your Cargo.toml file under [dependencies]
 
 [dependencies]
 # ...
 leptix_primitives = { git = "https://github.com/leptix/leptix.git" }
+```
+
+## Server-Side Rendering
+
+Enable the `ssr` feature flag under your project's `features` section
+
+```toml
+[features]
+csr = ...
+hydrate = ...
+ssr = [
+  "leptix_primitives/ssr",
+
+  # the rest of your leptos ssr dependencies ...
+  "leptos/ssr",
+  "dep:leptox_actix",
+  ...
+]
 ```
 
 ## Available Components
@@ -63,25 +79,25 @@ import * as Checkbox from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@radix-ui/react-icons";
 
 const CheckboxDemo = () => (
-  <form>
-    <div className="flex items-center">
-      <Checkbox.Root
-        className="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
-        defaultChecked
-        id="c1"
-      >
-        <Checkbox.Indicator className="text-violet11">
-          <CheckIcon />
-        </Checkbox.Indicator>
-      </Checkbox.Root>
-      <label
-        className="pl-[15px] text-[15px] leading-none text-white"
-        htmlFor="c1"
-      >
-        Accept terms and conditions.
-      </label>
-    </div>
-  </form>
+	<form>
+		<div className="flex items-center">
+			<Checkbox.Root
+				className="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
+				defaultChecked
+				id="c1"
+			>
+				<Checkbox.Indicator className="text-violet11">
+					<CheckIcon />
+				</Checkbox.Indicator>
+			</Checkbox.Root>
+			<label
+				className="pl-[15px] text-[15px] leading-none text-white"
+				htmlFor="c1"
+			>
+				Accept terms and conditions.
+			</label>
+		</div>
+	</form>
 );
 ```
 
@@ -117,11 +133,11 @@ fn CheckboxDemo() -> impl IntoView {
 
 ## Examples
 
-* [Trunk + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/csr-with-tailwind)
+- [Trunk + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/csr-with-tailwind)
 
-* [Actix + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-actix-tailwind)
+- [Actix + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-actix-tailwind)
 
-* [Axum + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-axum-tailwind)
+- [Axum + TailwindCSS](https://github.com/leptix/leptix/tree/master/examples/ssr-with-axum-tailwind)
 
 ## Contributing
 
