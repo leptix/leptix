@@ -6,7 +6,7 @@ use leptos_use::{use_element_size, UseElementSizeReturn};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
   js_sys::{Array, Function, JsString, Object, Reflect},
-  Event, EventInit, HtmlButtonElement, MouseEvent,
+  Event, EventInit, MouseEvent,
 };
 
 use crate::{
@@ -79,8 +79,7 @@ pub fn Radio(
       "disabled",
       Signal::derive(move || {
         disabled
-          .map(|disabled| disabled.get().then_some(""))
-          .flatten()
+          .and_then(|disabled| disabled.get().then_some(""))
         // .unwrap_or(false)
         // .to_string()
       })
@@ -92,7 +91,7 @@ pub fn Radio(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   provide_context(RadioContextValue {
     checked: Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false)),
@@ -109,7 +108,7 @@ pub fn Radio(
           on_click.call(ev.clone());
         }
 
-        if checked.map(|checked| checked.get()).unwrap_or(false) == false {
+        if !checked.map(|checked| checked.get()).unwrap_or(false) {
           if let Some(on_check) = on_check {
             on_check.call(())
           }
@@ -118,7 +117,7 @@ pub fn Radio(
         if is_form_control.get() {
           // has_consumer_stopped_propagation.set_value(ev.is_propagation_stopped());
 
-          if has_consumer_stopped_propagation.get_value() == false {
+          if !has_consumer_stopped_propagation.get_value() {
             ev.stop_propagation();
           }
         }
@@ -178,8 +177,7 @@ pub fn RadioIndicator(
         "data-disabled",
         Signal::derive(move || context.disabled.get()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   let children = StoredValue::new(children);
@@ -238,7 +236,7 @@ fn BubbleInput(
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter([JsValue::from_bool(checked.get())].into_iter()),
+          &Array::from_iter([JsValue::from_bool(checked.get())]),
         );
 
         _ = input.dispatch_event(&ev);

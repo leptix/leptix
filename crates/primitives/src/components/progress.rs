@@ -23,12 +23,11 @@ pub fn ProgressRoot(
   let value = value.map(|value| Signal::derive(move || value.get() % (max.get() + 1)));
 
   let value_label = value
-    .map(|value| {
+    .and_then(|value| {
       get_value_label.map(|get_value_label| {
         Signal::derive(move || get_value_label.call((value.get(), max.get())))
       })
-    })
-    .flatten();
+    });
 
   provide_context(ProgressContextValue {
     value,
@@ -76,8 +75,7 @@ pub fn ProgressRoot(
         "data-max",
         Signal::derive(move || max.get()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   view! {
@@ -127,8 +125,7 @@ pub fn ProgressIndicator(
         "data-max",
         Signal::derive(move || context.max.get()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   view! {

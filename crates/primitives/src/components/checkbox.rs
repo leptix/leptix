@@ -82,7 +82,7 @@ pub fn CheckboxRoot(
       return;
     };
 
-    let reset_set_checked = set_checked.clone();
+    let reset_set_checked = set_checked;
     let reset = Closure::<dyn FnMut()>::new(move || {
       reset_set_checked.set(
         initial_checked_state

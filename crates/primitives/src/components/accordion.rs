@@ -275,7 +275,7 @@ fn Accordion(
     .into_attribute(),
   )];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -287,7 +287,7 @@ fn Accordion(
           on_key_down.call(ev.clone());
         }
 
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           return;
         }
 
@@ -416,8 +416,7 @@ pub fn AccordionItem(
       .value
       .get()
       .iter()
-      .find(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
-      .is_some()
+      .any(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
   });
   let is_disabled = Signal::derive(move || {
     state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
@@ -440,7 +439,7 @@ pub fn AccordionItem(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   let open_value = value.clone();
   view! {
@@ -495,7 +494,7 @@ pub fn AccordionHeader(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -537,7 +536,7 @@ pub fn AccordionTrigger(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <CollapsibleTrigger

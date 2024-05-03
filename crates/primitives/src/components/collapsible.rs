@@ -70,7 +70,7 @@ pub fn CollapsibleRoot(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -117,7 +117,7 @@ pub fn CollapsibleTrigger(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive

@@ -160,13 +160,11 @@ pub fn SliderRoot(
   let handle_slide_end = Callback::new(move |_: ()| {
     let prev_value = values_before_slide_start
       .get_value()
-      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
-      .flatten();
+      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
     let next_value = values
       .get()
-      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
-      .flatten();
+      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
     let has_changed = next_value != prev_value;
 
@@ -206,8 +204,7 @@ pub fn SliderRoot(
         Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
           .into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   let home_key_down_update = update_values.clone();
@@ -229,12 +226,12 @@ pub fn SliderRoot(
       on_slide_move=handle_slide_move
       on_slide_end=handle_slide_end
       on_home_key_down=Callback::new(move |_| {
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           home_key_down_update(min.map(|min| min.get()).unwrap_or(0.), 0, true);
         }
       })
       on_end_key_down=Callback::new(move |_| {
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           end_key_down_update(max.map(|max| max.get()).unwrap_or(0.), values.get().unwrap_or_default().len() - 1, true);
         }
       })
@@ -562,15 +559,13 @@ fn Slider(
         ev.prevent_default();
 
         if context.thumbs.get_value().iter().any(|el| {
-          let el: &web_sys::HtmlElement = &el;
+          let el: &web_sys::HtmlElement = el;
 
           el == target_el
         }) {
           _ = target_el.focus();
-        } else {
-          if let Some(on_slide_start) = on_slide_start {
-            on_slide_start.call(pointer_value.call(ev.client_x()));
-          }
+        } else if let Some(on_slide_start) = on_slide_start {
+          on_slide_start.call(pointer_value.call(ev.client_x()));
         }
       }
       on:pointermove=move |ev: PointerEvent| {
@@ -633,8 +628,7 @@ pub fn SliderTrack(
         "data-orientation",
         (move || context.orientation.get().to_string()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   view! {
@@ -783,8 +777,7 @@ pub fn SliderThumb(
   let label = Signal::derive(move || {
     index
       .get()
-      .map(|index| get_label(index, context.values.get().len()))
-      .flatten()
+      .and_then(|index| get_label(index, context.values.get().len()))
   });
 
   let orientation_size = Signal::derive(move || match orientation.size.get() {
@@ -882,8 +875,7 @@ pub fn SliderThumb(
         "tabindex",
         (move || (!context.disabled.get()).then_some(0)).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   let span_ref = NodeRef::<Span>::new();
@@ -953,7 +945,7 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter([JsValue::from_f64(value.get())].into_iter()),
+          &Array::from_iter([JsValue::from_f64(value.get())]),
         );
 
         _ = input.dispatch_event(&ev);

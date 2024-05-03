@@ -1,8 +1,8 @@
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap};
 
 use leptos::{html::AnyElement, *};
 use wasm_bindgen::{closure::Closure, JsCast};
-use web_sys::{Event, FocusEvent, HtmlSpanElement, KeyboardEvent, MouseEvent};
+use web_sys::{Event, FocusEvent, KeyboardEvent, MouseEvent};
 
 use itertools::Either;
 
@@ -167,7 +167,7 @@ pub(crate) fn RovingFocusGroup(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive element=html::div
@@ -188,7 +188,7 @@ pub(crate) fn RovingFocusGroup(
 
         let is_keyboard_focus = !is_click_focus.get_value();
 
-        if ev.target() == ev.current_target() && is_keyboard_focus && is_tabbing_back_out.get() == false {
+        if ev.target() == ev.current_target() && is_keyboard_focus && !is_tabbing_back_out.get() {
           let mut init = web_sys::CustomEventInit::new();
           init.bubbles(false).cancelable(true);
 
@@ -211,7 +211,7 @@ pub(crate) fn RovingFocusGroup(
           let active_item = items.clone().find(|&(_, item)| item.active.get());
           let current_item = items.clone().find(|(_, item)| current_tab_stop_id.get().map(|id| id == item.id).unwrap_or(false));
 
-          let candidate_nodes = items.map(|item| Some(item))
+          let candidate_nodes = items.map(Some)
             .chain([active_item, current_item].into_iter())
             .filter_map(|item| item.map(|(el, _)| el))
             .collect::<Vec<_>>();
@@ -296,7 +296,7 @@ pub(crate) fn RovingFocusGroupItem(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   let mousedown_id = id.clone();
   let focus_id = id.clone();
@@ -311,7 +311,7 @@ pub(crate) fn RovingFocusGroupItem(
           on_mouse_down.call(ev.clone());
         }
 
-        if focusable.map(|focusable| focusable.get()).unwrap_or(false) == false {
+        if !focusable.map(|focusable| focusable.get()).unwrap_or(false) {
           ev.prevent_default();
         } else {
           on_item_focus.call(mousedown_id());
@@ -447,7 +447,7 @@ fn focus_first(candidates: &[HtmlElement<AnyElement>], prevent_scroll: bool) {
   let previously_focused = document().active_element();
 
   for candidate in candidates {
-    let candidate_el: &web_sys::Element = &candidate;
+    let candidate_el: &web_sys::Element = candidate;
 
     if Some(candidate_el) == previously_focused.as_ref() {
       return;

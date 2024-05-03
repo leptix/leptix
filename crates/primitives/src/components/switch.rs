@@ -6,7 +6,7 @@ use leptos_use::{use_element_size, UseElementSizeReturn};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
   js_sys::{Array, Function, JsString, Object, Reflect},
-  Event, EventInit, HtmlButtonElement, MouseEvent,
+  Event, EventInit, MouseEvent,
 };
 
 use crate::{
@@ -101,8 +101,7 @@ pub fn SwitchRoot(
         "value",
         Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   let inner_name = name.clone();
@@ -123,7 +122,7 @@ pub fn SwitchRoot(
         if is_form_control.get() {
           // has_consumer_stopped_propagation.set_value(ev.is_propagation_stopped());
 
-          if has_consumer_stopped_propagation.get_value() == false {
+          if !has_consumer_stopped_propagation.get_value() {
             ev.stop_propagation();
           }
         }
@@ -172,8 +171,7 @@ pub fn SwitchThumb(
         "data-disabled",
         Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   view! {
@@ -228,7 +226,7 @@ pub fn BubbleInput(
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter([JsValue::from_bool(checked.get())].into_iter()),
+          &Array::from_iter([JsValue::from_bool(checked.get())]),
         );
 
         _ = input.dispatch_event(&ev);
