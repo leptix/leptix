@@ -19,7 +19,7 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
     if self.is_controlled.get() {
       self.on_change.call(Some(value));
     } else {
-      let set_uncontrolled_value = self.set_uncontrolled_value.clone();
+      let set_uncontrolled_value = self.set_uncontrolled_value;
       let cloned_value = value.clone();
 
       // request_animation_frame(move || {

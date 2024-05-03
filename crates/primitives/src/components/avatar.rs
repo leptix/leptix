@@ -122,14 +122,14 @@ fn use_image_loading_status(src: Option<Signal<String>>) -> Signal<ImageLoadingS
     };
 
     let loaded_status_callback = Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
-      if is_mounted.get_value() == false {
+      if !is_mounted.get_value() {
         return;
       }
 
       set_loading_status.set(ImageLoadingStatus::Loaded);
     });
     let error_status_callback = Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
-      if is_mounted.get_value() == false {
+      if !is_mounted.get_value() {
         return;
       }
 

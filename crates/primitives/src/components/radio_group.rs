@@ -95,7 +95,7 @@ pub fn RadioGroupRoot(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <RovingFocusGroup

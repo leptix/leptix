@@ -128,8 +128,7 @@ pub fn ScrollAreaRoot(
     [(
       "dir",
       (move || direction.get().to_string()).into_attribute(),
-    )]
-    .into_iter(),
+    )],
   );
 
   Effect::new(move |_| {
@@ -770,7 +769,7 @@ fn ScrollAreaScrollbarX(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-orientation", "horizontal".into_attribute())].into_iter());
+  merged_attrs.extend([("data-orientation", "horizontal".into_attribute())]);
 
   view! {
     <ScrollAreaScrollbarImpl
@@ -885,7 +884,7 @@ fn ScrollAreaScrollbarY(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-orientation", "vertical".into_attribute())].into_iter());
+  merged_attrs.extend([("data-orientation", "vertical".into_attribute())]);
 
   view! {
     <ScrollAreaScrollbarImpl

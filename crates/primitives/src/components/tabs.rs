@@ -113,8 +113,7 @@ pub fn TabsList(
         "aria-orientation",
         (move || context.orientation.get().to_string()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   view! {
@@ -161,7 +160,7 @@ pub fn TabsTrigger(
   let is_selected_value = value.clone();
   let is_selected = Signal::derive(move || context.value.get() == Some(is_selected_value.get()));
 
-  let data_disabled = disabled.clone();
+  let data_disabled = disabled;
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend(
     [
@@ -199,8 +198,7 @@ pub fn TabsTrigger(
         "id",
         Signal::derive(move || trigger_id.get()).into_attribute(),
       ),
-    ]
-    .into_iter(),
+    ],
   );
 
   let keydown_value = value.clone();
@@ -220,7 +218,7 @@ pub fn TabsTrigger(
             on_mouse_down.call(ev.clone());
           }
 
-          if !disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && ev.ctrl_key() == false {
+          if !disabled.map(|disabled| disabled.get()).unwrap_or(false) && ev.button() == 0 && !ev.ctrl_key() {
             context.on_value_change.call(value.get());
           } else {
             ev.prevent_default();
