@@ -3,3 +3,4 @@
 /dist
 Cargo.lock
 package-lock.json
+/styles/output.css

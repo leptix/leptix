@@ -241,15 +241,15 @@ pub fn CheckboxIndicator(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=move || presence.get()>
-        <Primitive
-            element=html::span
-            attrs=merged_attrs.clone()
-            node_ref=node_ref
-        >
-            {children.with_value(|children| children())}
-        </Primitive>
-      </Show>
+    <Show when=move || presence.get()>
+      <Primitive
+          element=html::span
+          attrs=merged_attrs.clone()
+          node_ref=node_ref
+      >
+          {children.with_value(|children| children())}
+      </Primitive>
+    </Show>
   }
 }
 

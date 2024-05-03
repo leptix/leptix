@@ -190,7 +190,7 @@ fn CollapsibleContentImpl(
     .expect("CollapsibleContentImpl must be used in a CollapsibleRoot component");
 
   let is_open = Signal::derive(move || open.get() || is_present.get());
-  let is_mount_animation_prevented = StoredValue::new(is_open.get());
+  let is_mount_animation_prevented = StoredValue::new(is_open.get_untracked());
 
   let original_styles = StoredValue::<Option<CssStyleDeclaration>>::new(None);
 
@@ -226,6 +226,7 @@ fn CollapsibleContentImpl(
       original_styles.set_value(Some(new_styles));
     }
 
+    logging::log!("removing animations");
     node = node
       .style("transition-duration", "0s")
       .style("animation-name", "none");
@@ -233,6 +234,8 @@ fn CollapsibleContentImpl(
     let rect = node.get_bounding_client_rect();
 
     if !is_mount_animation_prevented.get_value() {
+      logging::log!("adding back animations");
+
       _ = node
         .style(
           "transition-duration",
