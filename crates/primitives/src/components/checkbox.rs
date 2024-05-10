@@ -47,13 +47,7 @@ pub fn CheckboxRoot(
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || checked.map(|checked| checked.get())),
@@ -97,6 +91,14 @@ pub fn CheckboxRoot(
       _ = form.remove_event_listener_with_callback("reset", reset.as_ref().unchecked_ref());
 
       reset.forget();
+    });
+  });
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
     });
   });
 
@@ -149,12 +151,6 @@ pub fn CheckboxRoot(
   ];
 
   merged_attrs.extend(attrs);
-
-  logging::log!("init: {}", is_form_control.get());
-
-  Effect::new(move |_| {
-    logging::log!("client: {}", is_form_control.get());
-  });
 
   let bubble_ref = NodeRef::<Input>::new();
 

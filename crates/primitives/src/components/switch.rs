@@ -40,13 +40,7 @@ pub fn SwitchRoot(
   children: Children,
 ) -> impl IntoView {
   let node_ref = NodeRef::<AnyElement>::new();
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let has_consumer_stopped_propagation = StoredValue::new(false);
 
@@ -62,6 +56,14 @@ pub fn SwitchRoot(
     }),
   });
 
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    });
+  });
+
   provide_context(SwitchContextValue {
     checked: Signal::derive(move || checked.get().unwrap_or(false)),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
@@ -70,39 +72,37 @@ pub fn SwitchRoot(
   let attr_value = value.clone();
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("type", "button".into_attribute()),
-      ("role", "switch".into_attribute()),
-      (
-        "aria-checked",
-        Signal::derive(move || checked.get()).into_attribute(),
-      ),
-      (
-        "aria-required",
-        Signal::derive(move || required.map(|required| required.get())).into_attribute(),
-      ),
-      (
-        "data-state",
-        Signal::derive(move || {
-          if checked.get().unwrap_or(false) {
-            "checked"
-          } else {
-            "unchecked"
-          }
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
-      ),
-      (
-        "value",
-        Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    ("type", "button".into_attribute()),
+    ("role", "switch".into_attribute()),
+    (
+      "aria-checked",
+      Signal::derive(move || checked.get()).into_attribute(),
+    ),
+    (
+      "aria-required",
+      Signal::derive(move || required.map(|required| required.get())).into_attribute(),
+    ),
+    (
+      "data-state",
+      Signal::derive(move || {
+        if checked.get().unwrap_or(false) {
+          "checked"
+        } else {
+          "unchecked"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
+    ),
+    (
+      "value",
+      Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
+    ),
+  ]);
 
   let inner_name = name.clone();
   let inner_value = value.clone();
@@ -154,25 +154,23 @@ pub fn SwitchThumb(
     .expect("SwitchThumb must be used in a SwitchRoot component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      (
-        "data-state",
-        Signal::derive(move || {
-          if context.checked.get() {
-            "checked"
-          } else {
-            "unchecked"
-          }
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    (
+      "data-state",
+      Signal::derive(move || {
+        if context.checked.get() {
+          "checked"
+        } else {
+          "unchecked"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
+    ),
+  ]);
 
   view! {
     <Primitive

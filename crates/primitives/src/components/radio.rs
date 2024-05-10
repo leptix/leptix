@@ -35,16 +35,17 @@ pub fn Radio(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
-  // let node_ref = NodeRef::<AnyElement>::new();
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let has_consumer_stopped_propagation = StoredValue::new(false);
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    });
+  });
 
   let mut merged_attrs = vec![
     ("type", "button".into_attribute()),
@@ -78,8 +79,7 @@ pub fn Radio(
     (
       "disabled",
       Signal::derive(move || {
-        disabled
-          .and_then(|disabled| disabled.get().then_some(""))
+        disabled.and_then(|disabled| disabled.get().then_some(""))
         // .unwrap_or(false)
         // .to_string()
       })
@@ -160,25 +160,23 @@ pub fn RadioIndicator(
   let presence = create_presence(is_present, node_ref);
   let mut merged_attrs = attrs.clone();
 
-  merged_attrs.extend(
-    [
-      (
-        "data-state",
-        Signal::derive(move || {
-          if context.checked.get() {
-            "checked"
-          } else {
-            "unchecked"
-          }
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || context.disabled.get()).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    (
+      "data-state",
+      Signal::derive(move || {
+        if context.checked.get() {
+          "checked"
+        } else {
+          "unchecked"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || context.disabled.get()).into_attribute(),
+    ),
+  ]);
 
   let children = StoredValue::new(children);
 

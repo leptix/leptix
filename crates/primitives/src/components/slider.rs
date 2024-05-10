@@ -196,16 +196,14 @@ pub fn SliderRoot(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("aria-disabled", disabled.into_attribute()),
-      (
-        "data-disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
-          .into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    ("aria-disabled", disabled.into_attribute()),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
+        .into_attribute(),
+    ),
+  ]);
 
   let home_key_down_update = update_values.clone();
   let end_key_down_update = update_values.clone();
@@ -618,18 +616,16 @@ pub fn SliderTrack(
     .expect("SliderTrack must be used in a SliderRoot component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      (
-        "data-disabled",
-        (move || context.disabled.get().then_some("")).into_attribute(),
-      ),
-      (
-        "data-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    (
+      "data-disabled",
+      (move || context.disabled.get().then_some("")).into_attribute(),
+    ),
+    (
+      "data-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+  ]);
 
   view! {
     <Primitive
@@ -734,13 +730,7 @@ pub fn SliderThumb(
   let orientation = use_context::<OrientationContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = item_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let size = use_element_size(item_ref);
 
@@ -797,6 +787,14 @@ pub fn SliderThumb(
   });
 
   Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    });
+  });
+
+  Effect::new(move |_| {
     let Some(node) = item_ref.get() else {
       return;
     };
@@ -834,49 +832,47 @@ pub fn SliderThumb(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("role", "slider".into_attribute()),
-      (
-        "aria-label",
-        attrs
-          .iter()
-          .find(|(name, _)| name.eq(&"aria-label"))
-          .map_or(label.get(), |(_, attr)| {
-            attr.as_nameless_value_string().map(|attr| attr.to_string())
-          })
-          .into_attribute(),
-      ),
-      (
-        "aria-valuemin",
-        (move || context.min.get()).into_attribute(),
-      ),
-      (
-        "aria-valuenow",
-        (move || value.get().unwrap_or_default()).into_attribute(),
-      ),
-      (
-        "aria-valuemax",
-        (move || context.max.get()).into_attribute(),
-      ),
-      (
-        "aria-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-      (
-        "data-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-      (
-        "data-disabled",
-        (move || context.disabled.get().then_some("")).into_attribute(),
-      ),
-      (
-        "tabindex",
-        (move || (!context.disabled.get()).then_some(0)).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    ("role", "slider".into_attribute()),
+    (
+      "aria-label",
+      attrs
+        .iter()
+        .find(|(name, _)| name.eq(&"aria-label"))
+        .map_or(label.get(), |(_, attr)| {
+          attr.as_nameless_value_string().map(|attr| attr.to_string())
+        })
+        .into_attribute(),
+    ),
+    (
+      "aria-valuemin",
+      (move || context.min.get()).into_attribute(),
+    ),
+    (
+      "aria-valuenow",
+      (move || value.get().unwrap_or_default()).into_attribute(),
+    ),
+    (
+      "aria-valuemax",
+      (move || context.max.get()).into_attribute(),
+    ),
+    (
+      "aria-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+    (
+      "data-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+    (
+      "data-disabled",
+      (move || context.disabled.get().then_some("")).into_attribute(),
+    ),
+    (
+      "tabindex",
+      (move || (!context.disabled.get()).then_some(0)).into_attribute(),
+    ),
+  ]);
 
   let span_ref = NodeRef::<Span>::new();
 
