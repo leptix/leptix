@@ -70,9 +70,9 @@ tailwind-config-file = "tailwind.config.js"
 # Optional. Env: LEPTOS_ASSETS_DIR.
 assets-dir = "assets"
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-site-addr = "127.0.0.1:3002"
+site-addr = "127.0.0.1:3000"
 # The port to use for automatic reload monitoring
-reload-port = 3003
+reload-port = 3001
 # [Optional] Command to use when running end2end tests. It will run in the end2end dir.
 #   [Windows] for non-WSL use "npx.cmd playwright test"
 #   This binary name can be checked in Powershell with Get-Command npx

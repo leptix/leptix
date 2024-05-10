@@ -73,10 +73,10 @@ tailwind-input-file = "style/tailwind.css"
 #
 
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-site-addr = "127.0.0.1:3006"
+site-addr = "127.0.0.1:3000"
 
 # The port to use for automatic reload monitoring
-reload-port = 3007
+reload-port = 3001
 
 #  The browserlist query used for optimizing the CSS.
 browserquery = "defaults"

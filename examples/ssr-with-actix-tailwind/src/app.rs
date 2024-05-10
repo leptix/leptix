@@ -3,8 +3,6 @@ use leptos_meta::*;
 use leptos_router::*;
 use leptos_use::{use_cookie, utils::FromToStringCodec};
 
-use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
-
 use crate::primitives::PrimitivesShowcase;
 
 #[component]

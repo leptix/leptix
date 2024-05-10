@@ -287,7 +287,7 @@ fn WithTitle(
 #[component]
 fn CheckboxDemo() -> impl IntoView {
     view! {
-      // <form>
+      <form>
         <div class="flex items-center">
           <CheckboxRoot
             default_checked=CheckedState::Checked(true).into()
@@ -303,7 +303,7 @@ fn CheckboxDemo() -> impl IntoView {
             <span class="select-none">"Accept terms and conditions."</span>
           </label>
         </div>
-      // </form>
+      </form>
     }
 }
 
