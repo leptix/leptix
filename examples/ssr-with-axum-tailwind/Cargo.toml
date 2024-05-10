@@ -48,6 +48,13 @@ opt-level = 'z'
 lto = true
 codegen-units = 1
 panic = "abort"
+incremental = true
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+incremental = true
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
@@ -66,10 +73,10 @@ tailwind-input-file = "style/tailwind.css"
 #
 
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-site-addr = "127.0.0.1:3000"
+site-addr = "127.0.0.1:3006"
 
 # The port to use for automatic reload monitoring
-reload-port = 3001
+reload-port = 3007
 
 #  The browserlist query used for optimizing the CSS.
 browserquery = "defaults"
