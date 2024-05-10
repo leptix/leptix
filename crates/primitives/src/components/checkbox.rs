@@ -47,13 +47,7 @@ pub fn CheckboxRoot(
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || checked.map(|checked| checked.get())),
@@ -97,6 +91,14 @@ pub fn CheckboxRoot(
       _ = form.remove_event_listener_with_callback("reset", reset.as_ref().unchecked_ref());
 
       reset.forget();
+    });
+  });
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
     });
   });
 
@@ -150,6 +152,16 @@ pub fn CheckboxRoot(
 
   merged_attrs.extend(attrs);
 
+  let bubble_ref = NodeRef::<Input>::new();
+
+  Effect::new(move |_| {
+    let Some(node) = bubble_ref.get() else {
+      return;
+    };
+
+    _ = node.style("transform", "translateX(-100%)");
+  });
+
   view! {
     <Primitive
       element=html::button
@@ -175,7 +187,7 @@ pub fn CheckboxRoot(
             CheckedState::Checked(checked) => CheckedState::Checked(!checked),
             CheckedState::Indeterminate => CheckedState::Checked(true),
           });
-      });
+        });
 
         if is_form_control.get() {
           // if !ev.is_propagation_stopped()
@@ -184,15 +196,15 @@ pub fn CheckboxRoot(
       }
     >
       {children()}
-
-      <Show when=move || is_form_control.get()>
-        <BubbleInput
-            checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
-            bubbles=Signal::derive(move || false)
-            control=node_ref
-        />
-      </Show>
     </Primitive>
+    <Show when=move || is_form_control.get()>
+      <BubbleInput
+          checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
+          bubbles=Signal::derive(move || false)
+          control=node_ref
+          node_ref=bubble_ref
+      />
+    </Show>
   }
 }
 
@@ -258,9 +270,9 @@ fn BubbleInput(
   checked: Signal<CheckedState>,
   control: NodeRef<AnyElement>,
   bubbles: Signal<bool>,
+  node_ref: NodeRef<Input>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<Input>::new();
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
   let UseElementSizeReturn { width, height } = use_element_size(control);
 
@@ -311,8 +323,9 @@ fn BubbleInput(
 
   view! {
     <input
+      {..attrs}
       type="checkbox"
-      aria-hidden
+      aria-hidden="true"
       checked=(move || match checked.get() { CheckedState::Checked(checked) => checked, CheckedState::Indeterminate => false }).into_attribute()
       tabindex=(-1).into_attribute()
       node_ref=node_ref
@@ -320,9 +333,8 @@ fn BubbleInput(
       style:pointer-events="none"
       style:opacity="0"
       style:margin="0"
-      style:width=move || width.get()
-      style:height=move || height.get()
-      {..attrs}
+      style:width=move || format!("{}px", width.get())
+      style:height=move || format!("{}px", height.get())
     />
   }
 }
