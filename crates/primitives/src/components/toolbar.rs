@@ -67,7 +67,7 @@ pub fn ToolbarRoot(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <RovingFocusGroup
@@ -119,7 +119,7 @@ pub fn ToolbarButton(
   children: Children,
 ) -> impl IntoView {
   let mut merged_attrs = vec![("type", "button".into_attribute())];
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <RovingFocusGroupItem
@@ -156,7 +156,7 @@ pub fn ToolbarLink(
         node_ref=node_ref
         on:keydown=move |ev: KeyboardEvent| {
           if let Some(on_key_down) = on_key_down {
-            on_key_down(ev.clone());
+            on_key_down.call(ev.clone());
           }
 
           if ev.key() == " " {
@@ -199,7 +199,7 @@ pub fn ToolbarToggleGroup(
       (move || context.direction.get().to_string()).into_attribute(),
     ),
   ];
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <ToggleGroupRoot

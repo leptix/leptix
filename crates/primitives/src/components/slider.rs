@@ -16,7 +16,7 @@ use web_sys::{
 
 use crate::{
   components::{
-    collection::{use_collection_context, CollectionContextValue, create_collection_item_ref},
+    collection::{create_collection_item_ref, use_collection_context, CollectionContextValue},
     primitive::Primitive,
   },
   util::{
@@ -90,7 +90,7 @@ pub fn SliderRoot(
       }
 
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -110,8 +110,7 @@ pub fn SliderRoot(
 
     set_values.update(move |values| {
       let previous_values = values.as_ref().cloned().unwrap_or_default();
-      let next_values =
-        get_next_sorted_values(&previous_values, next_value, at_index);
+      let next_values = get_next_sorted_values(&previous_values, next_value, at_index);
 
       if has_min_steps_between_values(
         &previous_values,
@@ -128,12 +127,13 @@ pub fn SliderRoot(
           .filter(|&(prev, curr)| prev == curr)
           .count();
 
-        let has_changed = updated_count != next_values.len() || updated_count != previous_values.len();
+        let has_changed =
+          updated_count != next_values.len() || updated_count != previous_values.len();
 
         if has_changed {
           if commit {
             if let Some(on_value_commit) = on_value_commit {
-              on_value_commit(next_values.clone());
+              on_value_commit.call(next_values.clone());
             }
           }
 
@@ -160,19 +160,17 @@ pub fn SliderRoot(
   let handle_slide_end = Callback::new(move |_: ()| {
     let prev_value = values_before_slide_start
       .get_value()
-      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
-      .flatten();
+      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
     let next_value = values
       .get()
-      .map(|values| Some(values.get(value_index_to_change.get_value()?).cloned()))
-      .flatten();
+      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
     let has_changed = next_value != prev_value;
 
     if has_changed {
       if let Some(on_value_commit) = on_value_commit {
-        on_value_commit(values.get().unwrap_or_default());
+        on_value_commit.call(values.get().unwrap_or_default());
       }
     }
   });
@@ -198,20 +196,14 @@ pub fn SliderRoot(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      (
-        "aria-disabled",
-        disabled.into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
-          .into_attribute(),
-      ),
-    ]
-    .into_iter(),
-  );
+  merged_attrs.extend([
+    ("aria-disabled", disabled.into_attribute()),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
+        .into_attribute(),
+    ),
+  ]);
 
   let home_key_down_update = update_values.clone();
   let end_key_down_update = update_values.clone();
@@ -232,12 +224,12 @@ pub fn SliderRoot(
       on_slide_move=handle_slide_move
       on_slide_end=handle_slide_end
       on_home_key_down=Callback::new(move |_| {
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           home_key_down_update(min.map(|min| min.get()).unwrap_or(0.), 0, true);
         }
       })
       on_end_key_down=Callback::new(move |_| {
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           end_key_down_update(max.map(|max| max.get()).unwrap_or(0.), values.get().unwrap_or_default().len() - 1, true);
         }
       })
@@ -520,13 +512,13 @@ fn Slider(
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
           if let Some(on_home_key_down) = on_home_key_down {
-            on_home_key_down(ev.clone());
+            on_home_key_down.call(ev.clone());
           }
 
           ev.prevent_default();
         } else if ev.key() == "End" {
           if let Some(on_end_key_down) = on_end_key_down {
-            on_end_key_down(ev.clone());
+            on_end_key_down.call(ev.clone());
           }
 
           ev.prevent_default();
@@ -539,7 +531,7 @@ fn Slider(
               SlideDirection::FromBottom => ["Home", "PageDown", "ArrowUp", "ArrowLeft"].contains(&ev.key().as_ref()),
             };
 
-            on_step_key_down(Step {
+            on_step_key_down.call(Step {
               event: ev.clone(),
               direction: if is_back_key {
                 OrientationDirection::Backward
@@ -565,15 +557,13 @@ fn Slider(
         ev.prevent_default();
 
         if context.thumbs.get_value().iter().any(|el| {
-          let el: &web_sys::HtmlElement = &el;
+          let el: &web_sys::HtmlElement = el;
 
           el == target_el
         }) {
           _ = target_el.focus();
-        } else {
-          if let Some(on_slide_start) = on_slide_start {
-            on_slide_start(pointer_value(ev.client_x()));
-          }
+        } else if let Some(on_slide_start) = on_slide_start {
+          on_slide_start.call(pointer_value.call(ev.client_x()));
         }
       }
       on:pointermove=move |ev: PointerEvent| {
@@ -587,7 +577,7 @@ fn Slider(
 
         if target_el.has_pointer_capture(ev.pointer_id()) {
           if let Some(on_slide_move) = on_slide_move {
-            on_slide_move(pointer_value(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
+            on_slide_move.call(pointer_value.call(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
           }
         }
       }
@@ -606,7 +596,7 @@ fn Slider(
           dom_rect.set_value(None);
 
           if let Some(on_slide_end) = on_slide_end {
-            on_slide_end(());
+            on_slide_end.call(());
           }
         }
       }
@@ -626,19 +616,16 @@ pub fn SliderTrack(
     .expect("SliderTrack must be used in a SliderRoot component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      (
-        "data-disabled",
-        (move || context.disabled.get().then_some("")).into_attribute(),
-      ),
-      (
-        "data-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-    ]
-    .into_iter(),
-  );
+  merged_attrs.extend([
+    (
+      "data-disabled",
+      (move || context.disabled.get().then_some("")).into_attribute(),
+    ),
+    (
+      "data-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+  ]);
 
   view! {
     <Primitive
@@ -682,8 +669,13 @@ pub fn SliderRange(
       0.0f64
     }
   });
-  let offset_end =
-    Signal::derive(move || 100.0f64 - percentages.get().iter().fold(f64::NEG_INFINITY, |max, &x| max.max(x)));
+  let offset_end = Signal::derive(move || {
+    100.0f64
+      - percentages
+        .get()
+        .iter()
+        .fold(f64::NEG_INFINITY, |max, &x| max.max(x))
+  });
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
@@ -729,7 +721,8 @@ pub fn SliderThumb(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let item_ref = create_collection_item_ref::<html::AnyElement, SliderCollectionItem>(SliderCollectionItem);
+  let item_ref =
+    create_collection_item_ref::<html::AnyElement, SliderCollectionItem>(SliderCollectionItem);
   let get_items = use_collection_context::<SliderCollectionItem, AnyElement>();
 
   let context = use_context::<SliderContextValue>()
@@ -737,19 +730,13 @@ pub fn SliderThumb(
   let orientation = use_context::<OrientationContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = item_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let size = use_element_size(item_ref);
 
   let index = Signal::derive(move || {
     let node = item_ref.get()?;
-    let items = get_items();
+    let items = get_items.get();
 
     let index = items.iter().position(|item| {
       let Some(item) = item.0.get() else {
@@ -780,8 +767,7 @@ pub fn SliderThumb(
   let label = Signal::derive(move || {
     index
       .get()
-      .map(|index| get_label(index, context.values.get().len()))
-      .flatten()
+      .and_then(|index| get_label(index, context.values.get().len()))
   });
 
   let orientation_size = Signal::derive(move || match orientation.size.get() {
@@ -798,6 +784,14 @@ pub fn SliderThumb(
         OrientationDirection::Forward => 1.0f64,
       },
     )
+  });
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    });
   });
 
   Effect::new(move |_| {
@@ -838,47 +832,47 @@ pub fn SliderThumb(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("role", "slider".into_attribute()),
-      (
-        "aria-label",
-        attrs
-          .iter()
-          .find(|(name, _)| name.eq(&"aria-label"))
-          .map_or(label.get(), |(_, attr)| {
-            attr.as_nameless_value_string().map(|attr| attr.to_string())
-          })
-          .into_attribute(),
-      ),
-      (
-        "aria-valuemin",
-        (move || context.min.get()).into_attribute(),
-      ),
-      (
-        "aria-valuenow",
-        (move || value.get().unwrap_or_default()).into_attribute(),
-      ),
-      (
-        "aria-valuemax",
-        (move || context.max.get()).into_attribute(),
-      ),
-      (
-        "aria-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-      (
-        "data-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-      (
-        "data-disabled",
-        (move || context.disabled.get().then_some("")).into_attribute(),
-      ),
-      ("tabindex", (move || (!context.disabled.get()).then_some(0)).into_attribute())
-    ]
-    .into_iter(),
-  );
+  merged_attrs.extend([
+    ("role", "slider".into_attribute()),
+    (
+      "aria-label",
+      attrs
+        .iter()
+        .find(|(name, _)| name.eq(&"aria-label"))
+        .map_or(label.get(), |(_, attr)| {
+          attr.as_nameless_value_string().map(|attr| attr.to_string())
+        })
+        .into_attribute(),
+    ),
+    (
+      "aria-valuemin",
+      (move || context.min.get()).into_attribute(),
+    ),
+    (
+      "aria-valuenow",
+      (move || value.get().unwrap_or_default()).into_attribute(),
+    ),
+    (
+      "aria-valuemax",
+      (move || context.max.get()).into_attribute(),
+    ),
+    (
+      "aria-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+    (
+      "data-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+    (
+      "data-disabled",
+      (move || context.disabled.get().then_some("")).into_attribute(),
+    ),
+    (
+      "tabindex",
+      (move || (!context.disabled.get()).then_some(0)).into_attribute(),
+    ),
+  ]);
 
   let span_ref = NodeRef::<Span>::new();
 
@@ -947,7 +941,7 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter([JsValue::from_f64(value.get())].into_iter()),
+          &Array::from_iter([JsValue::from_f64(value.get())]),
         );
 
         _ = input.dispatch_event(&ev);

@@ -47,13 +47,7 @@ pub fn CheckboxRoot(
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || checked.map(|checked| checked.get())),
@@ -62,7 +56,7 @@ pub fn CheckboxRoot(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_checked_change) = on_checked_change {
-        on_checked_change(value);
+        on_checked_change.call(value);
       }
     }),
   });
@@ -82,7 +76,7 @@ pub fn CheckboxRoot(
       return;
     };
 
-    let reset_set_checked = set_checked.clone();
+    let reset_set_checked = set_checked;
     let reset = Closure::<dyn FnMut()>::new(move || {
       reset_set_checked.set(
         initial_checked_state
@@ -97,6 +91,14 @@ pub fn CheckboxRoot(
       _ = form.remove_event_listener_with_callback("reset", reset.as_ref().unchecked_ref());
 
       reset.forget();
+    });
+  });
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
     });
   });
 
@@ -150,6 +152,16 @@ pub fn CheckboxRoot(
 
   merged_attrs.extend(attrs);
 
+  let bubble_ref = NodeRef::<Input>::new();
+
+  Effect::new(move |_| {
+    let Some(node) = bubble_ref.get() else {
+      return;
+    };
+
+    _ = node.style("transform", "translateX(-100%)");
+  });
+
   view! {
     <Primitive
       element=html::button
@@ -158,7 +170,7 @@ pub fn CheckboxRoot(
       as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
-          on_key_down(ev.clone());
+          on_key_down.call(ev.clone());
         }
 
         if ev.key() == "Enter" {
@@ -167,7 +179,7 @@ pub fn CheckboxRoot(
       }
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
         set_checked.update(|checked| {
@@ -175,7 +187,7 @@ pub fn CheckboxRoot(
             CheckedState::Checked(checked) => CheckedState::Checked(!checked),
             CheckedState::Indeterminate => CheckedState::Checked(true),
           });
-      });
+        });
 
         if is_form_control.get() {
           // if !ev.is_propagation_stopped()
@@ -184,15 +196,15 @@ pub fn CheckboxRoot(
       }
     >
       {children()}
-
-      <Show when=is_form_control>
-        <BubbleInput
-            checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
-            bubbles=Signal::derive(move || false)
-            control=node_ref
-        />
-      </Show>
     </Primitive>
+    <Show when=move || is_form_control.get()>
+      <BubbleInput
+          checked=Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false)))
+          bubbles=Signal::derive(move || false)
+          control=node_ref
+          node_ref=bubble_ref
+      />
+    </Show>
   }
 }
 
@@ -241,15 +253,15 @@ pub fn CheckboxIndicator(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=presence>
-        <Primitive
-            element=html::span
-            attrs=merged_attrs.clone()
-            node_ref=node_ref
-        >
-            {children.with_value(|children| children())}
-        </Primitive>
-      </Show>
+    <Show when=move || presence.get()>
+      <Primitive
+          element=html::span
+          attrs=merged_attrs.clone()
+          node_ref=node_ref
+      >
+          {children.with_value(|children| children())}
+      </Primitive>
+    </Show>
   }
 }
 
@@ -258,9 +270,9 @@ fn BubbleInput(
   checked: Signal<CheckedState>,
   control: NodeRef<AnyElement>,
   bubbles: Signal<bool>,
+  node_ref: NodeRef<Input>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<Input>::new();
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
   let UseElementSizeReturn { width, height } = use_element_size(control);
 
@@ -311,8 +323,9 @@ fn BubbleInput(
 
   view! {
     <input
+      {..attrs}
       type="checkbox"
-      aria-hidden
+      aria-hidden="true"
       checked=(move || match checked.get() { CheckedState::Checked(checked) => checked, CheckedState::Indeterminate => false }).into_attribute()
       tabindex=(-1).into_attribute()
       node_ref=node_ref
@@ -320,9 +333,8 @@ fn BubbleInput(
       style:pointer-events="none"
       style:opacity="0"
       style:margin="0"
-      style:width=move || width.get()
-      style:height=move || height.get()
-      {..attrs}
+      style:width=move || format!("{}px", width.get())
+      style:height=move || format!("{}px", height.get())
     />
   }
 }

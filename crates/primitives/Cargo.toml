@@ -2,9 +2,18 @@
 name = "leptix_primitives"
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+repository = "https://github.com/leptix/leptix"
+description = "Accessible and unstyled components for Leptos"
+license = "MIT"
+homepage = "https://upbolt.github.io/leptos_primitives"
+authors = ["Upbolt", "DanielleHuisman"]
+keywords = ["leptos", "components", "radix-ui", "accessibility", "unstyled"]
+exclude = ["README.md", "assets/*"]
+categories = ["accessibility", "web-programming"]
 
 [dependencies]
-leptos = { version = "0.6", features = ["nightly"] }
+leptos = "0.6"
 leptos-use = "0.10.4"
 derive_more = "0.99.17"
 nanoid = "0.4.0"
@@ -13,3 +22,9 @@ strum_macros = "0.26.2"
 itertools = "0.12.1"
 wasm-bindgen = "=0.2.92"
 web-sys = { version = "0.3.65", features = ["CustomEventInit", "EventInit"] }
+
+[features]
+csr = ["leptos/csr"]
+ssr = ["leptos/ssr", "leptos-use/ssr"]
+hydrate = ["leptos/hydrate"]
+nightly = ["leptos/nightly"]

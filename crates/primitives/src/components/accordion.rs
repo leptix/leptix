@@ -117,7 +117,7 @@ fn AccordionSingle(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -179,7 +179,7 @@ fn AccordionMultiple(
     }),
     on_change: Callback::new(move |value| {
       if let Some(on_value_change) = on_value_change {
-        on_value_change(value);
+        on_value_change.call(value);
       }
     }),
   });
@@ -275,7 +275,7 @@ fn Accordion(
     .into_attribute(),
   )];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -284,17 +284,17 @@ fn Accordion(
       node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {
-          on_key_down(ev.clone());
+          on_key_down.call(ev.clone());
         }
 
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) == false {
+        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
           return;
         }
 
         (|| {
           let target = ev.target()?;
           let target_el = target.dyn_ref::<web_sys::HtmlButtonElement>()?;
-          let items = get_items();
+          let items = get_items.get();
 
           let triggers = items.iter().filter_map(|(node, _)| {
             let node = node.get()?;
@@ -416,8 +416,7 @@ pub fn AccordionItem(
       .value
       .get()
       .iter()
-      .find(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
-      .is_some()
+      .any(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
   });
   let is_disabled = Signal::derive(move || {
     state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
@@ -440,7 +439,7 @@ pub fn AccordionItem(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   let open_value = value.clone();
   view! {
@@ -451,9 +450,9 @@ pub fn AccordionItem(
       node_ref=node_ref
       on_open_change=Callback::new(move |open| {
         if open {
-          (value_context.on_item_open)(open_value.get());
+          value_context.on_item_open.call(open_value.get());
         } else {
-          (value_context.on_item_close)(open_value.get());
+          value_context.on_item_close.call(open_value.get());
         }
       })
     >
@@ -495,7 +494,7 @@ pub fn AccordionHeader(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <Primitive
@@ -537,7 +536,7 @@ pub fn AccordionTrigger(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   view! {
     <CollapsibleTrigger
@@ -552,7 +551,7 @@ pub fn AccordionTrigger(
 #[component]
 pub fn AccordionContent(
   #[prop(attrs)] attrs: Attributes,
-  // #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
   let state_context = use_context::<AccordionStateContextValue>()
@@ -560,43 +559,39 @@ pub fn AccordionContent(
   let item_context = use_context::<AccordionItemContextValue>()
     .expect("AccordionTrigger must be in an AccordionRoot component");
 
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
+    _ = node
+      .style(
+        "--primitive-accordion-content-width",
+        "var(--primitive-collapsible-content-width)",
+      )
+      .style(
+        "--primitive-accordion-content-height",
+        "var(--primitive-collapsible-content-height)",
+      );
+  });
+
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || state_context.orientation.get().to_string())
-      .into_attribute(),
+      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "aria-labelledby",
       Signal::derive(move || item_context.trigger_id.get()).into_attribute(),
     ),
     ("role", "region".into_attribute()),
-    (
-      "style", "--primitive-accordion-content-height: var(--primitive-collapsible-content-height); --primitive-accordion-content-width: var(--primitive-collapsible-content-width)".into_attribute()
-    ),
   ];
 
-  merged_attrs.extend(attrs.into_iter().map(|(name, attr)| {
-    if name == "style" {
-      let attr = Signal::derive(move || {
-        format!(
-          "{}--primitive-accordion-content-height: var(--primitive-collapsible-content-height); --primitive-accordion-content-width: var(--primitive-collapsible-content-width)",
-          attr
-            .as_nameless_value_string()
-            .map(|value| format!("{}; ", value.to_string()))
-            .unwrap_or_default(),
-        )
-      });
-
-      (name, attr.into_attribute())
-    } else {
-      (name, attr)
-    }
-  }));
+  merged_attrs.extend(attrs);
 
   view! {
     <CollapsibleContent
-      // node_ref=node_ref
+      node_ref=node_ref
       attrs=merged_attrs
     >
       {children()}

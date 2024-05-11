@@ -78,21 +78,21 @@ pub(crate) fn create_presence(
       .unwrap_or("none".to_string());
 
     if is_present.get() {
-      send(PresenceEvent::Mount);
+      send.call(PresenceEvent::Mount);
     } else if current_animation_name == "none"
       || styles
         .get_property_value("display")
         .map(|display| display == "none")
         .unwrap_or(false)
     {
-      send(PresenceEvent::Unmount);
+      send.call(PresenceEvent::Unmount);
     } else {
       let is_animating = prev_animation_name.get_value() != current_animation_name;
 
       if was_present && is_animating {
-        send(PresenceEvent::AnimationOut);
+        send.call(PresenceEvent::AnimationOut);
       } else {
-        send(PresenceEvent::Unmount);
+        send.call(PresenceEvent::Unmount);
       }
     }
 
@@ -101,12 +101,12 @@ pub(crate) fn create_presence(
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
-      send(PresenceEvent::AnimationEnd);
+      send.call(PresenceEvent::AnimationEnd);
       return;
     };
 
     if node.is_null() {
-      send(PresenceEvent::AnimationEnd);
+      send.call(PresenceEvent::AnimationEnd);
       return;
     }
 
@@ -159,7 +159,7 @@ pub(crate) fn create_presence(
       };
 
       if target_el.eq(&handle_end_node) && is_current_animation {
-        send(PresenceEvent::AnimationEnd);
+        send.call(PresenceEvent::AnimationEnd);
       }
     };
 

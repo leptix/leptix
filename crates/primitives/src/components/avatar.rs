@@ -15,7 +15,9 @@ pub fn AvatarRoot(#[prop(attrs)] attrs: Attributes, children: Children) -> impl 
 
   provide_context(AvatarContextValue {
     image_loading_status: Signal::derive(move || image_loading_status.get()),
-    on_image_loading_status_change: Callback::new(set_image_loading_status),
+    on_image_loading_status_change: Callback::new(move |status| {
+      set_image_loading_status.set(status);
+    }),
   });
 
   view! {
@@ -44,10 +46,10 @@ pub fn AvatarImage(
 
   let handle_loading_status_change = move |status: ImageLoadingStatus| {
     if let Some(on_loading_status_change) = on_loading_status_change {
-      on_loading_status_change(status.clone());
+      on_loading_status_change.call(status.clone());
     }
 
-    (context.on_image_loading_status_change)(status);
+    context.on_image_loading_status_change.call(status);
   };
 
   Effect::new(move |_| {
@@ -75,7 +77,7 @@ pub fn AvatarFallback(
 
   Effect::new(move |_| {
     if let Some(delay_ms) = delay_ms {
-      let callback = Closure::<dyn Fn()>::new(move || set_can_render(true));
+      let callback = Closure::<dyn Fn()>::new(move || set_can_render.set(true));
       let timer_id = window()
         .set_timeout_with_callback_and_timeout_and_arguments_0(
           callback.as_ref().unchecked_ref(),
@@ -109,29 +111,29 @@ fn use_image_loading_status(src: Option<Signal<String>>) -> Signal<ImageLoadingS
 
   Effect::new(move |_| {
     let Some(src) = src else {
-      set_loading_status(ImageLoadingStatus::Error);
+      set_loading_status.set(ImageLoadingStatus::Error);
       return;
     };
 
     let is_mounted = StoredValue::new(true);
     let Ok(image) = document().create_element("img") else {
-      set_loading_status(ImageLoadingStatus::Error);
+      set_loading_status.set(ImageLoadingStatus::Error);
       return;
     };
 
     let loaded_status_callback = Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
-      if is_mounted.get_value() == false {
+      if !is_mounted.get_value() {
         return;
       }
 
-      set_loading_status(ImageLoadingStatus::Loaded);
+      set_loading_status.set(ImageLoadingStatus::Loaded);
     });
     let error_status_callback = Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
-      if is_mounted.get_value() == false {
+      if !is_mounted.get_value() {
         return;
       }
 
-      set_loading_status(ImageLoadingStatus::Error);
+      set_loading_status.set(ImageLoadingStatus::Error);
     });
 
     image
@@ -154,5 +156,5 @@ fn use_image_loading_status(src: Option<Signal<String>>) -> Signal<ImageLoadingS
     });
   });
 
-  Signal::derive(loading_status)
+  loading_status.into()
 }

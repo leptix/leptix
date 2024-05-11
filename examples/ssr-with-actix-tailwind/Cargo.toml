@@ -11,10 +11,10 @@ actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4", optional = true, features = ["macros"] }
 console_error_panic_hook = "0.1"
 http = { version = "1.0.0", optional = true }
-leptos = { version = "0.6", features = ["nightly"] }
-leptos_meta = { version = "0.6", features = ["nightly"] }
+leptos = { version = "0.6" }
+leptos_meta = { version = "0.6" }
 leptos_actix = { version = "0.6", optional = true }
-leptos_router = { version = "0.6", features = ["nightly"] }
+leptos_router = { version = "0.6" }
 wasm-bindgen = "=0.2.92"
 leptos-use = { version = "0.10.4" }
 leptix_primitives = { path = "../../crates/primitives" }
@@ -40,6 +40,17 @@ opt-level = 'z'
 lto = true
 codegen-units = 1
 panic = "abort"
+incremental = true
+
+[profile.wasm-dev]
+inherits = "dev"
+incremental = true
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+incremental = true
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

@@ -6,7 +6,7 @@ use leptos_use::{use_element_size, UseElementSizeReturn};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
   js_sys::{Array, Function, JsString, Object, Reflect},
-  Event, EventInit, HtmlButtonElement, MouseEvent,
+  Event, EventInit, MouseEvent,
 };
 
 use crate::{
@@ -35,16 +35,17 @@ pub fn Radio(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
-  // let node_ref = NodeRef::<AnyElement>::new();
-  let is_form_control = Signal::derive(move || {
-    if let Some(node) = node_ref.get() {
-      node.closest("form").ok().flatten().is_some()
-    } else {
-      true
-    }
-  });
+  let (is_form_control, set_is_form_control) = create_signal(true);
 
   let has_consumer_stopped_propagation = StoredValue::new(false);
+
+  Effect::new(move |_| {
+    set_is_form_control.set(if let Some(foo) = node_ref.get() {
+      foo.closest("form").ok().flatten().is_some()
+    } else {
+      true
+    });
+  });
 
   let mut merged_attrs = vec![
     ("type", "button".into_attribute()),
@@ -78,9 +79,7 @@ pub fn Radio(
     (
       "disabled",
       Signal::derive(move || {
-        disabled
-          .map(|disabled| disabled.get().then_some(""))
-          .flatten()
+        disabled.and_then(|disabled| disabled.get().then_some(""))
         // .unwrap_or(false)
         // .to_string()
       })
@@ -92,7 +91,7 @@ pub fn Radio(
     ),
   ];
 
-  merged_attrs.extend(attrs.into_iter());
+  merged_attrs.extend(attrs);
 
   provide_context(RadioContextValue {
     checked: Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false)),
@@ -106,19 +105,19 @@ pub fn Radio(
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
         if let Some(on_click) = on_click {
-          on_click(ev.clone());
+          on_click.call(ev.clone());
         }
 
-        if checked.map(|checked| checked.get()).unwrap_or(false) == false {
+        if !checked.map(|checked| checked.get()).unwrap_or(false) {
           if let Some(on_check) = on_check {
-            on_check(())
+            on_check.call(())
           }
         }
 
         if is_form_control.get() {
           // has_consumer_stopped_propagation.set_value(ev.is_propagation_stopped());
 
-          if has_consumer_stopped_propagation.get_value() == false {
+          if !has_consumer_stopped_propagation.get_value() {
             ev.stop_propagation();
           }
         }
@@ -126,11 +125,11 @@ pub fn Radio(
     >
       {children()}
 
-      <Show when=is_form_control>
+      <Show when=move || is_form_control.get()>
         <BubbleInput
             checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone().map(|name| name.into_signal())
+            name=name.clone().map(|name| Signal::derive(move || name.get()))
             value=Signal::derive(move || value.get())
             required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
             disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
@@ -161,31 +160,28 @@ pub fn RadioIndicator(
   let presence = create_presence(is_present, node_ref);
   let mut merged_attrs = attrs.clone();
 
-  merged_attrs.extend(
-    [
-      (
-        "data-state",
-        Signal::derive(move || {
-          if context.checked.get() {
-            "checked"
-          } else {
-            "unchecked"
-          }
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || context.disabled.get()).into_attribute(),
-      ),
-    ]
-    .into_iter(),
-  );
+  merged_attrs.extend([
+    (
+      "data-state",
+      Signal::derive(move || {
+        if context.checked.get() {
+          "checked"
+        } else {
+          "unchecked"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || context.disabled.get()).into_attribute(),
+    ),
+  ]);
 
   let children = StoredValue::new(children);
 
   view! {
-    <Show when=presence>
+    <Show when=move || presence.get()>
         <Primitive
             element=html::span
             node_ref=node_ref
@@ -238,7 +234,7 @@ fn BubbleInput(
         _ = Reflect::apply(
           &input_descriptor_set,
           &input,
-          &Array::from_iter([JsValue::from_bool(checked.get())].into_iter()),
+          &Array::from_iter([JsValue::from_bool(checked.get())]),
         );
 
         _ = input.dispatch_event(&ev);

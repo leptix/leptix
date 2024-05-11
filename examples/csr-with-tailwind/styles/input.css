@@ -17,15 +17,13 @@
     height: 0;
   }
   to {
-    /*height: var(--primitive-accordion-content-height);*/
-    height: 75px;
+    height: var(--primitive-accordion-content-height);
   }
 }
 
 @keyframes slideUp {
   from {
-    /*height: var(--primitive-accordion-content-height);*/
-    height: 75px;
+    height: var(--primitive-accordion-content-height);
   }
   to {
     height: 0;

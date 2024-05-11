@@ -27,8 +27,8 @@ pub fn App() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
   view! {
-      <Auth />
-      <PrimitivesShowcase />
+    <Auth />
+    <PrimitivesShowcase />
   }
 }
 
