@@ -60,7 +60,7 @@ pub fn create_collection_item_ref<
     });
 
     on_cleanup(move || {
-      item_map.update(|item_map| {
+      item_map.try_update(|item_map| {
         item_map.remove(&id.clone());
       });
     });

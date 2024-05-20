@@ -804,7 +804,7 @@ pub fn SliderThumb(
     });
 
     on_cleanup(move || {
-      context.thumbs.update_value(|thumbs| {
+      context.thumbs.try_update_value(|thumbs| {
         if let Some(position) = thumbs.iter().position(|thumb| {
           let thumb_el: &web_sys::Element = thumb;
           let node_el: &web_sys::Element = &node.clone();
