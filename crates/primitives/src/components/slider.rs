@@ -802,18 +802,22 @@ pub fn SliderThumb(
     context.thumbs.update_value(|thumbs| {
       thumbs.push(node.clone());
     });
+  });
 
-    on_cleanup(move || {
-      context.thumbs.update_value(|thumbs| {
-        if let Some(position) = thumbs.iter().position(|thumb| {
-          let thumb_el: &web_sys::Element = thumb;
-          let node_el: &web_sys::Element = &node.clone();
+  on_cleanup(move || {
+    let Some(node) = item_ref.get() else {
+      return;
+    };
 
-          thumb_el == node_el
-        }) {
-          _ = thumbs.remove(position);
-        }
-      });
+    context.thumbs.update_value(|thumbs| {
+      if let Some(position) = thumbs.iter().position(|thumb| {
+        let thumb_el: &web_sys::Element = thumb;
+        let node_el: &web_sys::Element = &node.clone();
+
+        thumb_el == node_el
+      }) {
+        _ = thumbs.remove(position);
+      }
     });
   });
 
