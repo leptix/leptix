@@ -10,7 +10,7 @@ pub fn Separator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
   let mut merged_attrs = if decorative
-    .map(|decorative| decorative.get())
+    .map(|decorative| decorative.get_untracked())
     .unwrap_or(false)
   {
     vec![("role", "none".into_attribute())]

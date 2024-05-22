@@ -10,17 +10,17 @@ pub fn App() -> impl IntoView {
   provide_meta_context();
 
   view! {
-      <Stylesheet id="leptos" href="/pkg/ssr-with-actix-tailwind.css"/>
-      <Title text="Leptix SSR"/>
+    <Stylesheet id="leptos" href="/pkg/ssr-with-actix-tailwind.css"/>
+    <Title text="Leptix SSR"/>
 
-      <Router>
-          <main class="dark:bg-[#111113] p-4 flex flex-col gap-2 text-mauve11 dark:text-white">
-              <Routes>
-                  <Route path="" view=HomePage/>
-                  <Route path="/*any" view=NotFound/>
-              </Routes>
-          </main>
-      </Router>
+    <Router>
+      <main class="dark:bg-[#111113] p-4 flex flex-col gap-2 text-mauve11 dark:text-white">
+        <Routes>
+          <Route path="" view=HomePage/>
+          <Route path="/*any" view=NotFound/>
+        </Routes>
+      </main>
+    </Router>
   }
 }
 
@@ -39,44 +39,45 @@ fn Auth() -> impl IntoView {
   let auth_signal = move || profile.get().or(Some(auth_cookie.get())).flatten();
 
   view! {
-
-    {move || if auth_signal()
-      .map(|auth_cookie| auth_cookie == "bob")
-      .unwrap_or(false)
-    {
-      view! {
-        <div class="flex gap-2 items-center">
+    <Suspense fallback=move || view! { <p>"Loading (Suspense Fallback)..."</p> }>
+      {move || if auth_signal()
+        .map(|auth_cookie| auth_cookie == "bob")
+        .unwrap_or(false)
+        {
+          view! {
+            <div class="flex gap-2 items-center">
             <span>"hello bob"</span>
-            <button
+              <button
                 class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold"
                 on:click=move |_| {
-                    spawn_local(async move {
-                        _ = logout().await;
-                        profile.refetch();
-                    });
+                  spawn_local(async move {
+                    _ = logout().await;
+                    profile.refetch();
+                  });
                 }
-            >
+              >
                 "Logout"
+              </button>
+            </div>
+          }.into_view()
+        } else {
+          view! {
+            <button
+              class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold w-fit"
+              on:click=move |_| {
+                spawn_local(async move {
+                  _ = login().await;
+                  profile.refetch();
+                });
+              }
+            >
+              "Login"
             </button>
-        </div>
-      }
-      .into_view()
-    } else {
-      view! {
-        <button
-          class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold w-fit"
-          on:click=move |_| {
-            spawn_local(async move {
-              _ = login().await;
-              profile.refetch();
-            });
           }
-        >
-          "Login"
-        </button>
+        .into_view()
+        }
       }
-      .into_view()
-    }}
+    </Suspense>
   }
 }
 
@@ -104,6 +105,7 @@ async fn login() -> Result<(), ServerFnError> {
     cookie::{
       time::{Duration, OffsetDateTime, Time},
       Cookie,
+      SameSite,
     },
     http::header,
     http::header::HeaderValue,
@@ -114,6 +116,7 @@ async fn login() -> Result<(), ServerFnError> {
   let mut cookie = Cookie::build("auth", "bob")
     .max_age(Duration::days(7))
     .expires(OffsetDateTime::now_utc() + Duration::days(7))
+    .same_site(SameSite::Lax)
     .http_only(true)
     .path("/")
     .finish();
@@ -131,6 +134,7 @@ async fn logout() -> Result<(), ServerFnError> {
     cookie::{
       time::{Duration, OffsetDateTime, Time},
       Cookie,
+      SameSite,
     },
     http::header,
     http::header::HeaderValue,
@@ -141,6 +145,7 @@ async fn logout() -> Result<(), ServerFnError> {
   let mut cookie = Cookie::build("auth", "")
     .max_age(Duration::seconds(0))
     .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
+    .same_site(SameSite::Lax)
     .http_only(true)
     .path("/")
     .finish();
@@ -170,6 +175,6 @@ fn NotFound() -> impl IntoView {
   }
 
   view! {
-      <h1>"Not Found"</h1>
+    <h1>"Not Found"</h1>
   }
 }

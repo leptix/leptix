@@ -118,6 +118,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
     cookie::{
       time::{Duration, OffsetDateTime, Time},
       Cookie,
+      SameSite,
     },
     http::header,
     http::header::HeaderValue,
@@ -129,6 +130,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
     Cookie::build("dark", "true")
       .max_age(Duration::hours(500 * 365 * 24))
       .expires(OffsetDateTime::now_utc() + Duration::hours(500 * 365 * 24))
+      .same_site(SameSite::Lax)
       .http_only(true)
       .path("/")
       .finish()
@@ -136,6 +138,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
     Cookie::build("dark", "")
       .max_age(Duration::seconds(0))
       .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
+      .same_site(SameSite::Lax)
       .http_only(true)
       .path("/")
       .finish()
@@ -152,44 +155,42 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
 fn ThemeToggle() -> impl IntoView {
   let (dark, _) = use_cookie::<String, FromToStringCodec>("dark");
   let (dark_theme, set_dark_theme) = create_signal(dark.get_untracked().is_some());
-  let theme = if dark.get().is_some() { "dark" } else { "" };
+  let theme = if dark.get_untracked().is_some() { "dark" } else { "" };
 
   view! {
-      <Html class=theme />
+    <Html class=theme />
 
     <ToggleRoot
       attr:aria-label="Toggle italic"
       attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
       pressed=true.into()
       on_click=Callback::new(move |_| {
-          set_dark_theme
-              .update(|dark_theme| {
-                  *dark_theme = !*dark_theme;
-              });
-          let Some(el) = document().document_element() else {
-              return;
-          };
+        set_dark_theme.update(|dark_theme| {
+          *dark_theme = !*dark_theme;
+        });
 
-          if dark_theme.get() {
-              _ = el.class_list().add_1("dark");
-          } else {
-              _ = el.class_list().remove_1("dark");
-          }
+        let Some(el) = document().document_element() else {
+          return;
+        };
 
-          spawn_local(async move {
-              _ = toggle_dark_mode(dark_theme.get()).await;
-          });
+        if dark_theme.get() {
+          _ = el.class_list().add_1("dark");
+        } else {
+          _ = el.class_list().remove_1("dark");
+        }
+
+        spawn_local(async move {
+          _ = toggle_dark_mode(dark_theme.get_untracked()).await;
+        });
       })
     >
-
       {move || {
-          if dark_theme.get() {
-              view! { <MoonIcon/> }
-          } else {
-              view! { <SunIcon/> }
-          }
+        if dark_theme.get() {
+          view! { <MoonIcon/> }
+        } else {
+          view! { <SunIcon/> }
+        }
       }}
-
     </ToggleRoot>
   }
 }
@@ -327,7 +328,7 @@ fn AspectRatioDemo() -> impl IntoView {
 fn ProgressDemo() -> impl IntoView {
   let (progress, set_progress) = create_signal(25u32);
   let (indicator_style, set_indicator_style) =
-    create_signal(format!("transform: translateX(-{}%)", 100 - progress.get()));
+    create_signal(format!("transform: translateX(-{}%)", 100 - progress.get_untracked()));
 
   Effect::new(move |_| {
     let Pausable { pause, .. } = use_interval_fn(

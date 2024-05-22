@@ -95,7 +95,7 @@ pub fn SliderRoot(
     }),
   });
 
-  let values_before_slide_start = StoredValue::new(values.get());
+  let values_before_slide_start = StoredValue::new(values.get_untracked());
 
   let update_values = move |value: f64, at_index: usize, commit: bool| {
     let decimal_count = get_decimal_count(step.map(|step| step.get()).unwrap_or(1.));
@@ -347,7 +347,7 @@ fn Slider(
 ) -> impl IntoView {
   let dom_rect = StoredValue::<Option<DomRect>>::new(None);
 
-  let (orientation_context, pointer_value, slide_direction) = match orientation.get() {
+  let (orientation_context, pointer_value, slide_direction) = match orientation.get_untracked() {
     Orientation::Horizontal => {
       let is_left_to_right = Signal::derive(move || {
         direction
@@ -477,7 +477,7 @@ fn Slider(
     (move || orientation.get().to_string()).into_attribute(),
   ));
 
-  if orientation.get() == Orientation::Horizontal {
+  if orientation.get_untracked() == Orientation::Horizontal {
     if let Some(direction) = direction {
       merged_attrs.push((
         "dir",
@@ -836,13 +836,15 @@ pub fn SliderThumb(
     ("role", "slider".into_attribute()),
     (
       "aria-label",
-      attrs
-        .iter()
-        .find(|(name, _)| name.eq(&"aria-label"))
-        .map_or(label.get(), |(_, attr)| {
-          attr.as_nameless_value_string().map(|attr| attr.to_string())
-        })
-        .into_attribute(),
+      (move || {
+        attrs
+          .iter()
+          .find(|(name, _)| name.eq(&"aria-label"))
+          .map_or(label.get(), |(_, attr)| {
+            attr.as_nameless_value_string().map(|attr| attr.to_string())
+          })
+      })
+      .into_attribute(),
     ),
     (
       "aria-valuemin",
@@ -900,12 +902,12 @@ pub fn SliderThumb(
         {children()}
       </Primitive>
 
-      {move || is_form_control.get().then_some(view! {
-        <BubbleInput
-          name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
-          value=Signal::derive(move || value.get().unwrap_or_default())
-        />
-      })}
+    //  <Show when=move || is_form_control.get()>
+    //    <BubbleInput
+    //      name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
+    //      value=Signal::derive(move || value.get().unwrap_or_default())
+    //    />
+    //  </Show>
     </span>
   }
 }
@@ -960,8 +962,8 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
   view! {
     <input
       aria-hidden
-      name=Signal::derive(move || name.get()).into_attribute()
-      value=Signal::derive(move || value.get()).into_attribute()
+      name=name.into_attribute()
+      value=value.into_attribute()
       node_ref=node_ref
       style:display="none"
     />
@@ -969,14 +971,12 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
 }
 
 fn get_label(index: usize, total_values: usize) -> Option<String> {
-  if total_values > 2 {
-    Some(format!("Value {} of {total_values}", index + 1))
-  } else if total_values == 2 {
-    ["Minimum", "Maximum"]
+  match total_values {
+    n if n > 2 => Some(format!("Value {} of {}", index + 1, total_values)),
+    2 => ["Minimum", "Maximum"]
       .get(index)
-      .map(|label| label.to_string())
-  } else {
-    None
+      .map(|label| label.to_string()),
+    _ => None,
   }
 }
 

@@ -8,8 +8,8 @@ pub(crate) struct Previous<T> {
 
 pub(crate) fn create_previous<T: Clone + PartialEq + 'static>(initial: Signal<T>) -> Signal<T> {
   let prev = StoredValue::new(Previous {
-    value: initial.get(),
-    previous: initial.get(),
+    value: initial.get_untracked(),
+    previous: initial.get_untracked(),
   });
 
   create_memo(move |_| {

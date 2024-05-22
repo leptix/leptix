@@ -25,7 +25,7 @@ pub(crate) fn create_presence(
   node_ref: NodeRef<AnyElement>,
 ) -> Signal<bool> {
   let styles = StoredValue::<Option<StyleDeclaration>>::new(None);
-  let prev_present = StoredValue::new(is_present.get());
+  let prev_present = StoredValue::new(is_present.get_untracked());
   let prev_animation_name = StoredValue::new(String::from("none"));
 
   let initial = Signal::derive(move || {

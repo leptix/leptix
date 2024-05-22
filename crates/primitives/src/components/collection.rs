@@ -35,7 +35,7 @@ pub fn create_collection_item_ref<
     );
 
   let (id, set_id) = create_signal::<Option<CollectionItemId>>(None);
-  let item_ref = create_node_ref::<ItemElement>();
+  let item_ref = NodeRef::<ItemElement>::new();
 
   Effect::new(move |_| {
     if let Some(node) = item_ref.get() {
