@@ -228,15 +228,19 @@ fn WithTitle(
           {title}
         </div>
 
-        <Show when=move || broken>
-            <div class="flex items-center gap-1 px-2 pb-[0.075rem] font-semibold text-sm bg-red9/20 border-red9/20 border text-red9 w-fit rounded-full">
-                <div class="translate-y-[0.5px]">
-                    <ErrorIcon/>
-                </div>
+        {broken
+            .then_some(
+                view! {
+                  <div class="flex items-center gap-1 px-2 pb-[0.075rem] font-semibold text-sm bg-red9/20 border-red9/20 border text-red9 w-fit rounded-full">
+                    <div class="translate-y-[0.5px]">
+                      <ErrorIcon/>
+                    </div>
 
-                "Currently Broken"
-            </div>
-        </Show>
+                    "Currently Broken"
+                  </div>
+                },
+            )}
+
       </div>
       <div class="pl-2.5 mb-2.5 mr-2.5">{children()}</div>
     </div>
