@@ -934,7 +934,7 @@ pub fn SliderThumb(
       thumbs.push(node.clone());
     });
   });
-
+  
   on_cleanup(move || {
     let Some(node) = item_ref.get() else {
       return;
