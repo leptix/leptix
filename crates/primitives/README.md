@@ -5,6 +5,15 @@
 <h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptix Primitives</h1>
 
 <p align="center">
+  <a href="https://crates.io/crates/leptix_primitives" _target="blank">
+    <img src="https://img.shields.io/crates/v/leptix_primitives"/>
+  </a>
+  <a href="https://docs.rs/leptix_primitives" _target="blank">
+    <img src="https://img.shields.io/docsrs/leptix_primitives/0.1.0"/>
+  </a>
+</p>
+
+<p align="center">
     Accessible and unstyled components for Leptos
 </p>
 
