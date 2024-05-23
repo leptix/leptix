@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use leptos::{html::AnyElement, *};
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -258,22 +258,20 @@ pub(crate) fn RovingFocusGroupItem(
   } = use_context::<RovingContextValue>()
     .expect("RovingFocusGroupItem must be used in a RovingFocusGroup component");
 
-  let id = move || {
+  let id = Signal::derive(move || {
     tab_stop_id
       .as_ref()
       .map(|id| id.get())
       .unwrap_or(create_id().get())
-  };
+  });
 
   let item_ref = create_collection_item_ref::<html::AnyElement, ItemData>(ItemData {
-    id: id(),
+    id: id.get_untracked(),
     focusable: Signal::derive(move || focusable.map(|focusable| focusable.get()).unwrap_or(false)),
     active: Signal::derive(move || active.map(|active| active.get()).unwrap_or(false)),
   });
 
-  let is_current_tab_stop_id = id.clone();
-  let is_current_tab_stop =
-    Signal::derive(move || current_tab_stop_id.get() == Some(is_current_tab_stop_id()));
+  let is_current_tab_stop = Signal::derive(move || current_tab_stop_id.get() == Some(id.get()));
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
 
   Effect::new(move |_| {
@@ -298,9 +296,6 @@ pub(crate) fn RovingFocusGroupItem(
 
   merged_attrs.extend(attrs);
 
-  let mousedown_id = id.clone();
-  let focus_id = id.clone();
-
   view! {
     <Primitive element=html::span
       as_child=as_child
@@ -314,7 +309,7 @@ pub(crate) fn RovingFocusGroupItem(
         if !focusable.map(|focusable| focusable.get()).unwrap_or(false) {
           ev.prevent_default();
         } else {
-          on_item_focus.call(mousedown_id());
+          on_item_focus.call(id.get());
         }
       }
       on:focus=move |ev: FocusEvent| {
@@ -322,7 +317,7 @@ pub(crate) fn RovingFocusGroupItem(
           on_focus.call(ev);
         }
 
-        on_item_focus.call(focus_id());
+        on_item_focus.call(id.get());
       }
       on:keydown=move |ev: KeyboardEvent| {
         if let Some(on_key_down) = on_key_down {

@@ -54,7 +54,7 @@ fn Auth() -> impl IntoView {
     let auth_signal = move || profile.get().or(Some(auth_cookie.get())).flatten();
 
     view! {
-
+    <Suspense fallback=move || view! { <p>"Loading (Suspense Fallback)..."</p> }>
       {move || if auth_signal()
         .map(|auth_cookie| auth_cookie == "bob")
         .unwrap_or(false)
@@ -92,6 +92,7 @@ fn Auth() -> impl IntoView {
         }
         .into_view()
       }}
+          </Suspense>
     }
 }
 
@@ -116,7 +117,7 @@ async fn get_profile() -> Result<String, ServerFnError> {
 #[server]
 async fn login() -> Result<(), ServerFnError> {
     use axum::{http::header, http::header::HeaderValue};
-    use axum_extra::extract::cookie::Cookie;
+    use axum_extra::extract::cookie::{Cookie, SameSite};
     use leptos_axum::ResponseOptions;
     use std::ops::Add;
     use time::{Duration, OffsetDateTime, Time};
@@ -124,6 +125,7 @@ async fn login() -> Result<(), ServerFnError> {
     let mut cookie = Cookie::build(("auth", "bob"))
         .max_age(Duration::days(7))
         .expires(OffsetDateTime::now_utc() + Duration::days(7))
+        .same_site(SameSite::Lax)
         .http_only(true)
         .path("/")
         .finish();
@@ -138,7 +140,7 @@ async fn login() -> Result<(), ServerFnError> {
 #[server]
 async fn logout() -> Result<(), ServerFnError> {
     use axum::{http::header, http::header::HeaderValue};
-    use axum_extra::extract::cookie::Cookie;
+    use axum_extra::extract::cookie::{Cookie, SameSite};
     use leptos_axum::ResponseOptions;
     use std::ops::Add;
     use time::{Duration, OffsetDateTime, Time};
@@ -146,6 +148,7 @@ async fn logout() -> Result<(), ServerFnError> {
     let mut cookie = Cookie::build(("auth", ""))
         .max_age(Duration::seconds(0))
         .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
+        .same_site(SameSite::Lax)
         .http_only(true)
         .path("/")
         .finish();

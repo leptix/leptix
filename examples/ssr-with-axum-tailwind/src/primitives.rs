@@ -116,7 +116,7 @@ pub fn PrimitivesShowcase() -> impl IntoView {
 
 #[server]
 async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
-    use axum_extra::extract::cookie::Cookie;
+    use axum_extra::extract::cookie::{Cookie, SameSite};
 
     use time::{Duration, OffsetDateTime, Time};
 
@@ -129,6 +129,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
             .max_age(Duration::hours(500 * 365 * 24))
             .expires(OffsetDateTime::now_utc() + Duration::hours(500 * 365 * 24))
             .http_only(true)
+            .same_site(SameSite::Lax)
             .path("/")
             .finish()
     } else {
@@ -136,6 +137,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
             .max_age(Duration::seconds(0))
             .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
             .http_only(true)
+            .same_site(SameSite::Lax)
             .path("/")
             .finish()
     };
@@ -151,7 +153,7 @@ async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
 fn ThemeToggle() -> impl IntoView {
     let (dark, _) = use_cookie::<String, FromToStringCodec>("dark");
     let (dark_theme, set_dark_theme) = create_signal(dark.get_untracked().is_some());
-    let theme = if dark.get().is_some() { "dark" } else { "" };
+    let theme = if dark.get_untracked().is_some() { "dark" } else { "" };
 
     view! {
         <Html class=theme />
@@ -326,7 +328,7 @@ fn AspectRatioDemo() -> impl IntoView {
 fn ProgressDemo() -> impl IntoView {
     let (progress, set_progress) = create_signal(25u32);
     let (indicator_style, set_indicator_style) =
-        create_signal(format!("transform: translateX(-{}%)", 100 - progress.get()));
+        create_signal(format!("transform: translateX(-{}%)", 100 - progress.get_untracked()));
 
     Effect::new(move |_| {
         let Pausable { pause, .. } = use_interval_fn(

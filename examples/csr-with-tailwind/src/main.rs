@@ -288,8 +288,10 @@ fn AspectRatioDemo() -> impl IntoView {
 #[component]
 fn ProgressDemo() -> impl IntoView {
   let (progress, set_progress) = create_signal(25u32);
-  let (indicator_style, set_indicator_style) =
-    create_signal(format!("transform: translateX(-{}%)", 100 - progress.get()));
+  let (indicator_style, set_indicator_style) = create_signal(format!(
+    "transform: translateX(-{}%)",
+    100 - progress.get_untracked()
+  ));
 
   Effect::new(move |_| {
     let Pausable { pause, .. } = use_interval_fn(

@@ -56,7 +56,7 @@ pub fn SliderRoot(
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  children: ChildrenFn,
 ) -> impl IntoView {
   let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
   let value_index_to_change = StoredValue::new(Some(0usize));
@@ -95,7 +95,7 @@ pub fn SliderRoot(
     }),
   });
 
-  let values_before_slide_start = StoredValue::new(values.get());
+  let values_before_slide_start = StoredValue::new(values.get_untracked());
 
   let update_values = move |value: f64, at_index: usize, commit: bool| {
     let decimal_count = get_decimal_count(step.map(|step| step.get()).unwrap_or(1.));
@@ -327,6 +327,11 @@ enum SlideDirection {
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct SliderCollectionItem;
 
+#[derive(Clone)]
+struct SliderImplContextValue {
+  dom_rect: StoredValue<Option<DomRect>>,
+}
+
 #[component]
 fn Slider(
   max: Signal<f64>,
@@ -343,133 +348,263 @@ fn Slider(
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  children: ChildrenFn,
 ) -> impl IntoView {
   let dom_rect = StoredValue::<Option<DomRect>>::new(None);
 
-  let (orientation_context, pointer_value, slide_direction) = match orientation.get() {
-    Orientation::Horizontal => {
-      let is_left_to_right = Signal::derive(move || {
-        direction
-          .map(|direction| direction.get())
-          .unwrap_or_default()
-          == Direction::LeftToRight
-      });
+  provide_context(SliderImplContextValue { dom_rect });
 
-      let is_sliding_from_left = Signal::derive(move || {
-        (is_left_to_right.get() && !inverted.get()) || (!is_left_to_right.get() && inverted.get())
-      });
+  let children = StoredValue::new(children);
 
-      let pointer_value = Callback::new(move |pointer: i32| {
-        let rect = dom_rect
-          .get_value()
-          .unwrap_or(node_ref.get().unwrap().get_bounding_client_rect());
+  move || {
+    let attrs = attrs.clone();
 
-        let input = (0., rect.width());
-        let output = if is_sliding_from_left.get() {
-          (min.get(), max.get())
-        } else {
-          (max.get(), min.get())
-        };
-        let value = linear_scale(input, output);
-
-        dom_rect.set_value(Some(rect.clone()));
-
-        value(pointer as f64 - rect.left())
-      });
-
-      (
-        OrientationContextValue {
-          start_edge: Signal::derive(move || {
-            if is_sliding_from_left.get() {
-              Side::Left
-            } else {
-              Side::Right
-            }
-          }),
-          end_edge: Signal::derive(move || {
-            if is_sliding_from_left.get() {
-              Side::Right
-            } else {
-              Side::Left
-            }
-          }),
-          direction: Signal::derive(move || {
-            if is_sliding_from_left.get() {
-              OrientationDirection::Forward
-            } else {
-              OrientationDirection::Backward
-            }
-          }),
-          size: Signal::derive(|| Size::Width),
-        },
-        pointer_value,
-        Signal::derive(move || {
-          if is_sliding_from_left.get() {
-            SlideDirection::FromLeft
-          } else {
-            SlideDirection::FromRight
-          }
-        }),
-      )
+    match orientation.get() {
+      Orientation::Horizontal => view! {
+          <SliderHorizontal
+              max=max
+              min=min
+              inverted=inverted
+              direction=direction
+              node_ref=node_ref
+          >
+              <SliderImpl
+                  max=max
+                  min=min
+                  inverted=inverted
+                  orientation=orientation
+                  direction=direction
+                  on_slide_start=on_slide_start
+                  on_slide_move=on_slide_move
+                  on_slide_end=on_slide_end
+                  on_home_key_down=on_home_key_down
+                  on_end_key_down=on_end_key_down
+                  on_step_key_down=on_step_key_down
+                  attrs=attrs
+                  node_ref=node_ref
+              >
+                  {children.with_value(|children| children())}
+              </SliderImpl>
+          </SliderHorizontal>
+      },
+      Orientation::Vertical => view! {
+          <SliderVertical
+              max=max
+              min=min
+              inverted=inverted
+              direction=direction
+              node_ref=node_ref
+          >
+              <SliderImpl
+                  max=max
+                  min=min
+                  inverted=inverted
+                  orientation=orientation
+                  direction=direction
+                  on_slide_start=on_slide_start
+                  on_slide_move=on_slide_move
+                  on_slide_end=on_slide_end
+                  on_home_key_down=on_home_key_down
+                  on_end_key_down=on_end_key_down
+                  on_step_key_down=on_step_key_down
+                  attrs=attrs
+                  node_ref=node_ref
+              >
+                  {children.with_value(|children| children())}
+              </SliderImpl>
+          </SliderVertical>
+      },
     }
-    Orientation::Vertical => {
-      let is_sliding_from_bottom = Signal::derive(move || !inverted.get());
+  }
+}
 
-      let pointer_value = Callback::new(move |pointer: i32| {
-        let rect = dom_rect
-          .get_value()
-          .unwrap_or(node_ref.get().unwrap().get_bounding_client_rect());
+#[derive(Clone)]
+struct SliderOrientationImplContextValue {
+  pointer_value: Callback<i32, f64>,
+  slide_direction: Signal<SlideDirection>,
+}
 
-        let input = (0., rect.height());
-        let output = if is_sliding_from_bottom.get() {
-          (max.get(), min.get())
-        } else {
-          (min.get(), max.get())
-        };
-        let value = linear_scale(input, output);
+#[component]
+fn SliderHorizontal(
+  max: Signal<f64>,
+  min: Signal<f64>,
+  inverted: Signal<bool>,
+  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  node_ref: NodeRef<AnyElement>,
+  children: Children,
+) -> impl IntoView {
+  let SliderImplContextValue { dom_rect } =
+    use_context().expect("SliderImpl must be used in a Slider component");
 
-        dom_rect.set_value(Some(rect.clone()));
+  let is_left_to_right = Signal::derive(move || {
+    direction
+      .map(|direction| direction.get())
+      .unwrap_or_default()
+      == Direction::LeftToRight
+  });
 
-        value(pointer as f64 - rect.top())
-      });
+  let is_sliding_from_left = Signal::derive(move || {
+    (is_left_to_right.get() && !inverted.get()) || (!is_left_to_right.get() && inverted.get())
+  });
 
-      (
-        OrientationContextValue {
-          start_edge: Signal::derive(move || {
-            if is_sliding_from_bottom.get() {
-              Side::Bottom
-            } else {
-              Side::Top
-            }
-          }),
-          end_edge: Signal::derive(move || {
-            if is_sliding_from_bottom.get() {
-              Side::Top
-            } else {
-              Side::Bottom
-            }
-          }),
-          direction: Signal::derive(move || {
-            if is_sliding_from_bottom.get() {
-              OrientationDirection::Forward
-            } else {
-              OrientationDirection::Backward
-            }
-          }),
-          size: Signal::derive(|| Size::Height),
-        },
-        pointer_value,
-        Signal::derive(move || {
-          if is_sliding_from_bottom.get() {
-            SlideDirection::FromBottom
-          } else {
-            SlideDirection::FromTop
-          }
-        }),
-      )
+  let pointer_value = Callback::new(move |pointer: i32| {
+    let rect = dom_rect
+      .get_value()
+      .unwrap_or(node_ref.get().unwrap().get_bounding_client_rect());
+
+    let input = (0., rect.width());
+    let output = if is_sliding_from_left.get() {
+      (min.get(), max.get())
+    } else {
+      (max.get(), min.get())
+    };
+    let value = linear_scale(input, output);
+
+    dom_rect.set_value(Some(rect.clone()));
+
+    value(pointer as f64 - rect.left())
+  });
+
+  let slide_direction = Signal::derive(move || {
+    if is_sliding_from_left.get() {
+      SlideDirection::FromLeft
+    } else {
+      SlideDirection::FromRight
     }
-  };
+  });
+
+  provide_context(OrientationContextValue {
+    start_edge: Signal::derive(move || {
+      if is_sliding_from_left.get() {
+        Side::Left
+      } else {
+        Side::Right
+      }
+    }),
+    end_edge: Signal::derive(move || {
+      if is_sliding_from_left.get() {
+        Side::Right
+      } else {
+        Side::Left
+      }
+    }),
+    direction: Signal::derive(move || {
+      if is_sliding_from_left.get() {
+        OrientationDirection::Forward
+      } else {
+        OrientationDirection::Backward
+      }
+    }),
+    size: Signal::derive(|| Size::Width),
+  });
+
+  provide_context(SliderOrientationImplContextValue {
+    pointer_value,
+    slide_direction,
+  });
+
+  children().into_view()
+}
+
+#[component]
+fn SliderVertical(
+  max: Signal<f64>,
+  min: Signal<f64>,
+  inverted: Signal<bool>,
+  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  node_ref: NodeRef<AnyElement>,
+  children: Children,
+) -> impl IntoView {
+  let SliderImplContextValue { dom_rect } =
+    use_context().expect("SliderImpl must be used in a Slider component");
+
+  let is_sliding_from_bottom = Signal::derive(move || !inverted.get());
+
+  let pointer_value = Callback::new(move |pointer: i32| {
+    let rect = dom_rect
+      .get_value()
+      .unwrap_or(node_ref.get().unwrap().get_bounding_client_rect());
+
+    let input = (0., rect.height());
+    let output = if is_sliding_from_bottom.get() {
+      (max.get(), min.get())
+    } else {
+      (min.get(), max.get())
+    };
+    let value = linear_scale(input, output);
+
+    dom_rect.set_value(Some(rect.clone()));
+
+    value(pointer as f64 - rect.top())
+  });
+
+  let slide_direction = Signal::derive(move || {
+    if is_sliding_from_bottom.get() {
+      SlideDirection::FromBottom
+    } else {
+      SlideDirection::FromTop
+    }
+  });
+
+  provide_context(OrientationContextValue {
+    start_edge: Signal::derive(move || {
+      if is_sliding_from_bottom.get() {
+        Side::Bottom
+      } else {
+        Side::Top
+      }
+    }),
+    end_edge: Signal::derive(move || {
+      if is_sliding_from_bottom.get() {
+        Side::Top
+      } else {
+        Side::Bottom
+      }
+    }),
+    direction: Signal::derive(move || {
+      if is_sliding_from_bottom.get() {
+        OrientationDirection::Forward
+      } else {
+        OrientationDirection::Backward
+      }
+    }),
+    size: Signal::derive(|| Size::Height),
+  });
+
+  provide_context(SliderOrientationImplContextValue {
+    pointer_value,
+    slide_direction,
+  });
+
+  children().into_view()
+}
+
+#[component]
+fn SliderImpl(
+  max: Signal<f64>,
+  min: Signal<f64>,
+  inverted: Signal<bool>,
+  orientation: Signal<Orientation>,
+  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional_no_strip)] on_slide_start: Option<Callback<f64>>,
+  #[prop(optional_no_strip)] on_slide_move: Option<Callback<f64>>,
+  #[prop(optional_no_strip)] on_slide_end: Option<Callback<()>>,
+  #[prop(optional_no_strip)] on_home_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(optional_no_strip)] on_end_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(optional_no_strip)] on_step_key_down: Option<Callback<Step>>,
+
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
+  children: ChildrenFn,
+) -> impl IntoView {
+  let SliderImplContextValue { dom_rect } =
+    use_context().expect("SliderImpl must be used in a Slider component");
+
+  let SliderOrientationImplContextValue {
+    pointer_value,
+    slide_direction,
+  } = use_context()
+    .expect("SliderImpl must be used in either a SliderHorizontal or SliderVertical component");
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.push((
@@ -477,7 +612,7 @@ fn Slider(
     (move || orientation.get().to_string()).into_attribute(),
   ));
 
-  if orientation.get() == Orientation::Horizontal {
+  if orientation.get_untracked() == Orientation::Horizontal {
     if let Some(direction) = direction {
       merged_attrs.push((
         "dir",
@@ -488,8 +623,6 @@ fn Slider(
 
   let context =
     use_context::<SliderContextValue>().expect("Slider must be used in a SliderRoot component");
-
-  provide_context(orientation_context);
 
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
@@ -514,14 +647,10 @@ fn Slider(
           if let Some(on_home_key_down) = on_home_key_down {
             on_home_key_down.call(ev.clone());
           }
-
-          ev.prevent_default();
         } else if ev.key() == "End" {
           if let Some(on_end_key_down) = on_end_key_down {
             on_end_key_down.call(ev.clone());
           }
-
-          ev.prevent_default();
         } else if ["PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].contains(&ev.key().as_ref()) {
           if let Some(on_step_key_down) = on_step_key_down {
             let is_back_key = match slide_direction.get() {
@@ -540,17 +669,19 @@ fn Slider(
               }
             });
           }
-
-          ev.prevent_default();
+        } else {
+            return;
         }
+
+        ev.prevent_default();
       }
       on:pointerdown=move |ev: PointerEvent| {
         let Some(target) = ev.target() else {
-          return;
+            return;
         };
 
         let Some(target_el) = target.dyn_ref::<web_sys::HtmlElement>() else {
-          return;
+            return;
         };
 
         _ = target_el.set_pointer_capture(ev.pointer_id());
@@ -802,18 +933,22 @@ pub fn SliderThumb(
     context.thumbs.update_value(|thumbs| {
       thumbs.push(node.clone());
     });
+  });
+  
+  on_cleanup(move || {
+    let Some(node) = item_ref.get() else {
+      return;
+    };
 
-    on_cleanup(move || {
-      context.thumbs.try_update_value(|thumbs| {
-        if let Some(position) = thumbs.iter().position(|thumb| {
-          let thumb_el: &web_sys::Element = thumb;
-          let node_el: &web_sys::Element = &node.clone();
+    context.thumbs.update_value(|thumbs| {
+      if let Some(position) = thumbs.iter().position(|thumb| {
+        let thumb_el: &web_sys::Element = thumb;
+        let node_el: &web_sys::Element = &node.clone();
 
-          thumb_el == node_el
-        }) {
-          _ = thumbs.remove(position);
-        }
-      });
+        thumb_el == node_el
+      }) {
+        _ = thumbs.remove(position);
+      }
     });
   });
 
@@ -836,13 +971,15 @@ pub fn SliderThumb(
     ("role", "slider".into_attribute()),
     (
       "aria-label",
-      attrs
-        .iter()
-        .find(|(name, _)| name.eq(&"aria-label"))
-        .map_or(label.get(), |(_, attr)| {
-          attr.as_nameless_value_string().map(|attr| attr.to_string())
-        })
-        .into_attribute(),
+      (move || {
+        attrs
+          .iter()
+          .find(|(name, _)| name.eq(&"aria-label"))
+          .map_or(label.get(), |(_, attr)| {
+            attr.as_nameless_value_string().map(|attr| attr.to_string())
+          })
+      })
+      .into_attribute(),
     ),
     (
       "aria-valuemin",
@@ -900,12 +1037,12 @@ pub fn SliderThumb(
         {children()}
       </Primitive>
 
-      {move || is_form_control.get().then_some(view! {
-        <BubbleInput
-          name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
-          value=Signal::derive(move || value.get().unwrap_or_default())
-        />
-      })}
+    //  <Show when=move || is_form_control.get()>
+    //    <BubbleInput
+    //      name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
+    //      value=Signal::derive(move || value.get().unwrap_or_default())
+    //    />
+    //  </Show>
     </span>
   }
 }
@@ -960,8 +1097,8 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
   view! {
     <input
       aria-hidden
-      name=Signal::derive(move || name.get()).into_attribute()
-      value=Signal::derive(move || value.get()).into_attribute()
+      name=name.into_attribute()
+      value=value.into_attribute()
       node_ref=node_ref
       style:display="none"
     />
@@ -969,14 +1106,12 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
 }
 
 fn get_label(index: usize, total_values: usize) -> Option<String> {
-  if total_values > 2 {
-    Some(format!("Value {} of {total_values}", index + 1))
-  } else if total_values == 2 {
-    ["Minimum", "Maximum"]
+  match total_values {
+    n if n > 2 => Some(format!("Value {} of {}", index + 1, total_values)),
+    2 => ["Minimum", "Maximum"]
       .get(index)
-      .map(|label| label.to_string())
-  } else {
-    None
+      .map(|label| label.to_string()),
+    _ => None,
   }
 }
 
