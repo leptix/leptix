@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use leptos::{ev::EventDescriptor, html::AnyElement, *};
-use leptos_use::use_event_listener;
+use leptos::{html::AnyElement, *};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{Event, FocusEvent, KeyboardEvent, MouseEvent};
 
@@ -53,22 +52,6 @@ struct RovingContextValue {
   on_focusable_item_remove: Callback<()>,
 }
 
-#[derive(Clone)]
-struct OnEntryFocus;
-
-impl EventDescriptor for OnEntryFocus {
-  const BUBBLES: bool = false;
-  type EventType = web_sys::Event;
-
-  fn name(&self) -> Oco<'static, str> {
-    "roving_focus_group.on_entry_focus".into()
-  }
-
-  fn event_delegation_key(&self) -> Oco<'static, str> {
-    "$$$roving_focus_group.on_entry_focus".into()
-  }
-}
-
 #[component]
 pub(crate) fn RovingFocusGroup(
   #[prop(optional)] as_child: Option<bool>,
@@ -118,9 +101,28 @@ pub(crate) fn RovingFocusGroup(
 
   let (focusable_items_count, set_focusable_items_count) = create_signal(0);
 
-  _ = use_event_listener(node_ref, OnEntryFocus, move |ev: web_sys::Event| {
-    if let Some(on_entry_focus) = on_entry_focus {
-      on_entry_focus.call(ev);
+  Effect::new(move |_| {
+    if let Some(node_ref) = node_ref.get() {
+      let listen_entry_focus =
+        Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
+          if let Some(on_entry_focus) = on_entry_focus {
+            on_entry_focus.call(ev);
+          }
+        });
+
+      _ = node_ref.add_event_listener_with_callback(
+        "rovingFocusGroup.onEntryFocus",
+        listen_entry_focus.as_ref().unchecked_ref(),
+      );
+
+      on_cleanup(move || {
+        _ = node_ref.remove_event_listener_with_callback(
+          "rovingFocusGroup.onEntryFocus",
+          listen_entry_focus.as_ref().unchecked_ref(),
+        );
+
+        listen_entry_focus.forget();
+      });
     }
   });
 
@@ -190,7 +192,7 @@ pub(crate) fn RovingFocusGroup(
           let mut init = web_sys::CustomEventInit::new();
           init.bubbles(false).cancelable(true);
 
-          let Ok(entry_focus_event) = web_sys::CustomEvent::new_with_event_init_dict("roving_focus_group.on_entry_focus", &init) else {
+          let Ok(entry_focus_event) = web_sys::CustomEvent::new_with_event_init_dict("rovingFocusGroup.onEntryFocus", &init) else {
             return;
           };
 

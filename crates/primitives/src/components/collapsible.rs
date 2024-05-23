@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, *};
+use leptos::{html::AnyElement, *};
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
@@ -193,20 +193,17 @@ fn CollapsibleContentImpl(
   let is_mount_animation_prevented = StoredValue::new(is_open.get_untracked());
 
   let original_styles = StoredValue::<Option<CssStyleDeclaration>>::new(None);
-  let animation_frame_handle = StoredValue::<Option<AnimationFrameRequestHandle>>::new(None);
 
   Effect::new(move |_| {
-    if let Ok(handle) = request_animation_frame_with_handle(move || {
+    let Ok(animation_frame) = request_animation_frame_with_handle(move || {
       is_mount_animation_prevented.set_value(false);
-    }) {
-      animation_frame_handle.set_value(Some(handle));
-    }
-  });
+    }) else {
+      return;
+    };
 
-  on_cleanup(move || {
-    if let Some(handle) = animation_frame_handle.get_value() {
-      handle.cancel();
-    }
+    on_cleanup(move || {
+      animation_frame.cancel();
+    });
   });
 
   let rect_size = Signal::derive(move || {
@@ -302,7 +299,7 @@ fn CollapsibleContentImpl(
       "data-disabled",
       (move || disabled.get().unwrap_or(false)).into_attribute(),
     ),
-    ("id", content_id.into_attribute()),
+    ("id", (move || content_id.get()).into_attribute()),
     (
       "hidden",
       (move || !(is_open.get() || present_state.get())).into_attribute(),
