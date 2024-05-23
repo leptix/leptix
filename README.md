@@ -5,6 +5,15 @@
 <h1 align="center" tabindex="-1" class="heading-element" dir="auto">Leptix</h1>
 
 <p align="center">
+  <a href="https://crates.io/crates/leptix_primitives" _target="blank">
+    <img src="https://img.shields.io/crates/v/leptix_primitives"/>
+  </a>
+  <a href="https://docs.rs/leptix_primitives" _target="blank">
+    <img src="https://img.shields.io/docsrs/leptix_primitives/0.1.0"/>
+  </a>
+</p>
+
+<p align="center">
     Accessible components for Leptos
 </p>
 
@@ -75,25 +84,25 @@ import * as Checkbox from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@radix-ui/react-icons";
 
 const CheckboxDemo = () => (
-	<form>
-		<div className="flex items-center">
-			<Checkbox.Root
-				className="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
-				defaultChecked
-				id="c1"
-			>
-				<Checkbox.Indicator className="text-violet11">
-					<CheckIcon />
-				</Checkbox.Indicator>
-			</Checkbox.Root>
-			<label
-				className="pl-[15px] text-[15px] leading-none text-white"
-				htmlFor="c1"
-			>
-				Accept terms and conditions.
-			</label>
-		</div>
-	</form>
+  <form>
+    <div className="flex items-center">
+      <Checkbox.Root
+        className="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
+        defaultChecked
+        id="c1"
+      >
+        <Checkbox.Indicator className="text-violet11">
+          <CheckIcon />
+        </Checkbox.Indicator>
+      </Checkbox.Root>
+      <label
+        className="pl-[15px] text-[15px] leading-none text-white"
+        htmlFor="c1"
+      >
+        Accept terms and conditions.
+      </label>
+    </div>
+  </form>
 );
 ```
 
