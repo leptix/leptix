@@ -1,9 +1,4 @@
-use leptos::{
-  ev::{keydown, keyup},
-  html::AnyElement,
-  *,
-};
-use leptos_use::{use_document, use_event_listener};
+use leptos::{html::AnyElement, *};
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{FocusEvent, HtmlButtonElement, KeyboardEvent};
 
@@ -141,14 +136,31 @@ pub fn RadioGroupItem(
   let is_checked = Signal::derive(move || context.value.get() == Some(is_checked_value.get()));
   let is_arrow_key_pressed = StoredValue::new(false);
 
-  _ = use_event_listener(use_document(), keydown, move |ev: KeyboardEvent| {
-    if ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].contains(&ev.key().as_str()) {
-      is_arrow_key_pressed.set_value(true);
-    }
-  });
+  Effect::new(move |_| {
+    let handle_key_down = Closure::<dyn Fn(_)>::new(move |ev: KeyboardEvent| {
+      if ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].contains(&ev.key().as_str()) {
+        is_arrow_key_pressed.set_value(true);
+      }
+    });
 
-  _ = use_event_listener(use_document(), keyup, move |ev: KeyboardEvent| {
-    is_arrow_key_pressed.set_value(false);
+    let handle_key_up = Closure::<dyn Fn()>::new(move || {
+      is_arrow_key_pressed.set_value(false);
+    });
+
+    _ = document()
+      .add_event_listener_with_callback("keydown", handle_key_down.as_ref().unchecked_ref());
+    _ =
+      document().add_event_listener_with_callback("keyup", handle_key_up.as_ref().unchecked_ref());
+
+    on_cleanup(move || {
+      _ = document()
+        .remove_event_listener_with_callback("keydown", handle_key_down.as_ref().unchecked_ref());
+      _ = document()
+        .remove_event_listener_with_callback("keyup", handle_key_up.as_ref().unchecked_ref());
+
+      handle_key_down.forget();
+      handle_key_up.forget();
+    });
   });
 
   let node_ref = NodeRef::<AnyElement>::new();
