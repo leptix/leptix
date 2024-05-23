@@ -275,9 +275,12 @@ pub(crate) fn RovingFocusGroupItem(
   Effect::new(move |_| {
     if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
       on_focusable_item_add.call(());
-      on_cleanup(move || {
-        on_focusable_item_remove.call(());
-      });
+    }
+  });
+
+  on_cleanup(move || {
+    if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
+      on_focusable_item_remove.call(());
     }
   });
 

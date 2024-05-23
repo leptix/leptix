@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, *};
+use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, *};
 use web_sys::{FocusEvent, KeyboardEvent, MouseEvent};
 
 use crate::{
@@ -278,17 +278,20 @@ pub fn TabsContent(
   });
 
   let presence = create_presence(is_present, node_ref);
+  let animation_frame_handle = StoredValue::<Option<AnimationFrameRequestHandle>>::new(None);
 
   Effect::new(move |_| {
-    let Ok(animation_frame_handle) = request_animation_frame_with_handle(move || {
+    if let Ok(handle) = request_animation_frame_with_handle(move || {
       is_mount_animation_prevented.set_value(false);
-    }) else {
-      return;
-    };
+    }) {
+      animation_frame_handle.set_value(Some(handle));
+    }
+  });
 
-    on_cleanup(move || {
-      animation_frame_handle.cancel();
-    });
+  on_cleanup(move || {
+    if let Some(handle) = animation_frame_handle.get_value() {
+      handle.cancel();
+    }
   });
 
   Effect::new(move |_| {

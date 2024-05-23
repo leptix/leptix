@@ -267,14 +267,14 @@ pub fn ScrollAreaScrollbar(
     } else {
       on_scrollbar_y_enabled_change.call(true);
     }
+  });
 
-    on_cleanup(move || {
-      if orientation.get() == Orientation::Horizontal {
-        on_scrollbar_x_enabled_change.call(false);
-      } else {
-        on_scrollbar_y_enabled_change.call(false);
-      }
-    });
+  on_cleanup(move || {
+    if orientation.get() == Orientation::Horizontal {
+      on_scrollbar_x_enabled_change.call(false);
+    } else {
+      on_scrollbar_y_enabled_change.call(false);
+    }
   });
 
   match context.kind.get() {
