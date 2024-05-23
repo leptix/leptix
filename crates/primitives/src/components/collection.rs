@@ -35,7 +35,7 @@ pub fn create_collection_item_ref<
     );
 
   let (id, set_id) = create_signal::<Option<CollectionItemId>>(None);
-  let item_ref = create_node_ref::<ItemElement>();
+  let item_ref = NodeRef::<ItemElement>::new();
 
   Effect::new(move |_| {
     if let Some(node) = item_ref.get() {
@@ -58,11 +58,15 @@ pub fn create_collection_item_ref<
     item_map.update(|item_map| {
       item_map.insert(id.clone(), (item_ref, data.clone()));
     });
+  });
 
-    on_cleanup(move || {
-      item_map.update(|item_map| {
-        item_map.remove(&id.clone());
-      });
+  on_cleanup(move || {
+    let Some(id) = id.get() else {
+      return;
+    };
+
+    item_map.update(|item_map| {
+      item_map.remove(&id.clone());
     });
   });
 

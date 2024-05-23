@@ -61,7 +61,7 @@ pub fn CheckboxRoot(
     }),
   });
 
-  let initial_checked_state = StoredValue::new(checked.get());
+  let initial_checked_state = StoredValue::new(checked.get_untracked());
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {

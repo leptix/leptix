@@ -106,15 +106,13 @@ pub fn TabsList(
     use_context::<TabsContextValue>().expect("TabsList must be used in a TabsRoot component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("role", "tablist".into_attribute()),
-      (
-        "aria-orientation",
-        (move || context.orientation.get().to_string()).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    ("role", "tablist".into_attribute()),
+    (
+      "aria-orientation",
+      (move || context.orientation.get().to_string()).into_attribute(),
+    ),
+  ]);
 
   view! {
     <RovingFocusGroup
@@ -162,44 +160,42 @@ pub fn TabsTrigger(
 
   let data_disabled = disabled;
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [
-      ("type", "button".into_attribute()),
-      ("role", "tab".into_attribute()),
-      (
-        "aria-selected",
-        Signal::derive(move || is_selected.get()).into_attribute(),
-      ),
-      (
-        "aria-controls",
-        Signal::derive(move || content_id.get()).into_attribute(),
-      ),
-      (
-        "data-state",
-        Signal::derive(move || {
-          if is_selected.get() {
-            "active"
-          } else {
-            "inactive"
-          }
-        })
+  merged_attrs.extend([
+    ("type", "button".into_attribute()),
+    ("role", "tab".into_attribute()),
+    (
+      "aria-selected",
+      Signal::derive(move || is_selected.get()).into_attribute(),
+    ),
+    (
+      "aria-controls",
+      Signal::derive(move || content_id.get()).into_attribute(),
+    ),
+    (
+      "data-state",
+      Signal::derive(move || {
+        if is_selected.get() {
+          "active"
+        } else {
+          "inactive"
+        }
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || data_disabled.map(|disabled| disabled.get().then_some("")))
         .into_attribute(),
-      ),
-      (
-        "data-disabled",
-        Signal::derive(move || data_disabled.map(|disabled| disabled.get().then_some("")))
-          .into_attribute(),
-      ),
-      (
-        "disabled",
-        Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
-      ),
-      (
-        "id",
-        Signal::derive(move || trigger_id.get()).into_attribute(),
-      ),
-    ],
-  );
+    ),
+    (
+      "disabled",
+      Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
+    ),
+    (
+      "id",
+      Signal::derive(move || trigger_id.get()).into_attribute(),
+    ),
+  ]);
 
   let keydown_value = value.clone();
   let focus_value = value.clone();
@@ -272,7 +268,7 @@ pub fn TabsContent(
 
   let is_selected_value = value.clone();
   let is_selected = Signal::derive(move || context.value.get() == Some(is_selected_value.get()));
-  let is_mount_animation_prevented = StoredValue::new(is_selected.get());
+  let is_mount_animation_prevented = StoredValue::new(is_selected.get_untracked());
 
   let is_present = Signal::derive(move || {
     is_selected.get()

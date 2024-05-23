@@ -124,12 +124,10 @@ pub fn ScrollAreaRoot(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend(
-    [(
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    )],
-  );
+  merged_attrs.extend([(
+    "dir",
+    (move || direction.get().to_string()).into_attribute(),
+  )]);
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
@@ -1343,18 +1341,18 @@ pub fn ScrollAreaCorner(
       .style("bottom", 0);
   });
 
-  if has_corner() || has_size() {
-    view! {
+  let attrs = StoredValue::new(attrs);
+
+  view! {
+    <Show when=move || has_corner() || has_size()>
       <Primitive
-        attrs=attrs
+        attrs=attrs.get_value()
         element=html::div
         node_ref=node_ref
       >
         {().into_view()}
       </Primitive>
-    }
-  } else {
-    ().into_view()
+    </Show>
   }
 }
 
