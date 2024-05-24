@@ -64,7 +64,8 @@ fn MySlider(value: Signal<f64>, on_change: Callback<f64>) -> impl IntoView {
         <div style="width: 100%; padding: 30px;">
             {move || {
                 view! {
-                    <ToggleGroupDemo />
+                    <ScrollAreaDemo />
+                    // <ToggleGroupDemo />
                     // <RadioGroupDemo />
                     // <ToolbarDemo />
                     // <SliderRoot

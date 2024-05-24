@@ -459,7 +459,7 @@ fn ScrollAreaScrollbarScroll(
     });
 
     let viewport_scroll_end = scroll_end.clone();
-    let remove_viewport_scroll = use_event_listener(context.viewport, scroll, move |_| {
+    _ = use_event_listener(context.viewport, scroll, move |_| {
       let scroll_position = if is_horizontal.get() {
         viewport.scroll_left()
       } else {
@@ -472,10 +472,6 @@ fn ScrollAreaScrollbarScroll(
         send.call(ScrollAreaScrollbarScrollEvent::Scroll);
         viewport_scroll_end();
       }
-    });
-
-    on_cleanup(move || {
-      remove_viewport_scroll();
     });
   });
 
@@ -997,7 +993,7 @@ fn ScrollAreaScrollbarImpl(
       return;
     };
 
-    let remove_wheel_event = use_event_listener_with_options(
+    _ = use_event_listener_with_options(
       document.clone(),
       wheel,
       move |ev: WheelEvent| {
@@ -1020,10 +1016,6 @@ fn ScrollAreaScrollbarImpl(
       },
       UseEventListenerOptions::default().passive(false),
     );
-
-    on_cleanup(move || {
-      remove_wheel_event();
-    });
   });
 
   _ = watch(
@@ -1214,7 +1206,7 @@ fn ScrollAreaThumbImpl(
 
   Effect::new(move |_| {
     let scroll_listener_debounce_end = debounce_scroll_end.clone();
-    let remove_viewport_scroll = use_event_listener(context.viewport, scroll, move |_| {
+    _ = use_event_listener(context.viewport, scroll, move |_| {
       scroll_listener_debounce_end();
 
       if remove_unlinked_scroll_listener_ref.get_value().is_some() {
@@ -1233,10 +1225,6 @@ fn ScrollAreaThumbImpl(
     });
 
     scrollbar_context.on_thumb_position_change.call(());
-
-    on_cleanup(move || {
-      remove_viewport_scroll();
-    });
   });
 
   Effect::new(move |_| {
