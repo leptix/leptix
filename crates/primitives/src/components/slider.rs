@@ -934,13 +934,13 @@ pub fn SliderThumb(
       thumbs.push(node.clone());
     });
   });
-  
+
   on_cleanup(move || {
     let Some(node) = item_ref.get() else {
       return;
     };
 
-    context.thumbs.update_value(|thumbs| {
+    _ = context.thumbs.try_update_value(|thumbs| {
       if let Some(position) = thumbs.iter().position(|thumb| {
         let thumb_el: &web_sys::Element = thumb;
         let node_el: &web_sys::Element = &node.clone();

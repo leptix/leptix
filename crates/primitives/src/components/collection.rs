@@ -65,7 +65,7 @@ pub fn create_collection_item_ref<
       return;
     };
 
-    item_map.update(|item_map| {
+    _ = item_map.try_update(|item_map| {
       item_map.remove(&id.clone());
     });
   });

@@ -141,7 +141,7 @@ pub(crate) fn RovingFocusGroup(
       });
     }),
     on_focusable_item_remove: Callback::new(move |_| {
-      set_focusable_items_count.update(|count| {
+      _ = set_focusable_items_count.try_update(|count| {
         *count -= 1;
       });
     }),
@@ -275,10 +275,11 @@ pub(crate) fn RovingFocusGroupItem(
   Effect::new(move |_| {
     if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
       on_focusable_item_add.call(());
-      on_cleanup(move || {
-        on_focusable_item_remove.call(());
-      });
     }
+  });
+
+  on_cleanup(move || {
+    on_focusable_item_remove.call(());
   });
 
   let mut merged_attrs = vec![

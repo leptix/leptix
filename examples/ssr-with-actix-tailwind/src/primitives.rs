@@ -40,9 +40,69 @@ use leptos_use::{
 use leptos_meta::*;
 
 #[component]
+pub fn UiScratchSpace() -> impl IntoView {
+    let show = RwSignal::new(true);
+    let zoom = RwSignal::new(1);
+    view! {
+        <button on:click=move |_| show.set(!show.get())>"Toggle Show"</button>
+        <Show when=move || show.get()>
+            <MySlider
+                value=Signal::derive(move || zoom.get() as f64)
+                on_change=Callback::new(move |val: f64| {
+                    zoom.try_set(val as usize);
+                })
+            />
+
+        </Show>
+    }
+}
+
+#[component]
+fn MySlider(value: Signal<f64>, on_change: Callback<f64>) -> impl IntoView {
+    let input_ref = create_node_ref::<html::AnyElement>();
+    view! {
+        <div style="width: 100%; padding: 30px;">
+            {move || {
+                view! {
+                    <ToggleGroupDemo />
+                    // <RadioGroupDemo />
+                    // <ToolbarDemo />
+                    // <SliderRoot
+                    //     node_ref=input_ref
+                    //     step=1.0.into()
+                    //     value=Signal::derive(move || { vec![value.get()] }).into()
+                    //     min=1.0.into()
+                    //     max=100.0.into()
+                    //     attr:style="height: 1rem; width: 100%; display: flex; align-items: center; position: relative;"
+                    //     on_value_change=Callback::new(move |vals: Vec<f64>| {
+                    //         on_change.call(*vals.first().unwrap());
+                    //     })
+                    // >
+
+                    //     <SliderTrack attr:style="background-color: gray; height: 3px; width: 100%;">
+                    //         <SliderRange attr:style="background-color: gray; position: absolute; height: 100%;">
+                    //             {().into_view()}
+                    //         </SliderRange>
+                    //     </SliderTrack>
+
+                    //     <SliderThumb attr:style="display: block; width: 1rem; height: 1rem; background-color: red;">
+                    //         <div></div>
+                    //     </SliderThumb>
+
+                    // </SliderRoot>
+                }
+            }}
+
+        </div>
+    }
+}
+
+#[component]
 pub fn PrimitivesShowcase() -> impl IntoView {
   view! {
     <>
+        <UiScratchSpace />
+
       <ThemeToggle/>
 
       <WithTitle title="Accordion">
