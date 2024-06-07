@@ -514,8 +514,8 @@ fn AccordionDemo() -> impl IntoView {
           kind=AccordionKind::Single {
               value: None,
               default_value: Some("item-1".into()),
-              collapsible: Some(true.into()),
-              on_value_change: None,
+              collapsible: true.into(),
+              on_value_change: Callback::new(|_| {}),
           }
       >
 
