@@ -23,25 +23,24 @@ struct RadioContextValue {
 
 #[component]
 pub fn Radio(
-  value: Signal<String>,
-  #[prop(optional)] checked: Option<MaybeSignal<bool>>,
-  #[prop(optional)] required: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_check: Option<Callback<()>>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
+  #[prop(optional, into)] value: MaybeSignal<String>,
+  #[prop(optional, into)] checked: MaybeSignal<bool>,
+  #[prop(optional, into)] required: MaybeSignal<bool>,
+  #[prop(default=Callback::new(|_:()|{}), into)] on_check: Callback<()>,
+  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_click: Callback<MouseEvent>,
 
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional_no_strip, into)] name: Option<MaybeSignal<String>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
   let (is_form_control, set_is_form_control) = create_signal(true);
-
   let has_consumer_stopped_propagation = StoredValue::new(false);
 
   Effect::new(move |_| {
-    set_is_form_control.set(if let Some(foo) = node_ref.get() {
-      foo.closest("form").ok().flatten().is_some()
+    set_is_form_control.set(if let Some(form) = node_ref.get() {
+      form.closest("form").ok().flatten().is_some()
     } else {
       true
     });
@@ -52,18 +51,12 @@ pub fn Radio(
     ("role", "radio".into_attribute()),
     (
       "aria-checked",
-      Signal::derive(move || {
-        checked
-          .map(|checked| checked.get())
-          .unwrap_or(false)
-          .to_string()
-      })
-      .into_attribute(),
+      (move || checked.get().to_string()).into_attribute(),
     ),
     (
       "data-state",
-      Signal::derive(move || {
-        if checked.map(|checked| checked.get()).unwrap_or(false) {
+      (move || {
+        if checked.get() {
           "checked"
         } else {
           "unchecked"
@@ -71,31 +64,19 @@ pub fn Radio(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-        .into_attribute(),
-    ),
+    ("data-disabled", disabled.into_attribute()),
     (
       "disabled",
-      Signal::derive(move || {
-        disabled.and_then(|disabled| disabled.get().then_some(""))
-        // .unwrap_or(false)
-        // .to_string()
-      })
-      .into_attribute(),
+      (move || disabled.get().then_some("")).into_attribute(),
     ),
-    (
-      "value",
-      Signal::derive(move || value.get()).into_attribute(),
-    ),
+    ("value", value.clone().into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
 
   provide_context(RadioContextValue {
-    checked: Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false)),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
+    checked: Signal::derive(move || checked.get()),
+    disabled: Signal::derive(move || disabled.get()),
   });
 
   view! {
@@ -104,14 +85,10 @@ pub fn Radio(
       attrs=merged_attrs
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-        if let Some(on_click) = on_click {
           on_click.call(ev.clone());
-        }
 
-        if !checked.map(|checked| checked.get()).unwrap_or(false) {
-          if let Some(on_check) = on_check {
+        if !checked.get() {
             on_check.call(())
-          }
         }
 
         if is_form_control.get() {
@@ -125,37 +102,32 @@ pub fn Radio(
     >
       {children()}
 
-      <Show when=move || is_form_control.get()>
-        <BubbleInput
-            checked=Signal::derive(move || checked.map(|checked| checked.get()).unwrap_or(false))
-            bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone().map(|name| Signal::derive(move || name.get()))
-            value=Signal::derive(move || value.get())
-            required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
-            disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-            control=node_ref
-        />
-      </Show>
+        <Show when=move || is_form_control.get()>
+            <BubbleInput
+                checked=Signal::derive(move || checked.get())
+                bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
+                name=name.clone().map(|name| Signal::derive(move || name.get()))
+                value=value.clone()
+                required=Signal::derive(move || required.get())
+                disabled=Signal::derive(move || disabled.get())
+                control=node_ref
+            />
+        </Show>
     </Primitive>
   }
 }
 
 #[component]
 pub fn RadioIndicator(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] force_mount: MaybeSignal<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 ) -> impl IntoView {
-  let context =
-    use_context::<RadioContextValue>().expect("RadioIndicator must be used in a Radio component");
+  let RadioContextValue { checked, disabled } =
+    use_context().expect("RadioIndicator must be used in a Radio component");
 
-  let is_present = Signal::derive(move || {
-    force_mount
-      .map(|force_mount| force_mount.get())
-      .unwrap_or(false)
-      || context.checked.get()
-  });
+  let is_present = Signal::derive(move || force_mount.get() || checked.get());
 
   let presence = create_presence(is_present, node_ref);
   let mut merged_attrs = attrs.clone();
@@ -163,8 +135,8 @@ pub fn RadioIndicator(
   merged_attrs.extend([
     (
       "data-state",
-      Signal::derive(move || {
-        if context.checked.get() {
+      (move || {
+        if checked.get() {
           "checked"
         } else {
           "unchecked"
@@ -172,10 +144,7 @@ pub fn RadioIndicator(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      Signal::derive(move || context.disabled.get()).into_attribute(),
-    ),
+    ("data-disabled", disabled.into_attribute()),
   ]);
 
   let children = StoredValue::new(children);
@@ -198,7 +167,7 @@ fn BubbleInput(
   checked: Signal<bool>,
   bubbles: Signal<bool>,
   name: Option<Signal<String>>,
-  value: Signal<String>,
+  value: MaybeSignal<String>,
   required: Signal<bool>,
   disabled: Signal<bool>,
   control: NodeRef<AnyElement>,
@@ -249,10 +218,10 @@ fn BubbleInput(
       type="checkbox"
       aria-hidden
       name=name.into_attribute()
-      value=Signal::derive(move || value.get()).into_attribute()
-      required=Signal::derive(move || required.get()).into_attribute()
-      disabled=Signal::derive(move || disabled.get()).into_attribute()
-      checked=Signal::derive(move || checked.get()).into_attribute()
+      value=value.into_attribute()
+      required=required.into_attribute()
+      disabled=disabled.into_attribute()
+      checked=checked.into_attribute()
       tabindex=(-1).into_attribute()
       node_ref=node_ref
       style:position="absolute"

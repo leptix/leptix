@@ -921,13 +921,13 @@ fn RadioGroupDemo() -> impl IntoView {
       <form>
           <RadioGroupRoot
               attr:class="flex flex-col gap-2.5"
-              default_value="default".into()
+              default_value="default"
               attr:aria-label="View density"
           >
               <div class="flex items-center">
                   <RadioGroupItem
                       attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-                      value="default".into()
+                      value="default"
                       attr:id="r1"
                   >
                       <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
@@ -939,7 +939,7 @@ fn RadioGroupDemo() -> impl IntoView {
               <div class="flex items-center">
                   <RadioGroupItem
                       attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-                      value="comfortable".into()
+                      value="comfortable"
                       attr:id="r2"
                   >
                       <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
@@ -951,7 +951,7 @@ fn RadioGroupDemo() -> impl IntoView {
               <div class="flex items-center">
                   <RadioGroupItem
                       attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-                      value="compact".into()
+                      value="compact"
                       attr:id="r3"
                   >
                       <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
