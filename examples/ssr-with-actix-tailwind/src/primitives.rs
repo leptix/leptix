@@ -618,7 +618,7 @@ fn LabelDemo() -> impl IntoView {
       <div class="flex gap-4">
           <LabelRoot
               attr:class="text-[15px] font-semibold leading-[35px] dark:text-white text-mauve11"
-              for_html="firstName".into()
+              for_html="firstName"
           >
               "First name"
           </LabelRoot>

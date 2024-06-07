@@ -5,7 +5,7 @@ use crate::{components::primitive::Primitive, Attributes};
 
 #[component]
 pub fn LabelRoot(
-  #[prop(optional)] for_html: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] for_html: Option<MaybeSignal<String>>,
   #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_mouse_down: Callback<MouseEvent>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
