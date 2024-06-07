@@ -23,14 +23,14 @@ leptix_primitives = { path = "../../crates/primitives" }
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
-  "leptos-use/ssr",
-  "leptos-use/actix",
-  "dep:actix-files",
-  "dep:actix-web",
-  "dep:leptos_actix",
-  "leptos/ssr",
-  "leptos_meta/ssr",
-  "leptos_router/ssr",
+    "leptos-use/ssr",
+    "leptos-use/actix",
+    "dep:actix-files",
+    "dep:actix-web",
+    "dep:leptos_actix",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode

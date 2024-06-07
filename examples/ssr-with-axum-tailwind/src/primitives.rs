@@ -267,19 +267,15 @@ fn WithTitle(
             {title}
           </div>
 
-          {broken
-              .then_some(
-                  view! {
-                    <div class="flex items-center gap-1 px-2 pb-[0.075rem] font-semibold text-sm bg-red9/20 border-red9/20 border text-red9 w-fit rounded-full">
-                      <div class="translate-y-[0.5px]">
-                        <ErrorIcon/>
-                      </div>
+          <Show when=move || broken>
+              <div class="flex items-center gap-1 px-2 pb-[0.075rem] font-semibold text-sm bg-red9/20 border-red9/20 border text-red9 w-fit rounded-full">
+                  <div class="translate-y-[0.5px]">
+                      <ErrorIcon/>
+                  </div>
 
-                      "Currently Broken"
-                    </div>
-                  },
-              )}
-
+                  "Currently Broken"
+              </div>
+          </Show>
         </div>
         <div class="pl-2.5 mb-2.5 mr-2.5">{children()}</div>
       </div>
@@ -393,7 +389,7 @@ fn AvatarDemo() -> impl IntoView {
           />
           <AvatarFallback
             attr:class="text-violet11 leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
-            delay_ms=600
+            delay_ms=600.0
           >
             CT
           </AvatarFallback>
@@ -406,7 +402,7 @@ fn AvatarDemo() -> impl IntoView {
           />
           <AvatarFallback
             attr:class="text-violet11 leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
-            delay_ms=600
+            delay_ms=600.0
           >
             JD
           </AvatarFallback>

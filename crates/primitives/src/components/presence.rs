@@ -111,30 +111,29 @@ pub(crate) fn create_presence(
     }
 
     let handle_start_node = node.clone();
-    let remove_animation_start =
-      use_event_listener(node_ref, animationstart, move |ev: AnimationEvent| {
-        let Some(target) = ev.target() else {
-          return;
-        };
+    _ = use_event_listener(node_ref, animationstart, move |ev: AnimationEvent| {
+      let Some(target) = ev.target() else {
+        return;
+      };
 
-        let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
-          return;
-        };
+      let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
+        return;
+      };
 
-        if target_el.eq(&handle_start_node) {
-          if styles.get_value().is_none() {
-            styles.set_value(Some(StyleDeclaration::default()));
-          }
-
-          prev_animation_name.set_value(
-            styles
-              .get_value()
-              .unwrap_or_default()
-              .get_property_value("animation-name")
-              .unwrap_or("none".to_string()),
-          );
+      if target_el.eq(&handle_start_node) {
+        if styles.get_value().is_none() {
+          styles.set_value(Some(StyleDeclaration::default()));
         }
-      });
+
+        prev_animation_name.set_value(
+          styles
+            .get_value()
+            .unwrap_or_default()
+            .get_property_value("animation-name")
+            .unwrap_or("none".to_string()),
+        );
+      }
+    });
 
     let handle_end_node = node.clone();
     let handle_animation_end = move |ev: AnimationEvent| {
@@ -163,17 +162,8 @@ pub(crate) fn create_presence(
       }
     };
 
-    let remove_animation_end =
-      use_event_listener(node_ref, animationend, handle_animation_end.clone());
-
-    let remove_animation_cancel =
-      use_event_listener(node_ref, animationcancel, handle_animation_end);
-
-    on_cleanup(move || {
-      remove_animation_start();
-      remove_animation_end();
-      remove_animation_cancel();
-    });
+    _ = use_event_listener(node_ref, animationend, handle_animation_end.clone());
+    _ = use_event_listener(node_ref, animationcancel, handle_animation_end);
   });
 
   Signal::derive(move || {

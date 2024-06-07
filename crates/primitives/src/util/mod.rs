@@ -1,7 +1,7 @@
-pub mod create_controllable_signal;
+pub(crate) mod create_controllable_signal;
 pub(crate) mod create_id;
 pub(crate) mod create_previous;
-pub mod create_state_machine;
+pub(crate) mod create_state_machine;
 
 #[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
 pub enum Direction {

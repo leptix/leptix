@@ -23,10 +23,11 @@ impl CollectionItemId {
   }
 }
 
-pub fn create_collection_item_ref<
+pub fn use_collection_item_ref<
   ItemElement: ElementDescriptor + Clone + 'static,
   ItemData: Clone + Ord + 'static,
 >(
+  item_ref: NodeRef<ItemElement>,
   data: ItemData,
 ) -> NodeRef<ItemElement> {
   let CollectionContextValue { item_map, .. } =
@@ -35,7 +36,7 @@ pub fn create_collection_item_ref<
     );
 
   let (id, set_id) = create_signal::<Option<CollectionItemId>>(None);
-  let item_ref = NodeRef::<ItemElement>::new();
+  //let item_ref = NodeRef::<ItemElement>::new();
 
   Effect::new(move |_| {
     if let Some(node) = item_ref.get() {
@@ -65,7 +66,7 @@ pub fn create_collection_item_ref<
       return;
     };
 
-    item_map.update(|item_map| {
+    _ = item_map.try_update(|item_map| {
       item_map.remove(&id.clone());
     });
   });
