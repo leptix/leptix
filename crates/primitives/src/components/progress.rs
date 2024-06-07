@@ -2,32 +2,52 @@ use leptos::{html::AnyElement, *};
 
 use crate::{components::primitive::Primitive, Attributes};
 
-const DEFAULT_MAX: u32 = 100;
+const DEFAULT_MAX: f64 = 100.0;
 
 #[derive(Clone)]
 struct ProgressContextValue {
-  value: Option<Signal<u32>>,
-  max: Signal<u32>,
+  value: Signal<Option<f64>>,
+  max: Signal<f64>,
 }
 
 #[component]
 pub fn ProgressRoot(
-  #[prop(optional)] value: Option<MaybeSignal<u32>>,
-  #[prop(optional)] max: Option<MaybeSignal<u32>>,
-  #[prop(optional)] get_value_label: Option<Callback<(u32, u32), String>>,
+  #[prop(optional, into)] value: Option<MaybeSignal<f64>>,
+  #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
+  #[prop(optional)] get_value_label: Option<Callback<(f64, f64), String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let max = max.unwrap_or(DEFAULT_MAX.into());
-  let value = value.map(|value| Signal::derive(move || value.get() % (max.get() + 1)));
+  let max = Signal::derive(move || {
+    let max = max.get();
 
-  let value_label = value
-    .and_then(|value| {
-      get_value_label.map(|get_value_label| {
-        Signal::derive(move || get_value_label.call((value.get(), max.get())))
-      })
-    });
+    if !max.is_nan() && max > 0.0 {
+      max
+    } else {
+      DEFAULT_MAX
+    }
+  });
+
+  let value = Signal::derive(move || {
+    let max = max.get();
+
+    value.and_then(|value| {
+      let value = value.get();
+
+      (!value.is_nan() && value <= max && value >= 0.0).then_some(value)
+    })
+  });
+
+  let get_value_label = get_value_label.unwrap_or(Callback::new(|(value, max): (f64, f64)| {
+    format!("{}%", (value / max).round() * 100.0)
+  }));
+
+  let value_label = Signal::derive(move || {
+    value
+      .get()
+      .map(|value| get_value_label.call((value, max.get())))
+  });
 
   provide_context(ProgressContextValue {
     value,
@@ -36,47 +56,31 @@ pub fn ProgressRoot(
 
   let mut merged_attrs = attrs.clone();
 
-  merged_attrs.extend(
-    [
-      ("role", "progressbar".into_attribute()),
-      (
-        "aria-valuemax",
-        Signal::derive(move || max.get()).into_attribute(),
-      ),
-      ("aria-valuemin", 0.into_attribute()),
-      (
-        "aria-valuenow",
-        Signal::derive(move || value.map(|value| value.get())).into_attribute(),
-      ),
-      (
-        "aria-valuetext",
-        Signal::derive(move || value_label.map(|value_label| value_label.get())).into_attribute(),
-      ),
-      (
-        "data-state",
-        Signal::derive(move || {
-          value
-            .map(|value| {
-              if value.get() == max.get() {
-                "complete"
-              } else {
-                "loading"
-              }
-            })
-            .unwrap_or("indeterminate")
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-value",
-        Signal::derive(move || value.map(|value| value.get())).into_attribute(),
-      ),
-      (
-        "data-max",
-        Signal::derive(move || max.get()).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    ("role", "progressbar".into_attribute()),
+    ("aria-valuemax", max.into_attribute()),
+    ("aria-valuemin", 0.into_attribute()),
+    ("aria-valuenow", value.into_attribute()),
+    ("aria-valuetext", value_label.into_attribute()),
+    (
+      "data-state",
+      (move || {
+        value
+          .get()
+          .map(|value| {
+            if value == max.get() {
+              "complete"
+            } else {
+              "loading"
+            }
+          })
+          .unwrap_or("indeterminate")
+      })
+      .into_attribute(),
+    ),
+    ("data-value", value.into_attribute()),
+    ("data-max", max.into_attribute()),
+  ]);
 
   view! {
     <Primitive
@@ -94,39 +98,31 @@ pub fn ProgressIndicator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {
-  let context = use_context::<ProgressContextValue>()
-    .expect("ProgressIndicator needs to be in a Progress component");
+  let ProgressContextValue { max, value } =
+    use_context().expect("ProgressIndicator needs to be in a Progress component");
 
   let mut merged_attrs = attrs.clone();
 
-  merged_attrs.extend(
-    [
-      (
-        "data-state",
-        Signal::derive(move || {
-          context
-            .value
-            .map(|value| {
-              if value.get() == context.max.get() {
-                "complete"
-              } else {
-                "loading"
-              }
-            })
-            .unwrap_or("indeterminate")
-        })
-        .into_attribute(),
-      ),
-      (
-        "data-value",
-        Signal::derive(move || context.value.map(|value| value.get())).into_attribute(),
-      ),
-      (
-        "data-max",
-        Signal::derive(move || context.max.get()).into_attribute(),
-      ),
-    ],
-  );
+  merged_attrs.extend([
+    (
+      "data-state",
+      (move || {
+        value
+          .get()
+          .map(|value| {
+            if value == max.get() {
+              "complete"
+            } else {
+              "loading"
+            }
+          })
+          .unwrap_or("indeterminate")
+      })
+      .into_attribute(),
+    ),
+    ("data-value", value.into_attribute()),
+    ("data-max", max.into_attribute()),
+  ]);
 
   view! {
     <Primitive

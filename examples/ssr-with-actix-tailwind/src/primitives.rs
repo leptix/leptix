@@ -322,24 +322,24 @@ fn AspectRatioDemo() -> impl IntoView {
 
 #[component]
 fn ProgressDemo() -> impl IntoView {
-  let (progress, set_progress) = create_signal(25u32);
+  let progress = RwSignal::new(25.0f64);
   let (indicator_style, set_indicator_style) =
-    create_signal(format!("transform: translateX(-{}%)", 100 - progress.get_untracked()));
+    create_signal(format!("transform: translateX(-{}%)", 100.0 - progress.get_untracked()));
 
   Effect::new(move |_| {
     let Pausable { pause, .. } = use_interval_fn(
       move || {
-        set_progress.update(|progress| {
-          if *progress < 100 {
-            *progress = *progress + 25;
+        progress.update(|progress| {
+          if *progress < 100.0 {
+            *progress = *progress + 25.0;
           } else {
-            *progress = 0;
+            *progress = 0.0;
           }
         });
 
         set_indicator_style.set(format!(
           "transform: translateX(-{}%)",
-          100 - (progress.get_untracked() % 101)
+          100.0 - (progress.get_untracked() % 101.0)
         ));
       },
       1000,
@@ -353,7 +353,7 @@ fn ProgressDemo() -> impl IntoView {
       <ProgressRoot
           attr:class="relative overflow-hidden bg-black/25 rounded-full w-[300px] h-[25px] drop-shadow-md"
           attr:style="transform: translateZ(0)"
-          value=progress.into()
+          value=progress
       >
           <ProgressIndicator
               attr:class="bg-white w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
