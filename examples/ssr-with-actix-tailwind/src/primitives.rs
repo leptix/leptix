@@ -164,7 +164,7 @@ fn ThemeToggle() -> impl IntoView {
           attr:aria-label="Toggle italic"
           attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
           pressed=true.into()
-          on_click=Callback::new(move |_| {
+          on:click=move |_| {
               set_dark_theme
                   .update(|dark_theme| {
                       *dark_theme = !*dark_theme;
@@ -180,7 +180,7 @@ fn ThemeToggle() -> impl IntoView {
               spawn_local(async move {
                   _ = toggle_dark_mode(dark_theme.get_untracked()).await;
               });
-          })
+          }
       >
 
           {move || {
@@ -429,8 +429,8 @@ fn CollapsibleDemo() -> impl IntoView {
   view! {
       <CollapsibleRoot
           attr:class="w-[300px]"
-          open=open.into()
-          on_open_change=Callback::new(move |open: bool| set_open.set(open))
+          open=open
+          on_open_change=move |open: bool| set_open.set(open)
       >
           <div class="flex items-center justify-between">
               <span class="dark:text-white text-[15px] leading-[25px] dark:text-white">
@@ -515,7 +515,7 @@ fn AccordionDemo() -> impl IntoView {
               value: None,
               default_value: Some("item-1".into()),
               collapsible: true.into(),
-              on_value_change: Callback::new(|_| {}),
+              on_value_change: (|_| {}).into(),
           }
       >
 

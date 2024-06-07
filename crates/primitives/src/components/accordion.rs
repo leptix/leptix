@@ -189,8 +189,8 @@ fn AccordionSingle(
 
 #[component]
 fn AccordionMultiple(
-  #[prop(optional, into)] value: MaybeSignal<Vec<String>>,
-  #[prop(optional, into)] default_value: MaybeSignal<Vec<String>>,
+  #[prop(optional)] value: Option<MaybeSignal<Vec<String>>>,
+  #[prop(optional)] default_value: Option<MaybeSignal<Vec<String>>>,
 
   on_value_change: Callback<Vec<String>>,
 
@@ -203,8 +203,12 @@ fn AccordionMultiple(
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || Some(value.get())),
-    default_value: Signal::derive(move || Some(default_value.get())),
+    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
+    default_value: Signal::derive(move || {
+      default_value
+        .as_ref()
+        .map(|default_value| default_value.get())
+    }),
     on_change: Callback::new(move |value| {
       on_value_change.call(value);
     }),
@@ -460,16 +464,16 @@ pub fn AccordionItem(
   view! {
     <CollapsibleRoot
       attrs=merged_attrs
-      open=Signal::derive(move || is_open.get()).into()
-      disabled=Signal::derive(move || is_disabled.get()).into()
+      open=is_open
+      disabled=is_disabled
       node_ref=node_ref
-      on_open_change=Callback::new(move |open| {
+      on_open_change=move |open| {
         if open {
           value_context.on_item_open.call(open_value.get());
         } else {
           value_context.on_item_close.call(open_value.get());
         }
-      })
+      }
     >
       {children()}
     </CollapsibleRoot>

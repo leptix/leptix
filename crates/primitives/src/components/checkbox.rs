@@ -36,10 +36,8 @@ pub fn CheckboxRoot(
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  #[prop(default=CheckedState::Checked(false).into(), into)] checked: MaybeSignal<CheckedState>,
-  #[prop(default=CheckedState::Checked(false).into(), into)] default_checked: MaybeSignal<
-    CheckedState,
-  >,
+  #[prop(optional, into)] checked: Option<MaybeSignal<CheckedState>>,
+  #[prop(optional, into)] default_checked: Option<MaybeSignal<CheckedState>>,
   #[prop(default=Callback::new(|_:CheckedState|{}), into)] on_checked_change: Callback<
     CheckedState,
   >,
@@ -54,8 +52,10 @@ pub fn CheckboxRoot(
   let (is_form_control, set_is_form_control) = create_signal(true);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || Some(checked.get())),
-    default_value: Signal::derive(move || Some(default_checked.get())),
+    value: Signal::derive(move || checked.map(|checked| checked.get())),
+    default_value: Signal::derive(move || {
+      default_checked.map(|default_checked| default_checked.get())
+    }),
     on_change: Callback::new(move |value| {
       on_checked_change.call(value);
     }),
