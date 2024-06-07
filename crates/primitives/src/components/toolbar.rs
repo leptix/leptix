@@ -209,6 +209,7 @@ pub fn ToolbarToggleGroup(
       orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default()).into()
       direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default()).into()
       roving_focus=false.into()
+      node_ref=node_ref
     >
       {children()}
     </ToggleGroupRoot>

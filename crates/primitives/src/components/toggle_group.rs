@@ -317,8 +317,11 @@ pub fn ToggleGroupItem(
     Signal::derive(move || value_context.value.get().contains(&is_pressed_value.get()));
 
   let is_disabled = Signal::derive(move || {
-    state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
+    // state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
+    disabled.map(|disabled| disabled.get()).unwrap_or(false)
   });
+
+  let focusable = Signal::derive(move || !is_disabled.get()).into();
 
   let inner_value = value.clone();
   view! {
@@ -336,12 +339,12 @@ pub fn ToggleGroupItem(
         view! {
           <RovingFocusGroupItem
             as_child=true
-            focusable=Signal::derive(move || !is_disabled.get()).into()
-            active=Signal::derive(move || is_pressed.get()).into()
+            focusable=focusable
+            active=is_pressed.into()
           >
             <ToggleRoot
-              disabled=Signal::derive(move || is_disabled.get()).into()
-              pressed=Signal::derive(move || is_pressed.get()).into()
+              disabled=is_disabled.into()
+              pressed=is_pressed.into()
               attrs=merged_attrs
               node_ref=node_ref
               on_pressed_changed=Callback::new(move |pressed| {
@@ -359,8 +362,8 @@ pub fn ToggleGroupItem(
       } else {
         view! {
           <ToggleRoot
-            disabled=Signal::derive(move || is_disabled.get()).into()
-            pressed=Signal::derive(move || is_pressed.get()).into()
+            disabled=is_disabled.into()
+            pressed=is_pressed.into()
             attrs=merged_attrs
             node_ref=node_ref
             on_pressed_changed=Callback::new(move |pressed| {

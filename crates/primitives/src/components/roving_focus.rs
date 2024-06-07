@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use leptos::{html::AnyElement, *};
+use leptos::{ev::EventDescriptor, html::AnyElement, *};
+use leptos_use::use_event_listener;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{Event, FocusEvent, KeyboardEvent, MouseEvent};
 
@@ -19,7 +20,7 @@ use crate::{
   Attributes,
 };
 
-use super::collection::create_collection_item_ref;
+use super::collection::use_collection_item_ref;
 
 #[derive(Clone, PartialEq, Debug, Eq)]
 struct ItemData {
@@ -50,6 +51,23 @@ struct RovingContextValue {
   on_item_shift_tab: Callback<()>,
   on_focusable_item_add: Callback<()>,
   on_focusable_item_remove: Callback<()>,
+  focusable_items: RwSignal<i32>,
+}
+
+#[derive(Clone)]
+struct OnEntryFocus;
+
+impl EventDescriptor for OnEntryFocus {
+  const BUBBLES: bool = false;
+  type EventType = web_sys::Event;
+
+  fn name(&self) -> Oco<'static, str> {
+    "roving_focus_group.on_entry_focus".into()
+  }
+
+  fn event_delegation_key(&self) -> Oco<'static, str> {
+    "$$$roving_focus_group.on_entry_focus".into()
+  }
 }
 
 #[component]
@@ -69,12 +87,12 @@ pub(crate) fn RovingFocusGroup(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
+    let collection_ref = NodeRef::<html::AnyElement>::new();
+
   provide_context(CollectionContextValue::<ItemData, _> {
-    collection_ref: NodeRef::<html::AnyElement>::new(),
+    collection_ref,
     item_map: RwSignal::new(HashMap::new()),
   });
-
-  let node_ref = NodeRef::<html::Div>::new();
 
   let value = Signal::derive(move || current_tab_stop_id.as_ref().map(|id| id.get()));
   let default_value =
@@ -93,38 +111,16 @@ pub(crate) fn RovingFocusGroup(
 
   let (is_tabbing_back_out, set_is_tabbing_back_out) = create_signal(false);
 
-  let CollectionContextValue { collection_ref, .. } =
-    use_context::<CollectionContextValue<ItemData, AnyElement>>().expect("what happen");
-
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
   let is_click_focus = StoredValue::new(false);
 
-  let (focusable_items_count, set_focusable_items_count) = create_signal(0);
+  let focusable_items_count = RwSignal::new(0);
 
-  Effect::new(move |_| {
-    if let Some(node_ref) = node_ref.get() {
-      let listen_entry_focus =
-        Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
-          if let Some(on_entry_focus) = on_entry_focus {
-            on_entry_focus.call(ev);
-          }
-        });
-
-      _ = node_ref.add_event_listener_with_callback(
-        "rovingFocusGroup.onEntryFocus",
-        listen_entry_focus.as_ref().unchecked_ref(),
-      );
-
-      on_cleanup(move || {
-        _ = node_ref.remove_event_listener_with_callback(
-          "rovingFocusGroup.onEntryFocus",
-          listen_entry_focus.as_ref().unchecked_ref(),
-        );
-
-        listen_entry_focus.forget();
-      });
-    }
-  });
+  // _ = use_event_listener(collection_ref, OnEntryFocus, move |ev: web_sys::Event| {
+  //   if let Some(on_entry_focus) = on_entry_focus {
+  //     on_entry_focus.call(ev);
+  //   }
+  // });
 
   provide_context(RovingContextValue {
     orientation: Signal::derive(move || orientation.as_ref().map(|orientation| orientation.get())),
@@ -138,29 +134,30 @@ pub(crate) fn RovingFocusGroup(
       set_is_tabbing_back_out.set(true);
     }),
     on_focusable_item_add: Callback::new(move |_| {
-      set_focusable_items_count.update(|count| {
+      focusable_items_count.update(|count| {
         *count += 1;
       });
     }),
     on_focusable_item_remove: Callback::new(move |_| {
-      set_focusable_items_count.update(|count| {
+      _ = focusable_items_count.try_update(|count| {
         *count -= 1;
       });
     }),
+    focusable_items: focusable_items_count,
   });
 
   let mut merged_attrs = vec![
-    // (
-    //   "tabindex",
-    //   Signal::derive(move || {
-    //     if is_tabbing_back_out.get() || focusable_items_count.get() == 0 {
-    //       -1
-    //     } else {
-    //       0
-    //     }
-    //   })
-    //   .into_attribute(),
-    // ),
+    (
+      "tabindex",
+      Signal::derive(move || {
+        if is_tabbing_back_out.get() || focusable_items_count.get() == 0 {
+          -1
+        } else {
+          0
+        }
+      })
+      .into_attribute(),
+    ),
     (
       "data-orientation",
       (move || orientation.map(|orientation| orientation.get().to_string())).into_attribute(),
@@ -192,7 +189,7 @@ pub(crate) fn RovingFocusGroup(
           let mut init = web_sys::CustomEventInit::new();
           init.bubbles(false).cancelable(true);
 
-          let Ok(entry_focus_event) = web_sys::CustomEvent::new_with_event_init_dict("rovingFocusGroup.onEntryFocus", &init) else {
+          let Ok(entry_focus_event) = web_sys::CustomEvent::new_with_event_init_dict("roving_focus_group.on_entry_focus", &init) else {
             return;
           };
 
@@ -238,11 +235,12 @@ pub(crate) fn RovingFocusGroup(
 pub(crate) fn RovingFocusGroupItem(
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] tab_stop_id: Option<MaybeSignal<String>>,
-  #[prop(optional)] focusable: Option<MaybeSignal<bool>>,
+  #[prop(optional)] focusable: MaybeSignal<bool>,
   #[prop(optional)] active: Option<MaybeSignal<bool>>,
   #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
   #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
   #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
@@ -255,6 +253,7 @@ pub(crate) fn RovingFocusGroupItem(
     on_item_shift_tab,
     on_focusable_item_add,
     on_focusable_item_remove,
+    focusable_items,
   } = use_context::<RovingContextValue>()
     .expect("RovingFocusGroupItem must be used in a RovingFocusGroup component");
 
@@ -265,29 +264,33 @@ pub(crate) fn RovingFocusGroupItem(
       .unwrap_or(create_id().get())
   });
 
-  let item_ref = create_collection_item_ref::<html::AnyElement, ItemData>(ItemData {
-    id: id.get_untracked(),
-    focusable: Signal::derive(move || focusable.map(|focusable| focusable.get()).unwrap_or(false)),
-    active: Signal::derive(move || active.map(|active| active.get()).unwrap_or(false)),
-  });
+  use_collection_item_ref::<html::AnyElement, ItemData>(
+    node_ref,
+    ItemData {
+      id: id.get_untracked(),
+      focusable: Signal::derive(move || focusable.get()),
+      active: Signal::derive(move || active.map(|active| active.get()).unwrap_or(false)),
+    },
+  );
 
   let is_current_tab_stop = Signal::derive(move || current_tab_stop_id.get() == Some(id.get()));
   let get_items = use_collection_context::<ItemData, html::AnyElement>();
 
   Effect::new(move |_| {
-    if focusable.map(|focusable| focusable.get()).unwrap_or(false) {
-      on_focusable_item_add.call(());
+    if focusable.get() {
+      focusable_items.update(|items| *items += 1);
+
       on_cleanup(move || {
-        on_focusable_item_remove.call(());
+        _ = focusable_items.try_update(|items| *items -= 1);
       });
     }
   });
 
   let mut merged_attrs = vec![
-    // (
-    //   "tabindex",
-    //   Signal::derive(move || if is_current_tab_stop.get() { 0 } else { -1 }).into_attribute(),
-    // ),
+    (
+      "tabindex",
+      Signal::derive(move || if is_current_tab_stop.get() { 0 } else { -1 }).into_attribute(),
+    ),
     (
       "data-orientation",
       (move || orientation.get().map(|orientation| orientation.to_string())).into_attribute(),
@@ -300,13 +303,13 @@ pub(crate) fn RovingFocusGroupItem(
     <Primitive element=html::span
       as_child=as_child
       attrs=merged_attrs
-      node_ref=item_ref
+      node_ref=node_ref
       on:mousedown=move |ev: MouseEvent| {
         if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down.call(ev.clone());
         }
 
-        if !focusable.map(|focusable| focusable.get()).unwrap_or(false) {
+        if !focusable.get() {
           ev.prevent_default();
         } else {
           on_item_focus.call(id.get());
