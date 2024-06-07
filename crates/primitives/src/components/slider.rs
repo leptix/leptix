@@ -46,6 +46,7 @@ pub fn SliderRoot(
   #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
   #[prop(default=1.0f64.into(), into)] step: MaybeSignal<f64>,
   #[prop(optional)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional)] direction: MaybeSignal<Direction>,
   #[prop(optional)] disabled: MaybeSignal<bool>,
   #[prop(default=0.0f64.into(), into)] min_steps_between_thumbs: MaybeSignal<f64>,
   #[prop(optional)] value: Option<MaybeSignal<Vec<f64>>>,
@@ -102,10 +103,7 @@ pub fn SliderRoot(
       ((value - min.get()) / step.get()).round() * step.get() + min.get(),
       decimal_count as u32,
     );
-    let next_value = snap_to_step.clamp(
-      min.get(),
-      max.get(),
-    );
+    let next_value = snap_to_step.clamp(min.get(), max.get());
 
     set_values.update(move |values| {
       let previous_values = values.as_ref().cloned().unwrap_or_default();
@@ -154,14 +152,14 @@ pub fn SliderRoot(
     //   .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
     let prev_value = value_index_to_change
-        .get_value()
-        .map(|index| values_before_slide_start.get_value().get(index).cloned())
-        .flatten();
+      .get_value()
+      .map(|index| values_before_slide_start.get_value().get(index).cloned())
+      .flatten();
 
     let next_value = value_index_to_change
-        .get_value()
-        .map(|index| values.get().get(index).cloned())
-        .flatten();
+      .get_value()
+      .map(|index| values.get().get(index).cloned())
+      .flatten();
 
     let has_changed = next_value != prev_value;
 
@@ -205,6 +203,7 @@ pub fn SliderRoot(
       min=Signal::derive(move || min.get())
       max=Signal::derive(move || max.get())
       inverted=Signal::derive(move || inverted.get())
+      direction=Signal::derive(move || direction.get())
       orientation=Signal::derive(move || orientation.get())
       on_slide_start=handle_slide_start
       on_slide_move=handle_slide_move
@@ -324,13 +323,13 @@ fn Slider(
   min: Signal<f64>,
   inverted: Signal<bool>,
   orientation: Signal<Orientation>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] on_slide_start: Option<Callback<f64>>,
-  #[prop(optional)] on_slide_move: Option<Callback<f64>>,
-  #[prop(optional)] on_slide_end: Option<Callback<()>>,
-  #[prop(optional)] on_home_key_down: Option<Callback<KeyboardEvent>>,
-  #[prop(optional)] on_end_key_down: Option<Callback<KeyboardEvent>>,
-  #[prop(optional)] on_step_key_down: Option<Callback<Step>>,
+  direction: Signal<Direction>,
+  on_slide_start: Callback<f64>,
+  on_slide_move: Callback<f64>,
+  on_slide_end: Callback<()>,
+  on_home_key_down: Callback<KeyboardEvent>,
+  on_end_key_down: Callback<KeyboardEvent>,
+  on_step_key_down: Callback<Step>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -415,20 +414,14 @@ fn SliderHorizontal(
   max: Signal<f64>,
   min: Signal<f64>,
   inverted: Signal<bool>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  direction: Signal<Direction>,
   node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let SliderImplContextValue { dom_rect } =
     use_context().expect("SliderImpl must be used in a Slider component");
 
-  let is_left_to_right = Signal::derive(move || {
-    direction
-      .map(|direction| direction.get())
-      .unwrap_or_default()
-      == Direction::LeftToRight
-  });
-
+  let is_left_to_right = Signal::derive(move || direction.get() == Direction::LeftToRight);
   let is_sliding_from_left = Signal::derive(move || {
     (is_left_to_right.get() && !inverted.get()) || (!is_left_to_right.get() && inverted.get())
   });
@@ -499,7 +492,7 @@ fn SliderVertical(
   max: Signal<f64>,
   min: Signal<f64>,
   inverted: Signal<bool>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  direction: Signal<Direction>,
   node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
@@ -573,13 +566,13 @@ fn SliderImpl(
   min: Signal<f64>,
   inverted: Signal<bool>,
   orientation: Signal<Orientation>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional_no_strip)] on_slide_start: Option<Callback<f64>>,
-  #[prop(optional_no_strip)] on_slide_move: Option<Callback<f64>>,
-  #[prop(optional_no_strip)] on_slide_end: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_home_key_down: Option<Callback<KeyboardEvent>>,
-  #[prop(optional_no_strip)] on_end_key_down: Option<Callback<KeyboardEvent>>,
-  #[prop(optional_no_strip)] on_step_key_down: Option<Callback<Step>>,
+  direction: Signal<Direction>,
+  on_slide_start: Callback<f64>,
+  on_slide_move: Callback<f64>,
+  on_slide_end: Callback<()>,
+  on_home_key_down: Callback<KeyboardEvent>,
+  on_end_key_down: Callback<KeyboardEvent>,
+  on_step_key_down: Callback<Step>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
@@ -601,12 +594,10 @@ fn SliderImpl(
   ));
 
   if orientation.get_untracked() == Orientation::Horizontal {
-    if let Some(direction) = direction {
-      merged_attrs.push((
-        "dir",
-        (move || direction.get().to_string()).into_attribute(),
-      ));
-    }
+    merged_attrs.push((
+      "dir",
+      (move || direction.get().to_string()).into_attribute(),
+    ));
   }
 
   let context =
@@ -632,31 +623,25 @@ fn SliderImpl(
       attrs=merged_attrs
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
-          if let Some(on_home_key_down) = on_home_key_down {
             on_home_key_down.call(ev.clone());
-          }
         } else if ev.key() == "End" {
-          if let Some(on_end_key_down) = on_end_key_down {
             on_end_key_down.call(ev.clone());
-          }
         } else if ["PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].contains(&ev.key().as_ref()) {
-          if let Some(on_step_key_down) = on_step_key_down {
-            let is_back_key = match slide_direction.get() {
-              SlideDirection::FromLeft => ["Home", "PageDown", "ArrowDown", "ArrowLeft"].contains(&ev.key().as_ref()),
-              SlideDirection::FromRight => ["Home", "PageDown", "ArrowDown", "ArrowRight"].contains(&ev.key().as_ref()),
-              SlideDirection::FromTop => ["Home", "PageDown", "ArrowDown", "ArrowLeft"].contains(&ev.key().as_ref()),
-              SlideDirection::FromBottom => ["Home", "PageDown", "ArrowUp", "ArrowLeft"].contains(&ev.key().as_ref()),
-            };
+        let is_back_key = match slide_direction.get() {
+            SlideDirection::FromLeft => ["Home", "PageDown", "ArrowDown", "ArrowLeft"].contains(&ev.key().as_ref()),
+            SlideDirection::FromRight => ["Home", "PageDown", "ArrowDown", "ArrowRight"].contains(&ev.key().as_ref()),
+            SlideDirection::FromTop => ["Home", "PageDown", "ArrowDown", "ArrowLeft"].contains(&ev.key().as_ref()),
+            SlideDirection::FromBottom => ["Home", "PageDown", "ArrowUp", "ArrowLeft"].contains(&ev.key().as_ref()),
+        };
 
-            on_step_key_down.call(Step {
-              event: ev.clone(),
-              direction: if is_back_key {
+        on_step_key_down.call(Step {
+            event: ev.clone(),
+            direction: if is_back_key {
                 OrientationDirection::Backward
-              } else {
+            } else {
                 OrientationDirection::Forward
-              }
-            });
-          }
+            }
+        });
         } else {
             return;
         }
@@ -681,9 +666,9 @@ fn SliderImpl(
           el == target_el
         }) {
           _ = target_el.focus();
-        } else if let Some(on_slide_start) = on_slide_start {
-          on_slide_start.call(pointer_value.call(ev.client_x()));
         }
+
+        on_slide_start.call(pointer_value.call(ev.client_x()));
       }
       on:pointermove=move |ev: PointerEvent| {
         let Some(target) = ev.target() else {
@@ -695,9 +680,7 @@ fn SliderImpl(
         };
 
         if target_el.has_pointer_capture(ev.pointer_id()) {
-          if let Some(on_slide_move) = on_slide_move {
             on_slide_move.call(pointer_value.call(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
-          }
         }
       }
       on:pointerup=move |ev: PointerEvent| {
@@ -714,9 +697,7 @@ fn SliderImpl(
 
           dom_rect.set_value(None);
 
-          if let Some(on_slide_end) = on_slide_end {
-            on_slide_end.call(());
-          }
+          on_slide_end.call(());
         }
       }
     >
@@ -835,7 +816,7 @@ pub fn SliderRange(
 
 #[component]
 pub fn SliderThumb(
-  #[prop(optional)] name: Option<Signal<String>>,
+  #[prop(optional)] name: Option<MaybeSignal<String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
