@@ -1,3 +1,4 @@
+use html::{Img, Span};
 use leptos::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 use wasm_bindgen::{closure::Closure, JsCast};
@@ -11,7 +12,11 @@ pub struct AvatarContextValue {
 }
 
 #[component]
-pub fn AvatarRoot(#[prop(attrs)] attrs: Attributes, children: Children) -> impl IntoView {
+pub fn AvatarRoot(
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
+  children: Children,
+) -> impl IntoView {
   let (image_loading_status, set_image_loading_status) = create_signal(ImageLoadingStatus::Idle);
 
   provide_context(AvatarContextValue {
@@ -22,7 +27,7 @@ pub fn AvatarRoot(#[prop(attrs)] attrs: Attributes, children: Children) -> impl 
   });
 
   view! {
-    <span {..attrs}>
+    <span {..attrs} node_ref=node_ref>
       {children()}
     </span>
   }
@@ -30,8 +35,11 @@ pub fn AvatarRoot(#[prop(attrs)] attrs: Attributes, children: Children) -> impl 
 
 #[component]
 pub fn AvatarImage(
-  #[prop(optional)] on_loading_status_change: Option<Callback<ImageLoadingStatus>>,
+  #[prop(default=Callback::new(|_: ImageLoadingStatus| {}).into(), into)] on_loading_status_change: Callback<
+    ImageLoadingStatus,
+  >,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Img>,
 ) -> impl IntoView {
   let context = use_context::<AvatarContextValue>()
     .expect("AvatarImage needs to be in an AvatarRoot component");
@@ -46,10 +54,7 @@ pub fn AvatarImage(
   let image_loading_status = use_image_loading_status(src);
 
   let handle_loading_status_change = move |status: ImageLoadingStatus| {
-    if let Some(on_loading_status_change) = on_loading_status_change {
-      on_loading_status_change.call(status.clone());
-    }
-
+    on_loading_status_change.call(status.clone());
     context.on_image_loading_status_change.call(status);
   };
 
@@ -61,37 +66,36 @@ pub fn AvatarImage(
 
   view! {
     <Show when=move || image_loading_status.get() == ImageLoadingStatus::Loaded>
-      <img {..attrs.clone()} />
+      <img {..attrs.clone()} node_ref=node_ref />
     </Show>
   }
 }
 
 #[component]
 pub fn AvatarFallback(
-  #[prop(optional)] delay_ms: Option<f64>,
+  #[prop(optional, into)] delay_ms: MaybeSignal<f64>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 ) -> impl IntoView {
   let context = use_context::<AvatarContextValue>()
     .expect("AvatarFallback needs to be in an AvatarRoot component");
-  let (can_render, set_can_render) = create_signal(delay_ms.is_none());
+  let (can_render, set_can_render) = create_signal(false);
 
   Effect::new(move |_| {
-    if let Some(delay_ms) = delay_ms {
-      let UseTimeoutFnReturn { start, .. } = use_timeout_fn(
-        move |_: ()| {
-          set_can_render.set(true);
-        },
-        delay_ms,
-      );
+    let UseTimeoutFnReturn { start, .. } = use_timeout_fn(
+      move |_: ()| {
+        set_can_render.set(true);
+      },
+      delay_ms.get(),
+    );
 
-      start(());
-    }
+    start(());
   });
 
   view! {
     <Show when=move || can_render.get() && context.image_loading_status.get() != ImageLoadingStatus::Loaded>
-      <span {..attrs.clone()}>{children()}</span>
+      <span {..attrs.clone()} node_ref=node_ref>{children()}</span>
     </Show>
   }
 }
