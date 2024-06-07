@@ -1129,8 +1129,8 @@ fn SliderDemo() -> impl IntoView {
           <SliderRoot
               attr:class="relative flex items-center select-none touch-none w-[200px] h-5"
               default_value=vec![50.0f64].into()
-              max=100.0.into()
-              step=1.0.into()
+              max=100.0
+              step=1.0
           >
               <SliderTrack attr:class="bg-blackA7 relative grow rounded-full h-[3px]">
                   <SliderRange attr:class="absolute bg-white rounded-full h-full">

@@ -42,17 +42,17 @@ struct SliderContextValue {
 #[component]
 pub fn SliderRoot(
   #[prop(optional)] name: Option<MaybeSignal<String>>,
-  #[prop(default=0.0f64.into())] min: MaybeSignal<f64>,
-  #[prop(default=100.0f64.into())] max: MaybeSignal<f64>,
-  #[prop(default=1.0f64.into())] step: MaybeSignal<f64>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(default=0.0f64.into())] min_steps_between_thumbs: MaybeSignal<f64>,
+  #[prop(default=0.0f64.into(), into)] min: MaybeSignal<f64>,
+  #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
+  #[prop(default=1.0f64.into(), into)] step: MaybeSignal<f64>,
+  #[prop(optional)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional)] disabled: MaybeSignal<bool>,
+  #[prop(default=0.0f64.into(), into)] min_steps_between_thumbs: MaybeSignal<f64>,
   #[prop(optional)] value: Option<MaybeSignal<Vec<f64>>>,
   #[prop(optional)] default_value: Option<MaybeSignal<Vec<f64>>>,
-  #[prop(optional)] inverted: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_value_change: Option<Callback<Vec<f64>>>,
-  #[prop(optional)] on_value_commit: Option<Callback<Vec<f64>>>,
+  #[prop(optional)] inverted: MaybeSignal<bool>,
+  #[prop(default=Callback::new(move |_: Vec<f64>| {}), into)] on_value_change: Callback<Vec<f64>>,
+  #[prop(default=Callback::new(move |_: Vec<f64>| {}), into)] on_value_commit: Callback<Vec<f64>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -89,12 +89,11 @@ pub fn SliderRoot(
         }
       }
 
-      if let Some(on_value_change) = on_value_change {
-        on_value_change.call(value);
-      }
+      on_value_change.call(value);
     }),
   });
 
+  let values = Signal::derive(move || values.get().unwrap_or_default());
   let values_before_slide_start = StoredValue::new(values.get_untracked());
 
   let update_values = move |value: f64, at_index: usize, commit: bool| {
@@ -112,11 +111,7 @@ pub fn SliderRoot(
       let previous_values = values.as_ref().cloned().unwrap_or_default();
       let next_values = get_next_sorted_values(&previous_values, next_value, at_index);
 
-      if has_min_steps_between_values(
-        &next_values,
-        min_steps_between_thumbs.get()
-          * step.get(),
-      ) {
+      if has_min_steps_between_values(&next_values, min_steps_between_thumbs.get() * step.get()) {
         value_index_to_change.set_value(next_values.iter().position(|value| value == &next_value));
 
         let updated_count = next_values
@@ -130,9 +125,7 @@ pub fn SliderRoot(
 
         if has_changed {
           if commit {
-            if let Some(on_value_commit) = on_value_commit {
-              on_value_commit.call(next_values.clone());
-            }
+            on_value_commit.call(next_values.clone());
           }
 
           *values = Some(next_values);
@@ -143,7 +136,7 @@ pub fn SliderRoot(
 
   let start_update = update_values.clone();
   let handle_slide_start = Callback::new(move |value: f64| {
-    if let Some(closest_index) = find_closest_index(&values.get().unwrap_or_default(), value) {
+    if let Some(closest_index) = find_closest_index(&values.get(), value) {
       start_update(value, closest_index, false);
     }
   });
@@ -156,43 +149,40 @@ pub fn SliderRoot(
   });
 
   let handle_slide_end = Callback::new(move |_: ()| {
-    let prev_value = values_before_slide_start
-      .get_value()
-      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
+    // let prev_value = values_before_slide_start
+    //   .get_value()
+    //   .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
 
-    let next_value = values
-      .get()
-      .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
+    let prev_value = value_index_to_change
+        .get_value()
+        .map(|index| values_before_slide_start.get_value().get(index).cloned())
+        .flatten();
+
+    let next_value = value_index_to_change
+        .get_value()
+        .map(|index| values.get().get(index).cloned())
+        .flatten();
 
     let has_changed = next_value != prev_value;
 
     if has_changed {
-      if let Some(on_value_commit) = on_value_commit {
-        on_value_commit.call(values.get().unwrap_or_default());
-      }
+      on_value_commit.call(values.get());
     }
   });
 
   provide_context(SliderContextValue {
     name: Signal::derive(move || name.as_ref().map(|name| name.get())),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
+    disabled: Signal::derive(move || disabled.get()),
     min: Signal::derive(move || min.get()),
     max: Signal::derive(move || max.get()),
     value_index_to_change,
     thumbs,
-    values: Signal::derive(move || values.get().unwrap_or_default()),
-    orientation: Signal::derive(move || {
-      orientation
-        .map(|orientation| orientation.get())
-        .unwrap_or_default()
-    }),
+    values: Signal::derive(move || values.get()),
+    orientation: Signal::derive(move || orientation.get()),
   });
-
-  // let collection_ref = NodeRef::<AnyElement>::new();
 
   provide_context(CollectionContextValue::<SliderCollectionItem, AnyElement> {
     collection_ref: node_ref,
-    // collection_ref,
     item_map: RwSignal::new(HashMap::new()),
   });
 
@@ -201,8 +191,7 @@ pub fn SliderRoot(
     ("aria-disabled", disabled.into_attribute()),
     (
       "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get().then_some("")))
-        .into_attribute(),
+      Signal::derive(move || disabled.get().then_some("")).into_attribute(),
     ),
   ]);
 
@@ -212,31 +201,26 @@ pub fn SliderRoot(
   view! {
     <Slider
       node_ref=node_ref
-      // node_ref=collection_ref
       attrs=merged_attrs
       min=Signal::derive(move || min.get())
       max=Signal::derive(move || max.get())
-      inverted=Signal::derive(move || inverted.map(|inverted| inverted.get()).unwrap_or(false))
-      orientation=Signal::derive(move || {
-        orientation
-          .map(|orientation| orientation.get())
-          .unwrap_or_default()
-      })
+      inverted=Signal::derive(move || inverted.get())
+      orientation=Signal::derive(move || orientation.get())
       on_slide_start=handle_slide_start
       on_slide_move=handle_slide_move
       on_slide_end=handle_slide_end
       on_home_key_down=Callback::new(move |_| {
-        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
+        if !disabled.get() {
           home_key_down_update(min.get(), 0, true);
         }
       })
       on_end_key_down=Callback::new(move |_| {
-        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
-          end_key_down_update(max.get(), values.get().unwrap_or_default().len() - 1, true);
+        if !disabled.get() {
+          end_key_down_update(max.get(), values.get().len() - 1, true);
         }
       })
       on_step_key_down=Callback::new(move |Step{ event, direction }| {
-        if disabled.map(|disabled| disabled.get()).unwrap_or(false) {
+        if disabled.get() {
           return;
         }
 
@@ -248,7 +232,7 @@ pub fn SliderRoot(
           return;
         };
 
-        let value = values.get().unwrap_or_default().get(at_index).cloned().unwrap_or(0.);
+        let value = values.get().get(at_index).cloned().unwrap_or(0.);
         let step_in_direction = step.get() * multiplier * match direction { OrientationDirection::Forward => 1.0f64, OrientationDirection::Backward => -1.0f64 };
 
         update_values(value + step_in_direction, at_index, true);
@@ -274,7 +258,7 @@ pub fn SliderRoot(
       //       children=move |(_, value)| {
       //         view! {
       //           <BubbleInput
-      //             name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if values.get().unwrap_or_default().len() > 1 { "[]" } else { "" })))
+      //             name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if values.get().len() > 1 { "[]" } else { "" })))
       //             value=Signal::derive(move || value)
       //           />
       //         }
