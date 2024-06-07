@@ -525,21 +525,21 @@ fn AccordionDemo() -> impl IntoView {
           // on_value_change: None
           // }
           // <AccordionItemDemo value=Signal::derive(|| "item-1".into())>
-          <AccordionItemDemo value="item-1".into()>
+          <AccordionItemDemo value="item-1">
               <AccordionTriggerDemo>"Is it accessible?"</AccordionTriggerDemo>
               <AccordionContentDemo>
                   "Yes. It adheres to the WAI-ARIA design pattern."
               </AccordionContentDemo>
           </AccordionItemDemo>
 
-          <AccordionItemDemo value="item-2".into()>
+          <AccordionItemDemo value="item-2">
               <AccordionTriggerDemo>"Is it unstyled?"</AccordionTriggerDemo>
               <AccordionContentDemo>
                   "Yes. It's unstyled by default, giving you freedom over the look and feel."
               </AccordionContentDemo>
           </AccordionItemDemo>
 
-          <AccordionItemDemo value="item-3".into()>
+          <AccordionItemDemo value="item-3">
               <AccordionTriggerDemo>"Can it be animated?"</AccordionTriggerDemo>
               <AccordionContentDemo>
                   "Yes! You can animate the Accordion with CSS or Rust."
@@ -550,7 +550,7 @@ fn AccordionDemo() -> impl IntoView {
 }
 
 #[component]
-fn AccordionItemDemo(value: MaybeSignal<String>, children: Children) -> impl IntoView {
+fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: Children) -> impl IntoView {
   view! {
       <AccordionItem
           value=value

@@ -419,7 +419,7 @@ struct AccordionItemContextValue {
 #[component]
 pub fn AccordionItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  value: MaybeSignal<String>,
+  #[prop(into)] value: MaybeSignal<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
