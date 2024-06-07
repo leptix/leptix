@@ -70,8 +70,8 @@ struct AccordionCollapsibleContextValue {
 pub fn AccordionRoot(
   kind: AccordionKind,
 
-  #[prop(optional)] disabled: MaybeSignal<bool>,
-  #[prop(optional)] direction: MaybeSignal<Direction>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=Orientation::Vertical.into(), into)] orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
@@ -269,7 +269,9 @@ fn Accordion(
   disabled: Signal<bool>,
   orientation: Signal<Orientation>,
   direction: Signal<Direction>,
-  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(default=Callback::new(move|_: KeyboardEvent| {}), into)] on_key_down: Callback<
+    KeyboardEvent,
+  >,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -299,9 +301,7 @@ fn Accordion(
       attrs=merged_attrs
       node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
-        if let Some(on_key_down) = on_key_down {
-          on_key_down.call(ev.clone());
-        }
+        on_key_down.call(ev.clone());
 
         if !disabled.get() {
           return;
@@ -414,7 +414,7 @@ struct AccordionItemContextValue {
 
 #[component]
 pub fn AccordionItem(
-  #[prop(optional)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
   value: MaybeSignal<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
