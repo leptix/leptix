@@ -149,7 +149,7 @@ pub fn ScrollAreaRoot(
 
 #[component]
 pub fn ScrollAreaViewport(
-  #[prop(optional)] nonce: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] nonce: Option<MaybeSignal<String>>,
 
   #[prop(attrs)] attrs: Attributes,
   //#[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -233,12 +233,10 @@ pub fn ScrollAreaViewport(
   }
 }
 
-pub struct ForceMount;
-
 #[component]
 pub fn ScrollAreaScrollbar(
-  #[prop(optional)] force_mount: Option<ForceMount>,
-  #[prop(optional)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] force_mount: MaybeSignal<bool>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -273,7 +271,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Hover => {
       view! {
         <ScrollAreaScrollbarHover
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -285,7 +283,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Scroll => {
       view! {
         <ScrollAreaScrollbarScroll
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -297,7 +295,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Auto => {
       view! {
         <ScrollAreaScrollbarAuto
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -572,8 +570,8 @@ fn ScrollAreaScrollbarAuto(
 #[component]
 fn ScrollAreaScrollbarVisible(
   orientation: MaybeSignal<Orientation>,
-  #[prop(optional)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=Callback::new(move|_:()|{}), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(move|_:()|{}), into)] on_pointer_leave: Callback<()>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -698,8 +696,8 @@ fn ScrollAreaScrollbarVisible(
 
 #[component]
 fn ScrollAreaScrollbarX(
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_leave: Callback<()>,
 
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
@@ -820,8 +818,8 @@ fn ScrollAreaScrollbarX(
 
 #[component]
 fn ScrollAreaScrollbarY(
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_leave: Callback<()>,
 
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
@@ -956,8 +954,8 @@ struct Pointer {
 fn ScrollAreaScrollbarImpl(
   sizes: Signal<Sizes>,
 
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_leave: Callback<()>,
 
   has_thumb: Signal<bool>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
@@ -1109,14 +1107,10 @@ fn ScrollAreaScrollbarImpl(
         rect_ref.set_value(None);
       })
       .on(pointerenter, move |_| {
-        if let Some(on_pointer_enter) = on_pointer_enter {
-          on_pointer_enter.call(());
-        }
+        on_pointer_enter.call(());
       })
       .on(pointerleave, move |_| {
-        if let Some(on_pointer_leave) = on_pointer_leave {
-          on_pointer_leave.call(());
-        }
+        on_pointer_leave.call(());
       });
   });
 

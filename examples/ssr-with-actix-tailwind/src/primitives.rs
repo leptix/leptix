@@ -1169,13 +1169,13 @@ fn ScrollAreaDemo() -> impl IntoView {
           </ScrollAreaViewport>
           <ScrollAreaScrollbar
               attr:class="flex select-none touch-none p-0.5 bg-blackA3 transition-colors duration-[160ms] ease-out hover:bg-blackA5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation=Orientation::Vertical.into()
+              orientation=Orientation::Vertical
           >
               <ScrollAreaThumb attr:class="flex-1 bg-mauve10 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]"/>
           </ScrollAreaScrollbar>
           <ScrollAreaScrollbar
               attr:class="flex select-none touch-none p-0.5 bg-blackA3 transition-colors duration-[160ms] ease-out hover:bg-blackA5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation=Orientation::Horizontal.into()
+              orientation=Orientation::Horizontal
           >
               <ScrollAreaThumb attr:class="flex-1 bg-mauve10 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]"/>
           </ScrollAreaScrollbar>
