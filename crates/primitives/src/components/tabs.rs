@@ -102,24 +102,27 @@ pub fn TabsList(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let context =
-    use_context::<TabsContextValue>().expect("TabsList must be used in a TabsRoot component");
+  let TabsContextValue {
+    orientation,
+    direction,
+    ..
+  } = use_context().expect("TabsList must be used in a TabsRoot component");
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
     ("role", "tablist".into_attribute()),
     (
       "aria-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
+      (move || orientation.get().to_string()).into_attribute(),
     ),
   ]);
 
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Signal::derive(move || context.orientation.get()).into()
-      direction=Signal::derive(move || context.direction.get()).into()
-      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true)).into()
+      orientation=Some(orientation.into())
+      direction=Some(direction.into())
+      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
     >
       <Primitive
         element=html::div

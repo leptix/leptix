@@ -71,9 +71,9 @@ pub fn ToolbarRoot(
 
   view! {
     <RovingFocusGroup
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default()).into()
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default()).into()
-      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true)).into()
+      orientation=orientation
+      direction=direction
+      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
     >
       <Primitive
         element=html::div

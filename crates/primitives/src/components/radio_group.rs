@@ -83,9 +83,9 @@ pub fn RadioGroupRoot(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Signal::derive(move || orientation.get()).into()
-      direction=Signal::derive(move || direction.get()).into()
-      should_loop=Signal::derive(move || should_loop.get()).into()
+      orientation=Some(orientation)
+      direction=Some(direction)
+      should_loop=should_loop
     >
       <Primitive
         element=html::div

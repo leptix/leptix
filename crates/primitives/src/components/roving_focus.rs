@@ -45,7 +45,7 @@ impl PartialOrd for ItemData {
 struct RovingContextValue {
   orientation: Signal<Option<Orientation>>,
   direction: Signal<Option<Direction>>,
-  should_loop: Signal<Option<bool>>,
+  should_loop: Signal<bool>,
   current_tab_stop_id: Signal<Option<String>>,
   on_item_focus: Callback<String>,
   on_item_shift_tab: Callback<()>,
@@ -73,21 +73,22 @@ impl EventDescriptor for OnEntryFocus {
 #[component]
 pub(crate) fn RovingFocusGroup(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
-  #[prop(optional)] current_tab_stop_id: Option<MaybeSignal<String>>,
-  #[prop(optional)] default_current_tab_stop_id: Option<MaybeSignal<String>>,
-  #[prop(optional)] on_current_tab_stop_id_change: Option<Callback<Option<String>>>,
-  #[prop(optional)] on_entry_focus: Option<Callback<Event>>,
-  #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
-  #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
-  #[prop(optional)] on_blur: Option<Callback<FocusEvent>>,
-  #[prop(optional)] prevent_scroll_on_entry_focus: Option<bool>,
+  #[prop(optional_no_strip)] orientation: Option<MaybeSignal<Orientation>>,
+  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional, into)] should_loop: MaybeSignal<bool>,
+  #[prop(optional, into)] current_tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] default_current_tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(default=Callback::new(|_:Option<String>|{}), into)]
+  on_current_tab_stop_id_change: Callback<Option<String>>,
+  #[prop(default=Callback::new(|_:Event|{}), into)] on_entry_focus: Callback<Event>,
+  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_mouse_down: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_:FocusEvent|{}), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=Callback::new(|_:FocusEvent|{}), into)] on_blur: Callback<FocusEvent>,
+  #[prop(optional, into)] prevent_scroll_on_entry_focus: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
-    let collection_ref = NodeRef::<html::AnyElement>::new();
+  let collection_ref = NodeRef::<html::AnyElement>::new();
 
   provide_context(CollectionContextValue::<ItemData, _> {
     collection_ref,
@@ -102,11 +103,7 @@ pub(crate) fn RovingFocusGroup(
     create_controllable_signal(CreateControllableSignalProps {
       value,
       default_value,
-      on_change: Callback::new(move |value| {
-        if let Some(on_current_tab_stop_id_change) = on_current_tab_stop_id_change {
-          on_current_tab_stop_id_change.call(Some(value))
-        }
-      }),
+      on_change: Callback::new(move |value| on_current_tab_stop_id_change.call(Some(value))),
     });
 
   let (is_tabbing_back_out, set_is_tabbing_back_out) = create_signal(false);
@@ -117,15 +114,13 @@ pub(crate) fn RovingFocusGroup(
   let focusable_items_count = RwSignal::new(0);
 
   // _ = use_event_listener(collection_ref, OnEntryFocus, move |ev: web_sys::Event| {
-  //   if let Some(on_entry_focus) = on_entry_focus {
   //     on_entry_focus.call(ev);
-  //   }
   // });
 
   provide_context(RovingContextValue {
     orientation: Signal::derive(move || orientation.as_ref().map(|orientation| orientation.get())),
     direction: Signal::derive(move || direction.as_ref().map(|direction| direction.get())),
-    should_loop: Signal::derive(move || should_loop.as_ref().map(|should_loop| should_loop.get())),
+    should_loop: Signal::derive(move || should_loop.get()),
     current_tab_stop_id: Signal::derive(move || current_tab_stop_id.get()),
     on_item_focus: Callback::new(move |item| {
       set_current_tab_stop_id.set(item);
@@ -172,16 +167,11 @@ pub(crate) fn RovingFocusGroup(
       attrs=merged_attrs
       node_ref=collection_ref
       on:mousedown=move |ev: MouseEvent| {
-        if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down.call(ev);
-        }
-
         is_click_focus.set_value(true);
       }
       on:focus=move |ev: FocusEvent| {
-        if let Some(on_focus) = on_focus {
           on_focus.call(ev.clone());
-        }
 
         let is_keyboard_focus = !is_click_focus.get_value();
 
@@ -213,16 +203,13 @@ pub(crate) fn RovingFocusGroup(
             .filter_map(|item| item.map(|(el, _)| el))
             .collect::<Vec<_>>();
 
-          focus_first(&candidate_nodes, prevent_scroll_on_entry_focus.unwrap_or(false));
+          focus_first(&candidate_nodes, prevent_scroll_on_entry_focus.get());
         }
 
         is_click_focus.set_value(false);
       }
       on:blur=move |ev: FocusEvent| {
-        if let Some(on_blur) = on_blur {
           on_blur.call(ev);
-        }
-
         set_is_tabbing_back_out.set(false);
       }
     >
@@ -376,7 +363,7 @@ pub(crate) fn RovingFocusGroupItem(
             .collect::<Vec<_>>();
 
           let candidate_nodes = if let Some(current_index) = current_index {
-            if should_loop.get().unwrap_or(false) {
+            if should_loop.get() {
               let len = candidate_nodes.len();
               // (&mut candidate_nodes).rotate_right((current_index + 1) % len); // might need in the future? may cause weird behavior if not added back
 
