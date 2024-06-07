@@ -42,12 +42,12 @@ struct SliderContextValue {
 #[component]
 pub fn SliderRoot(
   #[prop(optional)] name: Option<MaybeSignal<String>>,
-  #[prop(optional)] min: Option<MaybeSignal<f64>>,
-  #[prop(optional)] max: Option<MaybeSignal<f64>>,
-  #[prop(optional)] step: Option<MaybeSignal<f64>>,
+  #[prop(default=0.0f64.into())] min: MaybeSignal<f64>,
+  #[prop(default=100.0f64.into())] max: MaybeSignal<f64>,
+  #[prop(default=1.0f64.into())] step: MaybeSignal<f64>,
   #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
   #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] min_steps_between_thumbs: Option<MaybeSignal<f64>>,
+  #[prop(default=0.0f64.into())] min_steps_between_thumbs: MaybeSignal<f64>,
   #[prop(optional)] value: Option<MaybeSignal<Vec<f64>>>,
   #[prop(optional)] default_value: Option<MaybeSignal<Vec<f64>>>,
   #[prop(optional)] inverted: Option<MaybeSignal<bool>>,
@@ -76,7 +76,7 @@ pub fn SliderRoot(
         default_value
           .as_ref()
           .map(|default_value| default_value.get())
-          .unwrap_or(vec![min.map(|min| min.get()).unwrap_or(0.)]),
+          .unwrap_or(vec![min.get()]),
       )
     }),
     on_change: Callback::new(move |value| {
@@ -98,14 +98,14 @@ pub fn SliderRoot(
   let values_before_slide_start = StoredValue::new(values.get_untracked());
 
   let update_values = move |value: f64, at_index: usize, commit: bool| {
-    let decimal_count = get_decimal_count(step.map(|step| step.get()).unwrap_or(1.));
+    let decimal_count = get_decimal_count(step.get());
     let snap_to_step = round_value(
-      (value - min.map(|min| min.get()).unwrap_or(0.)) / step.map(|step| step.get()).unwrap_or(1.),
+      ((value - min.get()) / step.get()).round() * step.get() + min.get(),
       decimal_count as u32,
     );
     let next_value = snap_to_step.clamp(
-      min.map(|min| min.get()).unwrap_or(0.),
-      max.map(|max| max.get()).unwrap_or(100.),
+      min.get(),
+      max.get(),
     );
 
     set_values.update(move |values| {
@@ -113,11 +113,9 @@ pub fn SliderRoot(
       let next_values = get_next_sorted_values(&previous_values, next_value, at_index);
 
       if has_min_steps_between_values(
-        &previous_values,
-        min_steps_between_thumbs
-          .map(|min_steps| min_steps.get())
-          .unwrap_or(0.)
-          * step.map(|step| step.get()).unwrap_or(0.),
+        &next_values,
+        min_steps_between_thumbs.get()
+          * step.get(),
       ) {
         value_index_to_change.set_value(next_values.iter().position(|value| value == &next_value));
 
@@ -178,8 +176,8 @@ pub fn SliderRoot(
   provide_context(SliderContextValue {
     name: Signal::derive(move || name.as_ref().map(|name| name.get())),
     disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
-    min: Signal::derive(move || min.map(|min| min.get()).unwrap_or(0.)),
-    max: Signal::derive(move || max.map(|max| max.get()).unwrap_or(100.)),
+    min: Signal::derive(move || min.get()),
+    max: Signal::derive(move || max.get()),
     value_index_to_change,
     thumbs,
     values: Signal::derive(move || values.get().unwrap_or_default()),
@@ -216,8 +214,8 @@ pub fn SliderRoot(
       node_ref=node_ref
       // node_ref=collection_ref
       attrs=merged_attrs
-      min=Signal::derive(move || min.map(|min| min.get()).unwrap_or(0.))
-      max=Signal::derive(move || max.map(|max| max.get()).unwrap_or(100.))
+      min=Signal::derive(move || min.get())
+      max=Signal::derive(move || max.get())
       inverted=Signal::derive(move || inverted.map(|inverted| inverted.get()).unwrap_or(false))
       orientation=Signal::derive(move || {
         orientation
@@ -229,12 +227,12 @@ pub fn SliderRoot(
       on_slide_end=handle_slide_end
       on_home_key_down=Callback::new(move |_| {
         if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
-          home_key_down_update(min.map(|min| min.get()).unwrap_or(0.), 0, true);
+          home_key_down_update(min.get(), 0, true);
         }
       })
       on_end_key_down=Callback::new(move |_| {
         if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
-          end_key_down_update(max.map(|max| max.get()).unwrap_or(0.), values.get().unwrap_or_default().len() - 1, true);
+          end_key_down_update(max.get(), values.get().unwrap_or_default().len() - 1, true);
         }
       })
       on_step_key_down=Callback::new(move |Step{ event, direction }| {
@@ -251,7 +249,7 @@ pub fn SliderRoot(
         };
 
         let value = values.get().unwrap_or_default().get(at_index).cloned().unwrap_or(0.);
-        let step_in_direction = step.map(|step| step.get()).unwrap_or(1.) * multiplier * match direction { OrientationDirection::Forward => 1.0f64, OrientationDirection::Backward => -1.0f64 };
+        let step_in_direction = step.get() * multiplier * match direction { OrientationDirection::Forward => 1.0f64, OrientationDirection::Backward => -1.0f64 };
 
         update_values(value + step_in_direction, at_index, true);
       })
