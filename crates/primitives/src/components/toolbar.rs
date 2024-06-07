@@ -124,7 +124,7 @@ pub fn ToolbarButton(
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
+      focusable=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
     >
       <Primitive
         element=html::button
@@ -148,7 +148,7 @@ pub fn ToolbarLink(
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || true).into()
+      focusable=true
     >
       <Primitive
         element=html::a

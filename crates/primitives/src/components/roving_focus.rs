@@ -221,12 +221,14 @@ pub(crate) fn RovingFocusGroup(
 #[component]
 pub(crate) fn RovingFocusGroupItem(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] tab_stop_id: Option<MaybeSignal<String>>,
-  #[prop(optional)] focusable: MaybeSignal<bool>,
-  #[prop(optional)] active: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_mouse_down: Option<Callback<MouseEvent>>,
-  #[prop(optional)] on_focus: Option<Callback<FocusEvent>>,
-  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(optional, into)] tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] focusable: MaybeSignal<bool>,
+  #[prop(optional, into)] active: MaybeSignal<bool>,
+  #[prop(default=Callback::new(move|_:MouseEvent|{}), into)] on_mouse_down: Callback<MouseEvent>,
+  #[prop(default=Callback::new(move|_:FocusEvent|{}), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=Callback::new(move|_:KeyboardEvent|{}), into)] on_key_down: Callback<
+    KeyboardEvent,
+  >,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -256,7 +258,7 @@ pub(crate) fn RovingFocusGroupItem(
     ItemData {
       id: id.get_untracked(),
       focusable: Signal::derive(move || focusable.get()),
-      active: Signal::derive(move || active.map(|active| active.get()).unwrap_or(false)),
+      active: Signal::derive(move || active.get()),
     },
   );
 
@@ -292,9 +294,7 @@ pub(crate) fn RovingFocusGroupItem(
       attrs=merged_attrs
       node_ref=node_ref
       on:mousedown=move |ev: MouseEvent| {
-        if let Some(on_mouse_down) = on_mouse_down {
           on_mouse_down.call(ev.clone());
-        }
 
         if !focusable.get() {
           ev.prevent_default();
@@ -303,16 +303,12 @@ pub(crate) fn RovingFocusGroupItem(
         }
       }
       on:focus=move |ev: FocusEvent| {
-        if let Some(on_focus) = on_focus {
           on_focus.call(ev);
-        }
 
         on_item_focus.call(id.get());
       }
       on:keydown=move |ev: KeyboardEvent| {
-        if let Some(on_key_down) = on_key_down {
           on_key_down.call(ev.clone());
-        }
 
         if ev.key() == "Tab" && ev.shift_key() {
           on_item_shift_tab.call(());

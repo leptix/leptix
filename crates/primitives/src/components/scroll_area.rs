@@ -49,7 +49,7 @@ pub enum ScrollAreaKind {
 pub struct ScrollAreaContextValue {
   kind: MaybeSignal<ScrollAreaKind>,
   direction: Signal<Direction>,
-  scroll_hide_delay: Signal<u32>,
+  scroll_hide_delay: Signal<u64>,
   scroll_area: NodeRef<AnyElement>,
   viewport: NodeRef<AnyElement>,
   // on_viewport_change: Callback<NodeRef<AnyElement>>,
@@ -69,9 +69,9 @@ pub struct ScrollAreaContextValue {
 
 #[component]
 pub fn ScrollAreaRoot(
-  #[prop(optional)] kind: MaybeSignal<ScrollAreaKind>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] scroll_hide_delay: Option<MaybeSignal<u32>>,
+  #[prop(optional, into)] kind: MaybeSignal<ScrollAreaKind>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
+  #[prop(default=600.into(), into)] scroll_hide_delay: MaybeSignal<u64>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -88,20 +88,12 @@ pub fn ScrollAreaRoot(
   let (scrollbar_x_enabled, set_scrollbar_x_enabled) = create_signal(false);
   let (scrollbar_y_enabled, set_scrollbar_y_enabled) = create_signal(false);
 
-  let direction = Signal::derive(move || {
-    direction
-      .map(|direction| direction.get())
-      .unwrap_or_default()
-  });
+  let direction = Signal::derive(move || direction.get());
 
   provide_context(ScrollAreaContextValue {
     kind,
     direction,
-    scroll_hide_delay: Signal::derive(move || {
-      scroll_hide_delay
-        .map(|scroll_hide_delay| scroll_hide_delay.get())
-        .unwrap_or(600)
-    }),
+    scroll_hide_delay: Signal::derive(move || scroll_hide_delay.get()),
     scroll_area: node_ref,
     viewport,
     content,

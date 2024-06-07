@@ -205,8 +205,8 @@ pub fn TabsTrigger(
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || !disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
-      active=Signal::derive(move || is_selected.get()).into()
+      focusable=Signal::derive(move || !disabled.map(|disabled| disabled.get()).unwrap_or(false))
+      active=is_selected
     >
       <Primitive
         element=html::button

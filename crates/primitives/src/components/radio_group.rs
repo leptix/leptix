@@ -137,8 +137,8 @@ pub fn RadioGroupItem(
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || !is_disabled.get()).into()
-      active=Signal::derive(move || is_checked.get()).into()
+      focusable=Signal::derive(move || !is_disabled.get())
+      active=is_checked
     >
       <Radio
         value=value

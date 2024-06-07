@@ -321,7 +321,7 @@ pub fn ToggleGroupItem(
     disabled.map(|disabled| disabled.get()).unwrap_or(false)
   });
 
-  let focusable = Signal::derive(move || !is_disabled.get()).into();
+  let focusable = Signal::derive(move || !is_disabled.get());
 
   let inner_value = value.clone();
   view! {
@@ -340,7 +340,7 @@ pub fn ToggleGroupItem(
           <RovingFocusGroupItem
             as_child=true
             focusable=focusable
-            active=is_pressed.into()
+            active=is_pressed
           >
             <ToggleRoot
               disabled=is_disabled.into()
