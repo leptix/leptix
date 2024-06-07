@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 use wasm_bindgen::{closure::Closure, JsCast};
 
 use crate::Attributes;
@@ -67,7 +68,7 @@ pub fn AvatarImage(
 
 #[component]
 pub fn AvatarFallback(
-  #[prop(optional)] delay_ms: Option<i32>,
+  #[prop(optional)] delay_ms: Option<f64>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 ) -> impl IntoView {
@@ -77,17 +78,14 @@ pub fn AvatarFallback(
 
   Effect::new(move |_| {
     if let Some(delay_ms) = delay_ms {
-      let callback = Closure::<dyn Fn()>::new(move || set_can_render.set(true));
-      let timer_id = window()
-        .set_timeout_with_callback_and_timeout_and_arguments_0(
-          callback.as_ref().unchecked_ref(),
-          delay_ms,
-        )
-        .expect("could not create fallback timeout closure");
+      let UseTimeoutFnReturn { start, .. } = use_timeout_fn(
+        move |_: ()| {
+          set_can_render.set(true);
+        },
+        delay_ms,
+      );
 
-      callback.forget();
-
-      on_cleanup(move || window().clear_timeout_with_handle(timer_id));
+      start(());
     }
   });
 

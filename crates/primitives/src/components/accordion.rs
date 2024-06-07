@@ -8,7 +8,7 @@ use wasm_bindgen::JsCast;
 use crate::{
   components::{
     collapsible::{CollapsibleContent, CollapsibleRoot, CollapsibleTrigger},
-    collection::use_collection_context,
+    collection::{use_collection_context, use_collection_item_ref, CollectionItemId},
     primitive::Primitive,
   },
   util::{
@@ -56,7 +56,7 @@ pub fn AccordionRoot(
 ) -> impl IntoView {
   provide_context(
     CollectionContextValue::<AccordionCollectionItem, AnyElement> {
-      collection_ref: NodeRef::new(),
+      collection_ref: node_ref,
       item_map: RwSignal::new(HashMap::new()),
     },
   );
@@ -519,6 +519,8 @@ pub fn AccordionTrigger(
     .expect("AccordionTrigger must be in an AccordionRoot component");
   let collapsible_context = use_context::<AccordionCollapsibleContextValue>()
     .expect("AccordionTrigger must be in an AccordionRoot component");
+
+  use_collection_item_ref(node_ref, AccordionCollectionItem);
 
   let mut merged_attrs = vec![
     (

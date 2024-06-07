@@ -141,17 +141,15 @@ pub fn RadioGroupItem(
   let is_checked = Signal::derive(move || context.value.get() == Some(is_checked_value.get()));
   let is_arrow_key_pressed = StoredValue::new(false);
 
-  _ = use_event_listener(use_document(), keydown, move |ev: KeyboardEvent| {
-    if ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].contains(&ev.key().as_str()) {
-      is_arrow_key_pressed.set_value(true);
-    }
-  });
+  // _ = use_event_listener(use_document(), keydown, move |ev: KeyboardEvent| {
+  //   if ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].contains(&ev.key().as_str()) {
+  //     is_arrow_key_pressed.set_value(true);
+  //   }
+  // });
 
-  _ = use_event_listener(use_document(), keyup, move |ev: KeyboardEvent| {
-    is_arrow_key_pressed.set_value(false);
-  });
-
-  let node_ref = NodeRef::<AnyElement>::new();
+  // _ = use_event_listener(use_document(), keyup, move |ev: KeyboardEvent| {
+  //   is_arrow_key_pressed.set_value(false);
+  // });
 
   let on_check_value = value.clone();
 

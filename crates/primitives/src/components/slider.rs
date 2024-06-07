@@ -16,7 +16,7 @@ use web_sys::{
 
 use crate::{
   components::{
-    collection::{create_collection_item_ref, use_collection_context, CollectionContextValue},
+    collection::{use_collection_context, use_collection_item_ref, CollectionContextValue},
     primitive::Primitive,
   },
   util::{
@@ -190,8 +190,11 @@ pub fn SliderRoot(
     }),
   });
 
+  // let collection_ref = NodeRef::<AnyElement>::new();
+
   provide_context(CollectionContextValue::<SliderCollectionItem, AnyElement> {
     collection_ref: node_ref,
+    // collection_ref,
     item_map: RwSignal::new(HashMap::new()),
   });
 
@@ -211,6 +214,7 @@ pub fn SliderRoot(
   view! {
     <Slider
       node_ref=node_ref
+      // node_ref=collection_ref
       attrs=merged_attrs
       min=Signal::derive(move || min.map(|min| min.get()).unwrap_or(0.))
       max=Signal::derive(move || max.map(|max| max.get()).unwrap_or(100.))
@@ -503,7 +507,9 @@ fn SliderHorizontal(
     slide_direction,
   });
 
-  children().into_view()
+  view! {
+      <>{children()}</>
+  }
 }
 
 #[component]
@@ -852,8 +858,7 @@ pub fn SliderThumb(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let item_ref =
-    create_collection_item_ref::<html::AnyElement, SliderCollectionItem>(SliderCollectionItem);
+  use_collection_item_ref::<html::AnyElement, SliderCollectionItem>(node_ref, SliderCollectionItem);
   let get_items = use_collection_context::<SliderCollectionItem, AnyElement>();
 
   let context = use_context::<SliderContextValue>()
@@ -863,10 +868,10 @@ pub fn SliderThumb(
 
   let (is_form_control, set_is_form_control) = create_signal(true);
 
-  let size = use_element_size(item_ref);
+  let size = use_element_size(node_ref);
 
   let index = Signal::derive(move || {
-    let node = item_ref.get()?;
+    let node = node_ref.get()?;
     let items = get_items.get();
 
     let index = items.iter().position(|item| {
@@ -926,34 +931,34 @@ pub fn SliderThumb(
   });
 
   Effect::new(move |_| {
-    let Some(node) = item_ref.get() else {
+    let Some(node) = node_ref.get() else {
       return;
     };
 
     context.thumbs.update_value(|thumbs| {
       thumbs.push(node.clone());
     });
-  });
 
-  on_cleanup(move || {
-    let Some(node) = item_ref.get() else {
-      return;
-    };
+    on_cleanup(move || {
+      // let Some(node) = node_ref.get() else {
+      //   return;
+      // };
 
-    _ = context.thumbs.try_update_value(|thumbs| {
-      if let Some(position) = thumbs.iter().position(|thumb| {
-        let thumb_el: &web_sys::Element = thumb;
-        let node_el: &web_sys::Element = &node.clone();
+      _ = context.thumbs.try_update_value(|thumbs| {
+        if let Some(position) = thumbs.iter().position(|thumb| {
+          let thumb_el: &web_sys::Element = thumb;
+          let node_el: &web_sys::Element = &node.clone();
 
-        thumb_el == node_el
-      }) {
-        _ = thumbs.remove(position);
-      }
+          thumb_el == node_el
+        }) {
+          _ = thumbs.remove(position);
+        }
+      });
     });
   });
 
   Effect::new(move |_| {
-    let Some(node) = item_ref.get() else {
+    let Some(node) = node_ref.get() else {
       return;
     };
 
@@ -1031,8 +1036,7 @@ pub fn SliderThumb(
       <Primitive
         element=html::span
         attrs=merged_attrs
-        // node_ref=node_ref
-        node_ref=item_ref
+        node_ref=node_ref
       >
         {children()}
       </Primitive>

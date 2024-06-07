@@ -10,25 +10,25 @@ pub fn App() -> impl IntoView {
   provide_meta_context();
 
   view! {
-    <Stylesheet id="leptos" href="/pkg/ssr-with-actix-tailwind.css"/>
-    <Title text="Leptix SSR"/>
+      <Stylesheet id="leptos" href="/pkg/ssr-with-actix-tailwind.css"/>
+      <Title text="Leptix SSR"/>
 
-    <Router>
-      <main class="dark:bg-[#111113] p-4 flex flex-col gap-2 text-mauve11 dark:text-white">
-        <Routes>
-          <Route path="" view=HomePage/>
-          <Route path="/*any" view=NotFound/>
-        </Routes>
-      </main>
-    </Router>
+      <Router>
+          <main class="dark:bg-[#111113] p-4 flex flex-col gap-2 text-mauve11 dark:text-white">
+              <Routes>
+                  <Route path="" view=HomePage/>
+                  <Route path="/*any" view=NotFound/>
+              </Routes>
+          </main>
+      </Router>
   }
 }
 
 #[component]
 fn HomePage() -> impl IntoView {
   view! {
-    <Auth />
-    <PrimitivesShowcase />
+      <Auth/>
+      <PrimitivesShowcase/>
   }
 }
 
@@ -39,45 +39,49 @@ fn Auth() -> impl IntoView {
   let auth_signal = move || profile.get().or(Some(auth_cookie.get())).flatten();
 
   view! {
-    <Suspense fallback=move || view! { <p>"Loading (Suspense Fallback)..."</p> }>
-      {move || if auth_signal()
-        .map(|auth_cookie| auth_cookie == "bob")
-        .unwrap_or(false)
-        {
-          view! {
-            <div class="flex gap-2 items-center">
-            <span>"hello bob"</span>
-              <button
-                class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold"
-                on:click=move |_| {
-                  spawn_local(async move {
-                    _ = logout().await;
-                    profile.refetch();
-                  });
-                }
-              >
-                "Logout"
-              </button>
-            </div>
-          }.into_view()
-        } else {
-          view! {
-            <button
-              class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold w-fit"
-              on:click=move |_| {
-                spawn_local(async move {
-                  _ = login().await;
-                  profile.refetch();
-                });
+      <Suspense fallback=move || {
+          view! { <p>"Loading (Suspense Fallback)..."</p> }
+      }>
+          {move || {
+              if auth_signal().map(|auth_cookie| auth_cookie == "bob").unwrap_or(false) {
+                  view! {
+                      <div class="flex gap-2 items-center">
+                          <span>"hello bob"</span>
+                          <button
+                              class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold"
+                              on:click=move |_| {
+                                  spawn_local(async move {
+                                      _ = logout().await;
+                                      profile.refetch();
+                                  });
+                              }
+                          >
+
+                              "Logout"
+                          </button>
+                      </div>
+                  }
+                      .into_view()
+              } else {
+                  view! {
+                      <button
+                          class="transition duration-75 rounded-md hover:bg-violet8 bg-violet9 active:bg-violet10 px-1.5 py-1 text-white text-sm font-semibold w-fit"
+                          on:click=move |_| {
+                              spawn_local(async move {
+                                  _ = login().await;
+                                  profile.refetch();
+                              });
+                          }
+                      >
+
+                          "Login"
+                      </button>
+                  }
+                      .into_view()
               }
-            >
-              "Login"
-            </button>
-          }
-        .into_view()
-        }
-      }
-    </Suspense>
+          }}
+
+      </Suspense>
   }
 }
 
@@ -174,7 +178,5 @@ fn NotFound() -> impl IntoView {
     resp.set_status(actix_web::http::StatusCode::NOT_FOUND);
   }
 
-  view! {
-    <h1>"Not Found"</h1>
-  }
+  view! { <h1>"Not Found"</h1> }
 }

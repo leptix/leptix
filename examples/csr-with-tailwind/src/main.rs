@@ -353,7 +353,7 @@ fn AvatarDemo() -> impl IntoView {
         />
         <AvatarFallback
           attr:class="text-violet11 leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
-          delay_ms=600
+          delay_ms=600.0
         >
           CT
         </AvatarFallback>
@@ -366,7 +366,7 @@ fn AvatarDemo() -> impl IntoView {
         />
         <AvatarFallback
           attr:class="text-violet11 leading-1 flex h-full w-full items-center justify-center bg-white text-[15px] font-medium"
-          delay_ms=600
+          delay_ms=600.0
         >
           JD
         </AvatarFallback>
