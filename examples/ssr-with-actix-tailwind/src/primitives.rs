@@ -288,7 +288,7 @@ fn CheckboxDemo() -> impl IntoView {
       <form>
           <div class="flex items-center">
               <CheckboxRoot
-                  default_checked=CheckedState::Checked(true).into()
+                  default_checked=CheckedState::Checked(true)
                   attr:class="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
                   attr:id="c1"
               >
@@ -309,7 +309,7 @@ fn CheckboxDemo() -> impl IntoView {
 fn AspectRatioDemo() -> impl IntoView {
   view! {
       <div class="shadow-blackA4 w-[300px] overflow-hidden rounded-md shadow-[0_2px_10px]">
-          <AspectRatioRoot ratio=(16.0 / 9.0).into()>
+          <AspectRatioRoot ratio=16.0 / 9.0>
               <img
                   class="h-full w-full object-cover"
                   src="https://images.unsplash.com/photo-1535025183041-0991a977e25b?w=300&dpr=2&q=80"
