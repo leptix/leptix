@@ -688,21 +688,21 @@ fn ToggleGroupDemo() -> impl IntoView {
           attr:aria-label="Text alignment"
       >
           <ToggleGroupItem
-              value="left".into()
+              value="left"
               attr:class=toggle_group_item_classes
               attr:aria-label="Left aligned"
           >
               <TextAlignLeftIcon/>
           </ToggleGroupItem>
           <ToggleGroupItem
-              value="center".into()
+              value="center"
               attr:class=toggle_group_item_classes
               attr:aria-label="Center aligned"
           >
               <TextAlignCenterIcon/>
           </ToggleGroupItem>
           <ToggleGroupItem
-              value="right".into()
+              value="right"
               attr:class=toggle_group_item_classes
               attr:aria-label="Right aligned"
           >
@@ -790,21 +790,21 @@ pub fn ToolbarDemo() -> impl IntoView {
           >
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 mr-0.5 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="bold".into()
+                  value="bold"
                   attr:aria-label="Bold"
               >
                   <FontBoldIcon/>
               </ToolbarToggleItem>
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 mr-0.5 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="italic".into()
+                  value="italic"
                   attr:aria-label="Italic"
               >
                   <FontItalicIcon/>
               </ToolbarToggleItem>
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="strikethrough".into()
+                  value="strikethrough"
                   attr:aria-label="Strike through"
               >
                   <StrikethroughIcon/>
@@ -822,21 +822,21 @@ pub fn ToolbarDemo() -> impl IntoView {
           >
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 flex-grow-0 mr-0.5 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="left".into()
+                  value="left"
                   attr:aria-label="Left aligned"
               >
                   <TextAlignLeftIcon/>
               </ToolbarToggleItem>
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 flex-grow-0 mr-0.5 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="center".into()
+                  value="center"
                   attr:aria-label="Center aligned"
               >
                   <TextAlignCenterIcon/>
               </ToolbarToggleItem>
               <ToolbarToggleItem
                   attr:class="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                  value="right".into()
+                  value="right"
                   attr:aria-label="Right aligned"
               >
                   <TextAlignRightIcon/>
