@@ -88,22 +88,20 @@ pub fn ToolbarRoot(
 
 #[component]
 pub fn ToolbarSeparator(
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] decorative: Option<MaybeSignal<bool>>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {
-  let context = use_context::<ToolbarContextValue>()
-    .expect("ToolbarSeparator must be used in a ToolbarRoot component");
+  let ToolbarContextValue { orientation, .. } =
+    use_context().expect("ToolbarSeparator must be used in a ToolbarRoot component");
 
-  let orientation = Signal::derive(move || match context.orientation.get() {
+  let orientation = Signal::derive(move || match orientation.get() {
     Orientation::Horizontal => Orientation::Vertical,
     Orientation::Vertical => Orientation::Horizontal,
   });
 
   view! {
     <Separator
-      orientation=orientation.into()
+      orientation=orientation
       attrs=attrs
       node_ref=node_ref
     />

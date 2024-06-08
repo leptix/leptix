@@ -4,27 +4,18 @@ use crate::{components::primitive::Primitive, util::Orientation, Attributes};
 
 #[component]
 pub fn Separator(
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] decorative: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] decorative: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
-  let mut merged_attrs = if decorative
-    .map(|decorative| decorative.get_untracked())
-    .unwrap_or(false)
-  {
+  let mut merged_attrs = if decorative.get_untracked() {
     vec![("role", "none".into_attribute())]
   } else {
     vec![
       (
         "aria-orientation",
-        Signal::derive(move || {
-          orientation
-            .map(|orientation| orientation.get())
-            .unwrap_or_default()
-            .to_string()
-        })
-        .into_attribute(),
+        Signal::derive(move || orientation.get().to_string()).into_attribute(),
       ),
       ("role", "separator".into_attribute()),
     ]
@@ -33,13 +24,7 @@ pub fn Separator(
   merged_attrs.extend(attrs);
   merged_attrs.extend([(
     "data-orientation",
-    Signal::derive(move || {
-      orientation
-        .map(|orientation| orientation.get())
-        .unwrap_or_default()
-        .to_string()
-    })
-    .into_attribute(),
+    Signal::derive(move || orientation.get().to_string()).into_attribute(),
   )]);
 
   view! {

@@ -645,14 +645,14 @@ fn SeparatorDemo() -> impl IntoView {
               <div class="dark:text-white text-[15px] leading-5">"Blog"</div>
               <Separator
                   attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
-                  decorative=true.into()
-                  orientation=Orientation::Vertical.into()
+                  decorative=true
+                  orientation=Orientation::Vertical
               />
               <div class="dark:text-white text-[15px] leading-5">"Docs"</div>
               <Separator
                   attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
-                  decorative=true.into()
-                  orientation=Orientation::Vertical.into()
+                  decorative=true
+                  orientation=Orientation::Vertical
               />
               <div class="dark:text-white text-[15px] leading-5">"Source"</div>
           </div>
