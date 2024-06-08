@@ -144,7 +144,7 @@ pub fn RadioGroupItem(
         name=name
         node_ref=node_ref
         attrs=attrs
-        on_check=move |_| on_value_change.call(on_check_value.get())
+        on_check=Callback::new(move |_| on_value_change.call(on_check_value.get()))
         on:keydown=move |ev: KeyboardEvent| {
           on_key_down.call(ev.clone());
 

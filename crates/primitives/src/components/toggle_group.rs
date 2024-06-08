@@ -344,13 +344,13 @@ pub fn ToggleGroupItem(
               pressed=is_pressed
               attrs=merged_attrs
               node_ref=node_ref
-              on_pressed_changed=move |pressed| {
+              on_pressed_changed=Callback::new(move |pressed| {
                 if pressed {
                   on_item_activate.call(on_pressed_value.get());
                 } else {
                   on_item_deactivate.call(on_pressed_value.get());
                 }
-              }
+              })
             >
               {children()}
             </ToggleRoot>
@@ -363,13 +363,13 @@ pub fn ToggleGroupItem(
             pressed=is_pressed
             attrs=merged_attrs
             node_ref=node_ref
-            on_pressed_changed=move |pressed| {
+            on_pressed_changed=Callback::new(move |pressed| {
               if pressed {
                 on_item_activate.call(on_pressed_value.get());
               } else {
                 on_item_deactivate.call(on_pressed_value.get());
               }
-            }
+            })
           >
             {children()}
           </ToggleRoot>

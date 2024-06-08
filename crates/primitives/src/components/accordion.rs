@@ -453,13 +453,13 @@ pub fn AccordionItem(
       open=is_open
       disabled=is_disabled
       node_ref=node_ref
-      on_open_change=move |open| {
+      on_open_change=Callback::new(move |open| {
         if open {
           value_context.on_item_open.call(open_value.get());
         } else {
           value_context.on_item_close.call(open_value.get());
         }
-      }
+      })
     >
       {children()}
     </CollapsibleRoot>
