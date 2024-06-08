@@ -49,7 +49,7 @@ pub enum ScrollAreaKind {
 pub struct ScrollAreaContextValue {
   kind: MaybeSignal<ScrollAreaKind>,
   direction: Signal<Direction>,
-  scroll_hide_delay: Signal<u32>,
+  scroll_hide_delay: Signal<u64>,
   scroll_area: NodeRef<AnyElement>,
   viewport: NodeRef<AnyElement>,
   // on_viewport_change: Callback<NodeRef<AnyElement>>,
@@ -69,9 +69,9 @@ pub struct ScrollAreaContextValue {
 
 #[component]
 pub fn ScrollAreaRoot(
-  #[prop(optional)] kind: MaybeSignal<ScrollAreaKind>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] scroll_hide_delay: Option<MaybeSignal<u32>>,
+  #[prop(optional, into)] kind: MaybeSignal<ScrollAreaKind>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
+  #[prop(default=600.into(), into)] scroll_hide_delay: MaybeSignal<u64>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -88,20 +88,12 @@ pub fn ScrollAreaRoot(
   let (scrollbar_x_enabled, set_scrollbar_x_enabled) = create_signal(false);
   let (scrollbar_y_enabled, set_scrollbar_y_enabled) = create_signal(false);
 
-  let direction = Signal::derive(move || {
-    direction
-      .map(|direction| direction.get())
-      .unwrap_or_default()
-  });
+  let direction = Signal::derive(move || direction.get());
 
   provide_context(ScrollAreaContextValue {
     kind,
     direction,
-    scroll_hide_delay: Signal::derive(move || {
-      scroll_hide_delay
-        .map(|scroll_hide_delay| scroll_hide_delay.get())
-        .unwrap_or(600)
-    }),
+    scroll_hide_delay: Signal::derive(move || scroll_hide_delay.get()),
     scroll_area: node_ref,
     viewport,
     content,
@@ -157,7 +149,7 @@ pub fn ScrollAreaRoot(
 
 #[component]
 pub fn ScrollAreaViewport(
-  #[prop(optional)] nonce: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] nonce: MaybeProp<String>,
 
   #[prop(attrs)] attrs: Attributes,
   //#[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -241,12 +233,10 @@ pub fn ScrollAreaViewport(
   }
 }
 
-pub struct ForceMount;
-
 #[component]
 pub fn ScrollAreaScrollbar(
-  #[prop(optional)] force_mount: Option<ForceMount>,
-  #[prop(optional)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] force_mount: MaybeSignal<bool>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -281,7 +271,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Hover => {
       view! {
         <ScrollAreaScrollbarHover
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -293,7 +283,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Scroll => {
       view! {
         <ScrollAreaScrollbarScroll
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -305,7 +295,7 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Auto => {
       view! {
         <ScrollAreaScrollbarAuto
-          force_mount=force_mount.map(|_| true).unwrap_or(false).into()
+            force_mount=force_mount
           orientation=orientation
           attrs=attrs
           node_ref=node_ref
@@ -580,8 +570,8 @@ fn ScrollAreaScrollbarAuto(
 #[component]
 fn ScrollAreaScrollbarVisible(
   orientation: MaybeSignal<Orientation>,
-  #[prop(optional)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -706,8 +696,8 @@ fn ScrollAreaScrollbarVisible(
 
 #[component]
 fn ScrollAreaScrollbarX(
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_leave: Callback<()>,
 
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
@@ -828,8 +818,8 @@ fn ScrollAreaScrollbarX(
 
 #[component]
 fn ScrollAreaScrollbarY(
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
@@ -964,8 +954,8 @@ struct Pointer {
 fn ScrollAreaScrollbarImpl(
   sizes: Signal<Sizes>,
 
-  #[prop(optional_no_strip)] on_pointer_enter: Option<Callback<()>>,
-  #[prop(optional_no_strip)] on_pointer_leave: Option<Callback<()>>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   has_thumb: Signal<bool>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
@@ -1117,14 +1107,10 @@ fn ScrollAreaScrollbarImpl(
         rect_ref.set_value(None);
       })
       .on(pointerenter, move |_| {
-        if let Some(on_pointer_enter) = on_pointer_enter {
-          on_pointer_enter.call(());
-        }
+        on_pointer_enter.call(());
       })
       .on(pointerleave, move |_| {
-        if let Some(on_pointer_leave) = on_pointer_leave {
-          on_pointer_leave.call(());
-        }
+        on_pointer_leave.call(());
       });
   });
 
@@ -1150,7 +1136,7 @@ fn ScrollAreaScrollbarImpl(
 
 #[component]
 pub fn ScrollAreaThumb(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional)] force_mount: MaybeSignal<bool>,
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
@@ -1158,12 +1144,7 @@ pub fn ScrollAreaThumb(
   let ScrollbarContextValue { has_thumb, .. } = use_context::<ScrollbarContextValue>()
     .expect("ScrollAreaThumb must be used in a ScrollAreaScrollbarImpl component");
 
-  let is_present = Signal::derive(move || {
-    has_thumb.get()
-      || force_mount
-        .map(|force_mount| force_mount.get())
-        .unwrap_or(false)
-  });
+  let is_present = Signal::derive(move || has_thumb.get() || force_mount.get());
 
   let presence = create_presence(is_present, node_ref);
 

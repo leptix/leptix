@@ -28,19 +28,19 @@ pub enum CheckedState {
 #[derive(Clone)]
 struct CheckboxValueContext {
   state: Signal<CheckedState>,
-  disabled: Signal<Option<bool>>,
+  disabled: Signal<bool>,
 }
 
 #[component]
 pub fn CheckboxRoot(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] required: Option<MaybeSignal<bool>>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] checked: Option<MaybeSignal<CheckedState>>,
-  #[prop(optional)] default_checked: Option<MaybeSignal<CheckedState>>,
-  #[prop(optional)] on_checked_change: Option<Callback<CheckedState>>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
-  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(optional, into)] required: MaybeSignal<bool>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] checked: MaybeProp<CheckedState>,
+  #[prop(optional, into)] default_checked: MaybeProp<CheckedState>,
+  #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<CheckedState>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -50,14 +50,10 @@ pub fn CheckboxRoot(
   let (is_form_control, set_is_form_control) = create_signal(true);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || checked.map(|checked| checked.get())),
-    default_value: Signal::derive(move || {
-      default_checked.map(|default_checked| default_checked.get())
-    }),
+    value: Signal::derive(move || checked.get()),
+    default_value: Signal::derive(move || default_checked.get()),
     on_change: Callback::new(move |value| {
-      if let Some(on_checked_change) = on_checked_change {
-        on_checked_change.call(value);
-      }
+      on_checked_change.call(value);
     }),
   });
 
@@ -104,7 +100,7 @@ pub fn CheckboxRoot(
 
   provide_context(CheckboxValueContext {
     state: Signal::derive(move || checked.get().unwrap_or(CheckedState::Checked(false))),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get())),
+    disabled: Signal::derive(move || disabled.get()),
   });
 
   let mut merged_attrs = vec![
@@ -122,7 +118,7 @@ pub fn CheckboxRoot(
     ),
     (
       "aria-required",
-      Signal::derive(move || required.map(|required| required.get())).into_attribute(),
+      Signal::derive(move || required.get()).into_attribute(),
     ),
     (
       "data-state",
@@ -142,11 +138,11 @@ pub fn CheckboxRoot(
     ),
     (
       "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
+      Signal::derive(move || disabled.get()).into_attribute(),
     ),
     (
       "disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
+      Signal::derive(move || disabled.get()).into_attribute(),
     ),
   ];
 
@@ -169,18 +165,14 @@ pub fn CheckboxRoot(
       attrs=merged_attrs
       as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
-        if let Some(on_key_down) = on_key_down {
-          on_key_down.call(ev.clone());
-        }
+        on_key_down.call(ev.clone());
 
         if ev.key() == "Enter" {
           ev.prevent_default();
         }
       }
       on:click=move |ev: MouseEvent| {
-        if let Some(on_click) = on_click {
-          on_click.call(ev.clone());
-        }
+        on_click.call(ev.clone());
 
         set_checked.update(|checked| {
           *checked = Some(match checked.as_ref().unwrap_or(&CheckedState::Checked(false)) {
@@ -210,7 +202,7 @@ pub fn CheckboxRoot(
 
 #[component]
 pub fn CheckboxIndicator(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] force_mount: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
@@ -218,12 +210,8 @@ pub fn CheckboxIndicator(
   let CheckboxValueContext { state, disabled } = use_context::<CheckboxValueContext>()
     .expect("CheckboxIndicator must be used inside of a CheckboxRoot component");
 
-  let is_present = Signal::derive(move || {
-    force_mount
-      .map(|force_mount| force_mount.get())
-      .unwrap_or(false)
-      || state.get() != CheckedState::Checked(false)
-  });
+  let is_present =
+    Signal::derive(move || force_mount.get() || state.get() != CheckedState::Checked(false));
 
   let presence = create_presence(is_present, node_ref);
 
