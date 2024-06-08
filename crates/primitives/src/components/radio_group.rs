@@ -22,7 +22,7 @@ use crate::{
 
 #[derive(Clone)]
 struct RadioGroupContextValue {
-  name: Option<Signal<String>>,
+  name: MaybeProp<String>,
   required: Signal<bool>,
   disabled: Signal<bool>,
   value: Signal<Option<String>>,
@@ -31,12 +31,12 @@ struct RadioGroupContextValue {
 
 #[component]
 pub fn RadioGroupRoot(
-  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] should_loop: MaybeSignal<bool>,
-  #[prop(optional, into)] value: Option<MaybeSignal<String>>,
-  #[prop(optional, into)] default_value: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] default_value: MaybeProp<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
@@ -45,17 +45,13 @@ pub fn RadioGroupRoot(
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: on_value_change,
   });
 
   provide_context(RadioGroupContextValue {
-    name: name.map(|name| Signal::derive(move || name.get())),
+    name,
     required: Signal::derive(move || required.get()),
     disabled: Signal::derive(move || disabled.get()),
     value: Signal::derive(move || value.get()),
@@ -83,8 +79,8 @@ pub fn RadioGroupRoot(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Some(orientation)
-      direction=Some(direction)
+      orientation=Signal::derive(move || orientation.get())
+      direction=Signal::derive(move || direction.get())
       should_loop=should_loop
     >
       <Primitive
@@ -145,7 +141,7 @@ pub fn RadioGroupItem(
         disabled=is_disabled
         required=required
         checked=is_checked
-        name=name.map(|name| name.into())
+        name=name
         node_ref=node_ref
         attrs=attrs
         on_check=move |_| on_value_change.call(on_check_value.get())

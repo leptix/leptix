@@ -12,7 +12,7 @@ struct ProgressContextValue {
 
 #[component]
 pub fn ProgressRoot(
-  #[prop(optional, into)] value: Option<MaybeSignal<f64>>,
+  #[prop(optional, into)] value: MaybeProp<f64>,
   #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
   #[prop(optional)] get_value_label: Option<Callback<(f64, f64), String>>,
   #[prop(attrs)] attrs: Attributes,
@@ -32,11 +32,9 @@ pub fn ProgressRoot(
   let value = Signal::derive(move || {
     let max = max.get();
 
-    value.and_then(|value| {
-      let value = value.get();
-
-      (!value.is_nan() && value <= max && value >= 0.0).then_some(value)
-    })
+    value
+      .get()
+      .and_then(|value| (!value.is_nan() && value <= max && value >= 0.0).then_some(value))
   });
 
   let get_value_label = get_value_label.unwrap_or(Callback::new(|(value, max): (f64, f64)| {

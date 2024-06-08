@@ -149,7 +149,7 @@ pub fn ScrollAreaRoot(
 
 #[component]
 pub fn ScrollAreaViewport(
-  #[prop(optional, into)] nonce: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] nonce: MaybeProp<String>,
 
   #[prop(attrs)] attrs: Attributes,
   //#[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -1136,7 +1136,7 @@ fn ScrollAreaScrollbarImpl(
 
 #[component]
 pub fn ScrollAreaThumb(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional)] force_mount: MaybeSignal<bool>,
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
@@ -1144,12 +1144,7 @@ pub fn ScrollAreaThumb(
   let ScrollbarContextValue { has_thumb, .. } = use_context::<ScrollbarContextValue>()
     .expect("ScrollAreaThumb must be used in a ScrollAreaScrollbarImpl component");
 
-  let is_present = Signal::derive(move || {
-    has_thumb.get()
-      || force_mount
-        .map(|force_mount| force_mount.get())
-        .unwrap_or(false)
-  });
+  let is_present = Signal::derive(move || has_thumb.get() || force_mount.get());
 
   let presence = create_presence(is_present, node_ref);
 

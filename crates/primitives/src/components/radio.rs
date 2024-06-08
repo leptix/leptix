@@ -30,7 +30,7 @@ pub fn Radio(
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  #[prop(optional_no_strip, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
@@ -106,7 +106,7 @@ pub fn Radio(
             <BubbleInput
                 checked=Signal::derive(move || checked.get())
                 bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-                name=name.clone().map(|name| Signal::derive(move || name.get()))
+                name=name.clone()
                 value=value.clone()
                 required=Signal::derive(move || required.get())
                 disabled=Signal::derive(move || disabled.get())
@@ -166,7 +166,7 @@ pub fn RadioIndicator(
 fn BubbleInput(
   checked: Signal<bool>,
   bubbles: Signal<bool>,
-  name: Option<Signal<String>>,
+  #[prop(into)] name: MaybeProp<String>,
   value: MaybeSignal<String>,
   required: Signal<bool>,
   disabled: Signal<bool>,

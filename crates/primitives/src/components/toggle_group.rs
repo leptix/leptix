@@ -15,15 +15,30 @@ use crate::{
 
 pub enum ToggleGroupKind {
   Single {
-    value: Option<MaybeSignal<String>>,
-    default_value: Option<MaybeSignal<String>>,
+    value: MaybeProp<String>,
+    default_value: MaybeProp<String>,
     on_value_change: Option<Callback<String>>,
   },
   Multiple {
-    value: Option<MaybeSignal<Vec<String>>>,
-    default_value: Option<MaybeSignal<Vec<String>>>,
+    value: MaybeProp<Vec<String>>,
+    default_value: MaybeProp<Vec<String>>,
     on_value_change: Option<Callback<Vec<String>>>,
   },
+}
+
+pub struct ToggleGroupSingle;
+pub struct ToggleGroupMultiple;
+
+impl ToggleGroupSingle {
+  pub fn none() -> Option<String> {
+    None
+  }
+}
+
+impl ToggleGroupMultiple {
+  pub fn none() -> Option<Vec<String>> {
+    None
+  }
 }
 
 #[component]
@@ -46,7 +61,7 @@ pub fn ToggleGroupRoot(
       default_value,
       on_value_change,
     } => view! {
-      <ToggleGroupSingle
+      <ToggleGroupSingleImpl
         disabled=disabled
         roving_focus=roving_focus
         should_loop=should_loop
@@ -59,14 +74,14 @@ pub fn ToggleGroupRoot(
         node_ref=node_ref
       >
         {children()}
-      </ToggleGroupSingle>
+      </ToggleGroupSingleImpl>
     },
     ToggleGroupKind::Multiple {
       value,
       default_value,
       on_value_change,
     } => view! {
-      <ToggleGroupMultiple
+      <ToggleGroupMultipleImpl
         disabled=disabled
         roving_focus=roving_focus
         should_loop=should_loop
@@ -79,7 +94,7 @@ pub fn ToggleGroupRoot(
         node_ref=node_ref
       >
         {children()}
-      </ToggleGroupMultiple>
+      </ToggleGroupMultipleImpl>
     },
   }
 }
@@ -99,15 +114,15 @@ struct ToggleGroupValueContextValue {
 }
 
 #[component]
-fn ToggleGroupSingle(
+fn ToggleGroupSingleImpl(
   disabled: MaybeSignal<bool>,
   roving_focus: MaybeSignal<bool>,
   should_loop: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
 
-  #[prop(optional_no_strip)] value: Option<MaybeSignal<String>>,
-  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] default_value: MaybeProp<String>,
 
   on_value_change: Callback<String>,
 
@@ -116,12 +131,8 @@ fn ToggleGroupSingle(
   children: ChildrenFn,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: on_value_change,
   });
 
@@ -152,15 +163,15 @@ fn ToggleGroupSingle(
 }
 
 #[component]
-fn ToggleGroupMultiple(
+fn ToggleGroupMultipleImpl(
   disabled: MaybeSignal<bool>,
   roving_focus: MaybeSignal<bool>,
   should_loop: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
 
-  #[prop(optional_no_strip)] value: Option<MaybeSignal<Vec<String>>>,
-  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<Vec<String>>>,
+  #[prop(optional, into)] value: MaybeProp<Vec<String>>,
+  #[prop(optional, into)] default_value: MaybeProp<Vec<String>>,
 
   on_value_change: Callback<Vec<String>>,
 
@@ -169,12 +180,8 @@ fn ToggleGroupMultiple(
   children: ChildrenFn,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: on_value_change,
   });
 
@@ -260,8 +267,8 @@ fn ToggleGroup(
         view! {
           <RovingFocusGroup
             as_child=true
-            orientation=Some(orientation)
-            direction=Some(direction)
+            orientation=Signal::derive(move || orientation.get())
+            direction=Signal::derive(move || direction.get())
             should_loop=Signal::derive(move || should_loop.get())
           >
             <Primitive

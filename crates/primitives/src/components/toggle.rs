@@ -9,8 +9,8 @@ use crate::{
 
 #[component]
 pub fn ToggleRoot(
-  #[prop(optional, into)] pressed: Option<MaybeSignal<bool>>,
-  #[prop(optional, into)] default_pressed: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] pressed: MaybeProp<bool>,
+  #[prop(optional, into)] default_pressed: MaybeProp<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(default=(|_|{}).into(), into)] on_pressed_changed: Callback<bool>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
@@ -20,10 +20,8 @@ pub fn ToggleRoot(
   children: Children,
 ) -> impl IntoView {
   let (pressed, set_pressed) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || pressed.map(|pressed| pressed.get())),
-    default_value: Signal::derive(move || {
-      default_pressed.map(|default_pressed| default_pressed.get())
-    }),
+    value: Signal::derive(move || pressed.get()),
+    default_value: Signal::derive(move || default_pressed.get()),
     on_change: on_pressed_changed,
   });
 

@@ -2,7 +2,7 @@ use leptos::html::Input;
 use leptos::*;
 
 use leptix_primitives::components::accordion::{
-  AccordionContent, AccordionHeader, AccordionItem, AccordionKind, AccordionRoot, AccordionTrigger,
+  AccordionContent, AccordionHeader, AccordionItem, AccordionKind, AccordionRoot, AccordionTrigger, AccordionSingle, AccordionMultiple
 };
 use leptix_primitives::components::aspect_ratio::AspectRatioRoot;
 use leptix_primitives::components::avatar::{AvatarFallback, AvatarImage, AvatarRoot};
@@ -24,7 +24,7 @@ use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
 use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
 use leptix_primitives::components::toggle::ToggleRoot;
 use leptix_primitives::components::toggle_group::{
-  ToggleGroupItem, ToggleGroupKind, ToggleGroupRoot,
+  ToggleGroupItem, ToggleGroupKind, ToggleGroupRoot, ToggleGroupSingle, ToggleGroupMultiple
 };
 use leptix_primitives::components::toolbar::{
   ToolbarButton, ToolbarLink, ToolbarRoot, ToolbarSeparator, ToolbarToggleGroup, ToolbarToggleItem,
@@ -38,6 +38,15 @@ use leptos_use::{
 };
 
 use leptos_meta::*;
+
+#[component]
+fn Foo(#[prop(optional, into)] disabled: MaybeSignal<bool>) -> impl IntoView {
+    view! {
+        <ToggleRoot disabled=disabled attr:class="bg-neutral-500">
+            "hello"
+        </ToggleRoot>
+    }
+}
 
 #[component]
 pub fn PrimitivesShowcase() -> impl IntoView {
@@ -512,19 +521,17 @@ fn AccordionDemo() -> impl IntoView {
       <AccordionRoot
           attr:class="bg-mauve6 w-[300px] rounded-md shadow-[0_2px_10px] shadow-black/5"
           kind=AccordionKind::Single {
-              value: None,
-              default_value: Some("item-1".into()),
+              value: AccordionSingle::none().into(),
+              default_value: "item-1".into(),
               collapsible: true.into(),
               on_value_change: None,
           }
       >
-
           // kind=AccordionKind::Multiple {
-          // value: None,
-          // default_value: None,
+          // value: AccordionMultiple::none(),
+          // default_value: AccordionMultiple::none(),
           // on_value_change: None
           // }
-          // <AccordionItemDemo value=Signal::derive(|| "item-1".into())>
           <AccordionItemDemo value="item-1">
               <AccordionTriggerDemo>"Is it accessible?"</AccordionTriggerDemo>
               <AccordionContentDemo>
@@ -680,11 +687,15 @@ fn ToggleGroupDemo() -> impl IntoView {
       <ToggleGroupRoot
           attr:class="inline-flex bg-mauve6 rounded shadow-[0_2px_10px] shadow-blackA4 space-x-px"
           kind=ToggleGroupKind::Single {
-              value: None,
+              value: ToggleGroupSingle::none().into(),
+              default_value: "center".into(),
               on_value_change: None,
-              default_value: Some("center".into()),
           }
-
+          // kind=AccordionKind::Multiple {
+          // value: ToggleGroupMultiple::none(),
+          // default_value: ToggleGroupMultiple::none(),
+          // on_value_change: None
+          // }
           attr:aria-label="Text alignment"
       >
           <ToggleGroupItem
@@ -781,11 +792,10 @@ pub fn ToolbarDemo() -> impl IntoView {
       >
           <ToolbarToggleGroup
               kind=ToggleGroupKind::Multiple {
-                  value: None,
-                  default_value: None,
+                  value: ToggleGroupMultiple::none().into(),
+                  default_value: ToggleGroupMultiple::none().into(),
                   on_value_change: None,
               }
-
               attr:aria-label="Text formatting"
           >
               <ToolbarToggleItem
@@ -813,11 +823,10 @@ pub fn ToolbarDemo() -> impl IntoView {
           <ToolbarSeparator attr:class="w-[1px] bg-mauve6 mx-[10px]"/>
           <ToolbarToggleGroup
               kind=ToggleGroupKind::Single {
-                  value: None,
-                  default_value: Some("center".into()),
+                  value: ToggleGroupSingle::none().into(),
+                  default_value: "center".into(),
                   on_value_change: None,
               }
-
               attr:aria-label="Text alignment"
           >
               <ToolbarToggleItem

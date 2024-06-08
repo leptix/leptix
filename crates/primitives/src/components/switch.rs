@@ -26,10 +26,10 @@ struct SwitchContextValue {
 
 #[component]
 pub fn SwitchRoot(
-  #[prop(optional, into)] checked: Option<MaybeSignal<bool>>,
-  #[prop(optional, into)] default_checked: Option<MaybeSignal<bool>>,
-  #[prop(optional, into)] value: Option<MaybeSignal<String>>,
-  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] checked: MaybeProp<bool>,
+  #[prop(optional, into)] default_checked: MaybeProp<bool>,
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
   #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<bool>,
@@ -45,10 +45,8 @@ pub fn SwitchRoot(
   let has_consumer_stopped_propagation = StoredValue::new(false);
 
   let (checked, set_checked) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || checked.map(|checked| checked.get())),
-    default_value: Signal::derive(move || {
-      default_checked.map(|default_checked| default_checked.get())
-    }),
+    value: Signal::derive(move || checked.get()),
+    default_value: Signal::derive(move || default_checked.get()),
     on_change: on_checked_change,
   });
 
@@ -64,8 +62,6 @@ pub fn SwitchRoot(
     checked: Signal::derive(move || checked.get().unwrap_or(false)),
     disabled: Signal::derive(move || disabled.get()),
   });
-
-  let attr_value = value.clone();
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
@@ -88,14 +84,8 @@ pub fn SwitchRoot(
       .into_attribute(),
     ),
     ("data-disabled", disabled.into_attribute()),
-    (
-      "value",
-      Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
-    ),
+    ("value", value.clone().into_attribute()),
   ]);
-
-  let inner_name = name.clone();
-  let inner_value = value.clone();
 
   view! {
     <Primitive
@@ -122,8 +112,8 @@ pub fn SwitchRoot(
         <BubbleInput
             checked=Signal::derive(move || checked.get().unwrap_or(false))
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone().map(|name| Signal::derive(move || name.get()))
-            value=value.clone().map(|value| Signal::derive(move || value.get())).unwrap_or(Signal::derive(|| "on".to_string()))
+            name=name.clone()
+            value=value.clone()
             disabled=Signal::derive(move || disabled.get())
             required=Signal::derive(move || required.get())
             control=node_ref
@@ -175,8 +165,8 @@ pub fn SwitchThumb(
 pub fn BubbleInput(
   checked: Signal<bool>,
   bubbles: Signal<bool>,
-  name: Option<Signal<String>>,
-  value: Signal<String>,
+  #[prop(into)] name: MaybeProp<String>,
+  #[prop(into)] value: MaybeProp<String>,
   disabled: Signal<bool>,
   required: Signal<bool>,
   control: NodeRef<AnyElement>,
@@ -230,7 +220,7 @@ pub fn BubbleInput(
       tabindex=(-1).into_attribute()
       node_ref=node_ref
       name=name.into_attribute()
-      value=Signal::derive(move || value.get()).into_attribute()
+      value=Signal::derive(move || value.get().unwrap_or("on".into())).into_attribute()
       disabled=Signal::derive(move || disabled.get()).into_attribute()
       required=Signal::derive(move || required.get()).into_attribute()
       style:position="absolute"

@@ -41,7 +41,7 @@ struct SliderContextValue {
 
 #[component]
 pub fn SliderRoot(
-  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(default=0.0f64.into(), into)] min: MaybeSignal<f64>,
   #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
   #[prop(default=1.0f64.into(), into)] step: MaybeSignal<f64>,
@@ -49,8 +49,8 @@ pub fn SliderRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(default=0.0f64.into(), into)] min_steps_between_thumbs: MaybeSignal<f64>,
-  #[prop(optional, into)] value: Option<MaybeSignal<Vec<f64>>>,
-  #[prop(optional, into)] default_value: Option<MaybeSignal<Vec<f64>>>,
+  #[prop(optional, into)] value: MaybeProp<Vec<f64>>,
+  #[prop(optional, into)] default_value: MaybeProp<Vec<f64>>,
   #[prop(optional, into)] inverted: MaybeSignal<bool>,
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<Vec<f64>>,
   #[prop(default=(|_|{}).into(), into)] on_value_commit: Callback<Vec<f64>>,
@@ -62,24 +62,9 @@ pub fn SliderRoot(
   let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
   let value_index_to_change = StoredValue::new(Some(0usize));
 
-  // let is_form_control = Signal::derive(move || {
-  //   if let Some(node) = node_ref.get() {
-  //     node.closest("form").ok().flatten().is_some()
-  //   } else {
-  //     true
-  //   }
-  // });
-
   let (values, set_values) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      Some(
-        default_value
-          .as_ref()
-          .map(|default_value| default_value.get())
-          .unwrap_or(vec![min.get()]),
-      )
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || Some(default_value.get().unwrap_or(vec![min.get()]))),
     on_change: Callback::new(move |value| {
       let thumbs = thumbs.get_value();
       let thumbs = Vec::from_iter(thumbs.iter());
@@ -147,10 +132,6 @@ pub fn SliderRoot(
   });
 
   let handle_slide_end = Callback::new(move |_: ()| {
-    // let prev_value = values_before_slide_start
-    //   .get_value()
-    //   .and_then(|values| Some(values.get(value_index_to_change.get_value()?).cloned()));
-
     let prev_value = value_index_to_change
       .get_value()
       .map(|index| values_before_slide_start.get_value().get(index).cloned())
@@ -169,7 +150,7 @@ pub fn SliderRoot(
   });
 
   provide_context(SliderContextValue {
-    name: Signal::derive(move || name.as_ref().map(|name| name.get())),
+    name: Signal::derive(move || name.get()),
     disabled: Signal::derive(move || disabled.get()),
     min: Signal::derive(move || min.get()),
     max: Signal::derive(move || max.get()),
@@ -238,33 +219,6 @@ pub fn SliderRoot(
       })
     >
       {children()}
-      // {move || is_form_control.get().then(|| {
-      //   let values = values.clone();
-
-      //   view! {
-      //     <For
-      //       each=move || {
-      //         let values = values
-      //           .get()
-      //           .unwrap_or_default();
-
-      //         values
-      //           .into_iter()
-      //           .enumerate()
-      //           .collect::<Vec<_>>()
-      //       }
-      //       key=|(index, _)| *index
-      //       children=move |(_, value)| {
-      //         view! {
-      //           <BubbleInput
-      //             name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if values.get().len() > 1 { "[]" } else { "" })))
-      //             value=Signal::derive(move || value)
-      //           />
-      //         }
-      //       }
-      //     />
-      //   }
-      // })}
     </Slider>
   }
 }
@@ -819,7 +773,7 @@ pub fn SliderRange(
 
 #[component]
 pub fn SliderThumb(
-  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -940,18 +894,7 @@ pub fn SliderThumb(
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
     ("role", "slider".into_attribute()),
-    (
-      "aria-label",
-      (move || {
-        attrs
-          .iter()
-          .find(|(name, _)| name.eq(&"aria-label"))
-          .map_or(label.get(), |(_, attr)| {
-            attr.as_nameless_value_string().map(|attr| attr.to_string())
-          })
-      })
-      .into_attribute(),
-    ),
+    ("aria-label", name.clone().into_attribute()),
     (
       "aria-valuemin",
       (move || context.min.get()).into_attribute(),
@@ -1007,18 +950,24 @@ pub fn SliderThumb(
         {children()}
       </Primitive>
 
-    //  <Show when=move || is_form_control.get()>
-    //    <BubbleInput
-    //      name=Signal::derive(move || name.map(|name| format!("{}{}", name.get(), if context.values.get().len() > 1 { "[]" } else { "" })))
-    //      value=Signal::derive(move || value.get().unwrap_or_default())
-    //    />
-    //  </Show>
+     <Show when=move || is_form_control.get()>
+       <BubbleInput
+           name=name.clone()
+         value=Signal::derive(move || value.get().unwrap_or_default())
+       />
+     </Show>
     </span>
   }
 }
 
 #[component]
-fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoView {
+fn BubbleInput(
+  #[prop(optional, into)] name: MaybeProp<String>,
+  value: Signal<f64>,
+) -> impl IntoView {
+  let SliderContextValue { values, .. } =
+    use_context().expect("SliderThumb must be used in a SliderRoot component");
+
   let node_ref = NodeRef::<Input>::new();
   let prev_value = create_previous(Signal::derive(move || value.get()));
 
@@ -1067,7 +1016,7 @@ fn BubbleInput(name: Signal<Option<String>>, value: Signal<f64>) -> impl IntoVie
   view! {
     <input
       aria-hidden
-      name=name.into_attribute()
+      name=Signal::derive(move || name.get().map(|name| format!("{}{}", name, if values.get().len() > 1 { "[]" } else { "" }))).into_attribute()
       value=value.into_attribute()
       node_ref=node_ref
       style:display="none"

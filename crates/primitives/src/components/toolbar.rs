@@ -51,8 +51,8 @@ pub fn ToolbarRoot(
 
   view! {
     <RovingFocusGroup
-      orientation=Some(orientation)
-      direction=Some(direction)
+      orientation=Signal::derive(move || orientation.get())
+      direction=Signal::derive(move || direction.get())
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive

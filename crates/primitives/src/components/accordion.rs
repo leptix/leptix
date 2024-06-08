@@ -23,34 +23,30 @@ use super::collection::CollectionContextValue;
 
 pub enum AccordionKind {
   Single {
-    value: Option<MaybeSignal<String>>,
-    default_value: Option<MaybeSignal<String>>,
+    value: MaybeProp<String>,
+    default_value: MaybeProp<String>,
     on_value_change: Option<Callback<String>>,
     collapsible: MaybeSignal<bool>,
   },
   Multiple {
-    value: MaybeSignal<Vec<String>>,
-    default_value: MaybeSignal<Vec<String>>,
+    value: MaybeProp<Vec<String>>,
+    default_value: MaybeProp<Vec<String>>,
     on_value_change: Option<Callback<Vec<String>>>,
   },
 }
 
-impl AccordionKind {
-  pub fn single_default() -> Self {
-    Self::Single {
-      value: None,
-      default_value: None,
-      on_value_change: None,
-      collapsible: false.into(),
-    }
-  }
+pub struct AccordionSingle;
+pub struct AccordionMultiple;
 
-  pub fn multiple_default() -> Self {
-    Self::Multiple {
-      value: vec![].into(),
-      default_value: vec![].into(),
-      on_value_change: None,
-    }
+impl AccordionSingle {
+  pub fn none() -> Option<String> {
+    None
+  }
+}
+
+impl AccordionMultiple {
+  pub fn none() -> Option<Vec<String>> {
+    None
   }
 }
 
@@ -92,7 +88,7 @@ pub fn AccordionRoot(
       on_value_change,
       collapsible,
     } => view! {
-      <AccordionSingle
+      <AccordionSingleImpl
         attrs=attrs
         node_ref=node_ref
         value=value
@@ -104,14 +100,14 @@ pub fn AccordionRoot(
         orientation=Signal::derive(move || orientation.get())
       >
         {children()}
-      </AccordionSingle>
+      </AccordionSingleImpl>
     },
     AccordionKind::Multiple {
       value,
       default_value,
       on_value_change,
     } => view! {
-      <AccordionMultiple
+      <AccordionMultipleImpl
         attrs=attrs
         node_ref=node_ref
         value=value
@@ -122,15 +118,15 @@ pub fn AccordionRoot(
         orientation=Signal::derive(move || orientation.get())
       >
         {children()}
-      </AccordionMultiple>
+      </AccordionMultipleImpl>
     },
   }
 }
 
 #[component]
-fn AccordionSingle(
-  #[prop(optional_no_strip)] value: Option<MaybeSignal<String>>,
-  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<String>>,
+fn AccordionSingleImpl(
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] default_value: MaybeProp<String>,
 
   on_value_change: Callback<String>,
 
@@ -144,12 +140,8 @@ fn AccordionSingle(
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.clone().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .clone()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
       on_value_change.call(value);
     }),
@@ -188,9 +180,9 @@ fn AccordionSingle(
 }
 
 #[component]
-fn AccordionMultiple(
-  #[prop(optional)] value: Option<MaybeSignal<Vec<String>>>,
-  #[prop(optional)] default_value: Option<MaybeSignal<Vec<String>>>,
+fn AccordionMultipleImpl(
+  #[prop(optional)] value: MaybeProp<Vec<String>>,
+  #[prop(optional)] default_value: MaybeProp<Vec<String>>,
 
   on_value_change: Callback<Vec<String>>,
 
@@ -203,12 +195,8 @@ fn AccordionMultiple(
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
       on_value_change.call(value);
     }),

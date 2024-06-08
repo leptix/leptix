@@ -34,8 +34,8 @@ pub enum ActivationMode {
 
 #[component]
 pub fn TabsRoot(
-  #[prop(optional, into)] value: Option<MaybeSignal<String>>,
-  #[prop(optional, into)] default_value: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] default_value: MaybeProp<String>,
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
@@ -46,15 +46,9 @@ pub fn TabsRoot(
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
-    on_change: Callback::new(move |value| {
-      on_value_change.call(value);
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
+    on_change: on_value_change,
   });
 
   provide_context(TabsContextValue {
@@ -105,8 +99,8 @@ pub fn TabsList(
   view! {
     <RovingFocusGroup
       as_child=true
-      orientation=Some(orientation.into())
-      direction=Some(direction.into())
+      orientation=Signal::derive(move || orientation.get())
+      direction=Signal::derive(move || direction.get())
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
@@ -254,7 +248,7 @@ pub fn TabsContent(
     Signal::derive(move || format!("{}-content-{}", base_id.get(), content_value.get()));
 
   let is_selected_value = value.clone();
-  let is_selected = Signal::derive(move || value.get() == is_selected_value.get());
+  let is_selected = Signal::derive(move || context_value.get() == Some(is_selected_value.get()));
   let is_mount_animation_prevented = StoredValue::new(is_selected.get_untracked());
 
   let is_present = Signal::derive(move || is_selected.get() || force_mount.get());

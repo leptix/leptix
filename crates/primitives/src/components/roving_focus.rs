@@ -73,11 +73,11 @@ impl EventDescriptor for OnEntryFocus {
 #[component]
 pub(crate) fn RovingFocusGroup(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional_no_strip)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional, into)] orientation: MaybeProp<Orientation>,
+  #[prop(optional, into)] direction: MaybeProp<Direction>,
   #[prop(optional, into)] should_loop: MaybeSignal<bool>,
-  #[prop(optional, into)] current_tab_stop_id: Option<MaybeSignal<String>>,
-  #[prop(optional, into)] default_current_tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] current_tab_stop_id: MaybeProp<String>,
+  #[prop(optional, into)] default_current_tab_stop_id: MaybeProp<String>,
   #[prop(default=(|_|{}).into(), into)] on_current_tab_stop_id_change: Callback<Option<String>>,
   #[prop(default=(|_|{}).into(), into)] on_entry_focus: Callback<Event>,
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
@@ -94,14 +94,10 @@ pub(crate) fn RovingFocusGroup(
     item_map: RwSignal::new(HashMap::new()),
   });
 
-  let value = Signal::derive(move || current_tab_stop_id.as_ref().map(|id| id.get()));
-  let default_value =
-    Signal::derive(move || default_current_tab_stop_id.as_ref().map(|id| id.get()));
-
   let (current_tab_stop_id, set_current_tab_stop_id) =
     create_controllable_signal(CreateControllableSignalProps {
-      value,
-      default_value,
+      value: Signal::derive(move || current_tab_stop_id.get()),
+      default_value: Signal::derive(move || default_current_tab_stop_id.get()),
       on_change: Callback::new(move |value| on_current_tab_stop_id_change.call(Some(value))),
     });
 
@@ -117,8 +113,8 @@ pub(crate) fn RovingFocusGroup(
   // });
 
   provide_context(RovingContextValue {
-    orientation: Signal::derive(move || orientation.as_ref().map(|orientation| orientation.get())),
-    direction: Signal::derive(move || direction.as_ref().map(|direction| direction.get())),
+    orientation: Signal::derive(move || orientation.get()),
+    direction: Signal::derive(move || direction.get()),
     should_loop: Signal::derive(move || should_loop.get()),
     current_tab_stop_id: Signal::derive(move || current_tab_stop_id.get()),
     on_item_focus: Callback::new(move |item| {
@@ -154,7 +150,7 @@ pub(crate) fn RovingFocusGroup(
     ),
     (
       "data-orientation",
-      (move || orientation.map(|orientation| orientation.get().to_string())).into_attribute(),
+      (move || orientation.with(|orientation| orientation.to_string())).into_attribute(),
     ),
   ];
 
@@ -220,7 +216,7 @@ pub(crate) fn RovingFocusGroup(
 #[component]
 pub(crate) fn RovingFocusGroupItem(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional, into)] tab_stop_id: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] tab_stop_id: MaybeProp<String>,
   #[prop(optional, into)] focusable: MaybeSignal<bool>,
   #[prop(optional, into)] active: MaybeSignal<bool>,
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
@@ -243,12 +239,7 @@ pub(crate) fn RovingFocusGroupItem(
   } = use_context::<RovingContextValue>()
     .expect("RovingFocusGroupItem must be used in a RovingFocusGroup component");
 
-  let id = Signal::derive(move || {
-    tab_stop_id
-      .as_ref()
-      .map(|id| id.get())
-      .unwrap_or(create_id().get())
-  });
+  let id = Signal::derive(move || tab_stop_id.get().unwrap_or(create_id().get()));
 
   use_collection_item_ref::<html::AnyElement, ItemData>(
     node_ref,
