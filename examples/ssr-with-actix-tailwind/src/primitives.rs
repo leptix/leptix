@@ -40,15 +40,6 @@ use leptos_use::{
 use leptos_meta::*;
 
 #[component]
-fn Foo(#[prop(optional, into)] disabled: MaybeSignal<bool>) -> impl IntoView {
-    view! {
-        <ToggleRoot disabled=disabled attr:class="bg-neutral-500">
-            "hello"
-        </ToggleRoot>
-    }
-}
-
-#[component]
 pub fn PrimitivesShowcase() -> impl IntoView {
   view! {
       <>
