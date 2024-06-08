@@ -23,16 +23,31 @@ use super::collection::CollectionContextValue;
 
 pub enum AccordionKind {
   Single {
-    value: Option<MaybeSignal<String>>,
-    default_value: Option<MaybeSignal<String>>,
+    value: MaybeProp<String>,
+    default_value: MaybeProp<String>,
     on_value_change: Option<Callback<String>>,
-    collapsible: Option<MaybeSignal<bool>>,
+    collapsible: MaybeSignal<bool>,
   },
   Multiple {
-    value: Option<MaybeSignal<Vec<String>>>,
-    default_value: Option<MaybeSignal<Vec<String>>>,
+    value: MaybeProp<Vec<String>>,
+    default_value: MaybeProp<Vec<String>>,
     on_value_change: Option<Callback<Vec<String>>>,
   },
+}
+
+pub struct AccordionSingle;
+pub struct AccordionMultiple;
+
+impl AccordionSingle {
+  pub fn none() -> Option<String> {
+    None
+  }
+}
+
+impl AccordionMultiple {
+  pub fn none() -> Option<Vec<String>> {
+    None
+  }
 }
 
 #[derive(Clone)]
@@ -44,12 +59,17 @@ struct AccordionContextValue {
 
 #[derive(Clone)]
 struct AccordionCollapsibleContextValue {
-  collapsible: Signal<bool>,
+  collapsible: MaybeSignal<bool>,
 }
 
 #[component]
 pub fn AccordionRoot(
   kind: AccordionKind,
+
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
+  #[prop(default=Orientation::Vertical.into(), into)] orientation: MaybeSignal<Orientation>,
+
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -68,57 +88,62 @@ pub fn AccordionRoot(
       on_value_change,
       collapsible,
     } => view! {
-      <AccordionSingle
+      <AccordionSingleImpl
         attrs=attrs
         node_ref=node_ref
         value=value
         default_value=default_value
-        on_value_change=on_value_change
-        collapsible=collapsible
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
+        collapsible=Signal::derive(move || collapsible.get())
+        disabled=Signal::derive(move || disabled.get())
+        direction=Signal::derive(move || direction.get())
+        orientation=Signal::derive(move || orientation.get())
       >
         {children()}
-      </AccordionSingle>
+      </AccordionSingleImpl>
     },
     AccordionKind::Multiple {
       value,
       default_value,
       on_value_change,
     } => view! {
-      <AccordionMultiple
+      <AccordionMultipleImpl
         attrs=attrs
         node_ref=node_ref
         value=value
         default_value=default_value
-        on_value_change=on_value_change
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
+        disabled=Signal::derive(move || disabled.get())
+        direction=Signal::derive(move || direction.get())
+        orientation=Signal::derive(move || orientation.get())
       >
         {children()}
-      </AccordionMultiple>
+      </AccordionMultipleImpl>
     },
   }
 }
 
 #[component]
-fn AccordionSingle(
-  #[prop(optional_no_strip)] value: Option<MaybeSignal<String>>,
-  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<String>>,
-  #[prop(optional_no_strip)] on_value_change: Option<Callback<String>>,
-  #[prop(optional_no_strip)] collapsible: Option<MaybeSignal<bool>>,
+fn AccordionSingleImpl(
+  #[prop(optional, into)] value: MaybeProp<String>,
+  #[prop(optional, into)] default_value: MaybeProp<String>,
+
+  on_value_change: Callback<String>,
+
+  collapsible: Signal<bool>,
+  disabled: Signal<bool>,
+  direction: Signal<Direction>,
+  orientation: Signal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || value.clone().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      default_value
-        .clone()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
-      if let Some(on_value_change) = on_value_change {
-        on_value_change.call(value);
-      }
+      on_value_change.call(value);
     }),
   });
 
@@ -131,25 +156,21 @@ fn AccordionSingle(
       set_on_item_open.set(value);
     }),
     on_item_close: Callback::new(move |_| {
-      if collapsible
-        .map(|collapsible| collapsible.get())
-        .unwrap_or(false)
-      {
+      if collapsible.get() {
         set_on_item_close.set(String::new());
       }
     }),
   });
 
   provide_context(AccordionCollapsibleContextValue {
-    collapsible: Signal::derive(move || {
-      collapsible
-        .map(|collapsible| collapsible.get())
-        .unwrap_or(false)
-    }),
+    collapsible: Signal::derive(move || collapsible.get()).into(),
   });
 
   view! {
     <Accordion
+      disabled=disabled
+      direction=direction
+      orientation=orientation
       node_ref=node_ref
       attrs=attrs
     >
@@ -159,28 +180,25 @@ fn AccordionSingle(
 }
 
 #[component]
-fn AccordionMultiple(
-  #[prop(optional_no_strip)] value: Option<MaybeSignal<Vec<String>>>,
-  #[prop(optional_no_strip)] default_value: Option<MaybeSignal<Vec<String>>>,
-  #[prop(optional_no_strip)] on_value_change: Option<Callback<Vec<String>>>,
+fn AccordionMultipleImpl(
+  #[prop(optional)] value: MaybeProp<Vec<String>>,
+  #[prop(optional)] default_value: MaybeProp<Vec<String>>,
+
+  on_value_change: Callback<Vec<String>>,
+
+  disabled: Signal<bool>,
+  direction: Signal<Direction>,
+  orientation: Signal<Orientation>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let controllable_value = value.clone();
-  let controllable_default_value = default_value.clone();
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || controllable_value.as_ref().map(|value| value.get())),
-    default_value: Signal::derive(move || {
-      controllable_default_value
-        .as_ref()
-        .map(|default_value| default_value.get())
-    }),
+    value: Signal::derive(move || value.get()),
+    default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
-      if let Some(on_value_change) = on_value_change {
-        on_value_change.call(value);
-      }
+      on_value_change.call(value);
     }),
   });
 
@@ -212,11 +230,14 @@ fn AccordionMultiple(
   });
 
   provide_context(AccordionCollapsibleContextValue {
-    collapsible: Signal::derive(|| true),
+    collapsible: true.into(),
   });
 
   view! {
     <Accordion
+      disabled=disabled
+      direction=direction
+      orientation=orientation
       node_ref=node_ref
       attrs=attrs
     >
@@ -229,7 +250,7 @@ fn AccordionMultiple(
 struct AccordionStateContextValue {
   disabled: Signal<bool>,
   orientation: Signal<Orientation>,
-  direction: Signal<Option<Direction>>,
+  direction: Signal<Direction>,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
@@ -237,10 +258,10 @@ struct AccordionCollectionItem;
 
 #[component]
 fn Accordion(
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  disabled: Signal<bool>,
+  orientation: Signal<Orientation>,
+  direction: Signal<Direction>,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -248,31 +269,18 @@ fn Accordion(
 ) -> impl IntoView {
   let get_items = use_collection_context::<AccordionCollectionItem, AnyElement>();
 
-  let is_direction_left_to_right = Signal::derive(move || {
-    direction
-      .map(|direction| direction.get() == Direction::LeftToRight)
-      .unwrap_or(false)
-  });
+  let is_direction_left_to_right =
+    Signal::derive(move || direction.get() == Direction::LeftToRight);
 
   provide_context(AccordionStateContextValue {
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
-    orientation: Signal::derive(move || {
-      orientation
-        .map(|orientation| orientation.get())
-        .unwrap_or(Orientation::Vertical)
-    }),
-    direction: Signal::derive(move || direction.map(|direction| direction.get())),
+    disabled: Signal::derive(move || disabled.get()),
+    orientation: Signal::derive(move || orientation.get()),
+    direction: Signal::derive(move || direction.get()),
   });
 
   let mut merged_attrs = vec![(
     "data-orientation",
-    Signal::derive(move || {
-      orientation
-        .map(|orientation| orientation.get())
-        .unwrap_or(Orientation::Vertical)
-        .to_string()
-    })
-    .into_attribute(),
+    (move || orientation.get().to_string()).into_attribute(),
   )];
 
   merged_attrs.extend(attrs);
@@ -283,11 +291,9 @@ fn Accordion(
       attrs=merged_attrs
       node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
-        if let Some(on_key_down) = on_key_down {
-          on_key_down.call(ev.clone());
-        }
+        on_key_down.call(ev.clone());
 
-        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
+        if !disabled.get() {
           return;
         }
 
@@ -321,7 +327,7 @@ fn Accordion(
               next_index = end_index;
             }
             "ArrowRight" => {
-              if orientation.map(|orientation| orientation.get() == Orientation::Horizontal).unwrap_or(false) {
+              if orientation.get() == Orientation::Horizontal {
                 if is_direction_left_to_right.get() {
                   next_index = trigger_index + 1;
 
@@ -338,7 +344,7 @@ fn Accordion(
               }
             }
             "ArrowDown" => {
-              if orientation.map(|orientation| orientation.get() == Orientation::Vertical).unwrap_or(false) {
+              if orientation.get() == Orientation::Vertical {
                 next_index = trigger_index + 1;
 
                 if next_index > end_index {
@@ -347,7 +353,7 @@ fn Accordion(
               }
             }
             "ArrowLeft" => {
-              if orientation.map(|orientation| orientation.get() == Orientation::Horizontal).unwrap_or(false) {
+              if orientation.get() == Orientation::Horizontal {
                 if is_direction_left_to_right.get() {
                   next_index = trigger_index - 1;
 
@@ -364,7 +370,7 @@ fn Accordion(
               }
             }
             "ArrowUp" => {
-              if orientation.map(|orientation| orientation.get() == Orientation::Vertical).unwrap_or(false) {
+              if orientation.get() == Orientation::Vertical {
                 next_index = trigger_index - 1;
 
                 if next_index < home_index {
@@ -398,8 +404,8 @@ struct AccordionItemContextValue {
 
 #[component]
 pub fn AccordionItem(
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  value: MaybeSignal<String>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(into)] value: MaybeSignal<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -418,9 +424,7 @@ pub fn AccordionItem(
       .iter()
       .any(|item| (*item).eq(&is_open_value.get()) && !is_open_value.get().is_empty())
   });
-  let is_disabled = Signal::derive(move || {
-    state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
-  });
+  let is_disabled = Signal::derive(move || state_context.disabled.get() || disabled.get());
 
   provide_context(AccordionItemContextValue {
     open: Signal::derive(move || is_open.get()),
@@ -431,12 +435,13 @@ pub fn AccordionItem(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
+      (move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "data-state",
-      Signal::derive(move || if is_open.get() { "open" } else { "closed" }).into_attribute(),
+      (move || if is_open.get() { "open" } else { "closed" }).into_attribute(),
     ),
+    ("data-disabled", (move || disabled.get()).into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -445,8 +450,8 @@ pub fn AccordionItem(
   view! {
     <CollapsibleRoot
       attrs=merged_attrs
-      open=Signal::derive(move || is_open.get()).into()
-      disabled=Signal::derive(move || is_disabled.get()).into()
+      open=is_open
+      disabled=is_disabled
       node_ref=node_ref
       on_open_change=Callback::new(move |open| {
         if open {
@@ -475,11 +480,11 @@ pub fn AccordionHeader(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
+      (move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "data-state",
-      Signal::derive(move || {
+      (move || {
         if item_context.open.get() {
           "open"
         } else {
@@ -490,7 +495,7 @@ pub fn AccordionHeader(
     ),
     (
       "data-disabled",
-      Signal::derive(move || item_context.disabled.get()).into_attribute(),
+      (move || item_context.disabled.get()).into_attribute(),
     ),
   ];
 
@@ -525,16 +530,15 @@ pub fn AccordionTrigger(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
+      (move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "id",
-      Signal::derive(move || item_context.trigger_id.get()).into_attribute(),
+      (move || item_context.trigger_id.get()).into_attribute(),
     ),
     (
       "aria-disabled",
-      Signal::derive(move || item_context.open.get() && !collapsible_context.collapsible.get())
-        .into_attribute(),
+      (move || item_context.open.get() && !collapsible_context.collapsible.get()).into_attribute(),
     ),
   ];
 
@@ -580,11 +584,11 @@ pub fn AccordionContent(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      Signal::derive(move || state_context.orientation.get().to_string()).into_attribute(),
+      (move || state_context.orientation.get().to_string()).into_attribute(),
     ),
     (
       "aria-labelledby",
-      Signal::derive(move || item_context.trigger_id.get()).into_attribute(),
+      (move || item_context.trigger_id.get()).into_attribute(),
     ),
     ("role", "region".into_attribute()),
   ];

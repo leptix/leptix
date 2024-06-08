@@ -108,7 +108,7 @@ fn CheckboxDemo() -> impl IntoView {
     <form>
       <div class="flex items-center">
         <CheckboxRoot
-          default_checked=CheckedState::Checked(true).into()
+          default_checked=CheckedState::Checked(true)
           attr:class="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
           attr:id="c1"
         >

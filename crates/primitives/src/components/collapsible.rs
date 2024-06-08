@@ -16,36 +16,34 @@ use super::presence::create_presence;
 #[derive(Clone)]
 struct CollapsibleContextValue {
   content_id: Signal<String>,
-  disabled: Signal<Option<bool>>,
+  disabled: Signal<bool>,
   open: Signal<bool>,
   on_open_toggle: Callback<()>,
 }
 
 #[component]
 pub fn CollapsibleRoot(
-  #[prop(optional)] open: Option<MaybeSignal<bool>>,
-  #[prop(optional)] default_open: Option<MaybeSignal<bool>>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_open_change: Option<Callback<bool>>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
-  #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(optional, into)] open: MaybeSignal<bool>,
+  #[prop(optional, into)] default_open: MaybeSignal<bool>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_open_change: Callback<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(optional, into)] as_child: Option<bool>,
+  #[prop(optional, into)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
   let (open, set_open) = create_controllable_signal(CreateControllableSignalProps {
-    value: Signal::derive(move || open.map(|open| open.get())),
-    default_value: Signal::derive(move || default_open.map(|default_open| default_open.get())),
+    value: Signal::derive(move || Some(open.get())),
+    default_value: Signal::derive(move || Some(default_open.get())),
     on_change: Callback::new(move |value| {
-      if let Some(on_open_change) = on_open_change {
-        on_open_change.call(value);
-      }
+      on_open_change.call(value);
     }),
   });
 
   provide_context(CollapsibleContextValue {
     open: Signal::derive(move || open.get().unwrap_or(false)),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get())),
+    disabled: Signal::derive(move || disabled.get()),
     content_id: create_id(),
     on_open_toggle: Callback::new(move |_| {
       set_open.update(|open| *open = Some(!open.unwrap_or(false)))
@@ -64,10 +62,7 @@ pub fn CollapsibleRoot(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      (move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into_attribute(),
-    ),
+    ("data-disabled", (move || disabled.get()).into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -88,7 +83,7 @@ pub fn CollapsibleRoot(
 pub fn CollapsibleTrigger(
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
@@ -107,14 +102,8 @@ pub fn CollapsibleTrigger(
       "data-state",
       (move || if open.get() { "open" } else { "closed" }).into_attribute(),
     ),
-    (
-      "data-disabled",
-      (move || disabled.get().unwrap_or(false)).into_attribute(),
-    ),
-    (
-      "disabled",
-      (move || disabled.get().unwrap_or(false)).into_attribute(),
-    ),
+    ("data-disabled", (move || disabled.get()).into_attribute()),
+    ("disabled", (move || disabled.get()).into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -126,10 +115,7 @@ pub fn CollapsibleTrigger(
       node_ref=node_ref
       as_child=as_child
       on:click=move |ev: MouseEvent| {
-        if let Some(on_click) = on_click {
-          on_click.call(ev);
-        }
-
+        on_click.call(ev);
         on_open_toggle.call(());
       }
     >
@@ -140,7 +126,7 @@ pub fn CollapsibleTrigger(
 
 #[component]
 pub fn CollapsibleContent(
-  #[prop(optional)] force_mount: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] force_mount: MaybeSignal<bool>,
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
@@ -149,12 +135,7 @@ pub fn CollapsibleContent(
   let CollapsibleContextValue { open, .. } = use_context::<CollapsibleContextValue>()
     .expect("CollapsibleContent must be used in a CollapsibleRoot component");
 
-  let is_present = Signal::derive(move || {
-    open.get()
-      || force_mount
-        .map(|force_mount| force_mount.get())
-        .unwrap_or(false)
-  });
+  let is_present = Signal::derive(move || open.get() || force_mount.get());
 
   let presence = create_presence(is_present, node_ref);
   let children = StoredValue::new(children);
@@ -298,10 +279,7 @@ fn CollapsibleContentImpl(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      (move || disabled.get().unwrap_or(false)).into_attribute(),
-    ),
+    ("data-disabled", (move || disabled.get()).into_attribute()),
     ("id", content_id.into_attribute()),
     (
       "hidden",
