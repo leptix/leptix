@@ -19,7 +19,7 @@ use leptix_primitives::components::radio_group::{
 use leptix_primitives::components::scroll_area::{
     ScrollAreaCorner, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport,
 };
-use leptix_primitives::components::separator::Separator;
+use leptix_primitives::components::separator::SeparatorRoot;
 use leptix_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
 use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
 use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
@@ -161,7 +161,7 @@ fn ThemeToggle() -> impl IntoView {
       <ToggleRoot
         attr:aria-label="Toggle italic"
         attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
-        pressed=true.into()
+        pressed=true
         on_click=Callback::new(move |_| {
             set_dark_theme
                 .update(|dark_theme| {
@@ -288,7 +288,7 @@ fn CheckboxDemo() -> impl IntoView {
       <form>
         <div class="flex items-center">
           <CheckboxRoot
-            default_checked=CheckedState::Checked(true).into()
+            default_checked=CheckedState::Checked(true)
             attr:class="shadow-blackA4 hover:bg-violet3 flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-[4px] bg-white shadow-[0_2px_10px] outline-none focus:shadow-[0_0_0_2px_black]"
             attr:id="c1"
           >
@@ -309,7 +309,7 @@ fn CheckboxDemo() -> impl IntoView {
 fn AspectRatioDemo() -> impl IntoView {
     view! {
       <div class="shadow-blackA4 w-[300px] overflow-hidden rounded-md shadow-[0_2px_10px]">
-        <AspectRatioRoot ratio=(16.0 / 9.0).into()>
+        <AspectRatioRoot ratio=16.0 / 9.0>
           <img
             class="h-full w-full object-cover"
             src="https://images.unsplash.com/photo-1535025183041-0991a977e25b?w=300&dpr=2&q=80"
@@ -322,44 +322,44 @@ fn AspectRatioDemo() -> impl IntoView {
 
 #[component]
 fn ProgressDemo() -> impl IntoView {
-    let (progress, set_progress) = create_signal(25u32);
+    let progress = RwSignal::new(25.0f64);
     let (indicator_style, set_indicator_style) =
-        create_signal(format!("transform: translateX(-{}%)", 100 - progress.get_untracked()));
+      create_signal(format!("transform: translateX(-{}%)", 100.0 - progress.get_untracked()));
 
     Effect::new(move |_| {
-        let Pausable { pause, .. } = use_interval_fn(
-            move || {
-                set_progress.update(|progress| {
-                    if *progress < 100 {
-                        *progress = *progress + 25;
-                    } else {
-                        *progress = 0;
-                    }
-                });
+      let Pausable { pause, .. } = use_interval_fn(
+        move || {
+          progress.update(|progress| {
+            if *progress < 100.0 {
+              *progress = *progress + 25.0;
+            } else {
+              *progress = 0.0;
+            }
+          });
 
-                set_indicator_style.set(format!(
-                    "transform: translateX(-{}%)",
-                    100 - (progress.get_untracked() % 101)
-                ));
-            },
-            1000,
-        );
+          set_indicator_style.set(format!(
+            "transform: translateX(-{}%)",
+            100.0 - (progress.get_untracked() % 101.0)
+          ));
+        },
+        1000,
+      );
 
-        on_cleanup(move || {
-            pause();
-        });
+      on_cleanup(move || {
+        pause();
+      });
     });
     view! {
-      <ProgressRoot
-        attr:class="relative overflow-hidden bg-black/25 rounded-full w-[300px] h-[25px] drop-shadow-md"
-        attr:style="transform: translateZ(0)"
-        value=progress.into()
-      >
-        <ProgressIndicator
-          attr:class="bg-white w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
-          attr:style=move || indicator_style.get()
-        />
-      </ProgressRoot>
+        <ProgressRoot
+            attr:class="relative overflow-hidden bg-black/25 rounded-full w-[300px] h-[25px] drop-shadow-md"
+            attr:style="transform: translateZ(0)"
+            value=progress
+        >
+            <ProgressIndicator
+                attr:class="bg-white w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
+                attr:style=move || indicator_style.get()
+            />
+        </ProgressRoot>
     }
 }
 
@@ -423,7 +423,7 @@ fn CollapsibleDemo() -> impl IntoView {
     view! {
       <CollapsibleRoot
         attr:class="w-[300px]"
-        open=open.into()
+        open=open
         on_open_change=Callback::new(move |open: bool| set_open.set(open))
       >
         <div class="flex items-center justify-between">
@@ -496,7 +496,7 @@ fn AccordionDemo() -> impl IntoView {
         kind=AccordionKind::Single {
             value: None,
             default_value: Some("item-1".into()),
-            collapsible: Some(true.into()),
+            collapsible: true.into(),
             on_value_change: None,
         }
       >
@@ -506,22 +506,22 @@ fn AccordionDemo() -> impl IntoView {
         // default_value: None,
         // on_value_change: None
         // }
-        // <AccordionItemDemo value=Signal::derive(|| "item-1".into())>
-        <AccordionItemDemo value="item-1".into()>
+        // <AccordionItemDemo value=Signal::derive(|| "item-1")>
+        <AccordionItemDemo value="item-1">
           <AccordionTriggerDemo>"Is it accessible?"</AccordionTriggerDemo>
           <AccordionContentDemo>
             "Yes. It adheres to the WAI-ARIA design pattern."
           </AccordionContentDemo>
         </AccordionItemDemo>
 
-        <AccordionItemDemo value="item-2".into()>
+        <AccordionItemDemo value="item-2">
           <AccordionTriggerDemo>"Is it unstyled?"</AccordionTriggerDemo>
           <AccordionContentDemo>
             "Yes. It's unstyled by default, giving you freedom over the look and feel."
           </AccordionContentDemo>
         </AccordionItemDemo>
 
-        <AccordionItemDemo value="item-3".into()>
+        <AccordionItemDemo value="item-3">
           <AccordionTriggerDemo>"Can it be animated?"</AccordionTriggerDemo>
           <AccordionContentDemo>
             "Yes! You can animate the Accordion with CSS or Rust."
@@ -532,7 +532,7 @@ fn AccordionDemo() -> impl IntoView {
 }
 
 #[component]
-fn AccordionItemDemo(value: MaybeSignal<String>, children: Children) -> impl IntoView {
+fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: Children) -> impl IntoView {
     view! {
       <AccordionItem
         value=value
@@ -600,7 +600,7 @@ fn LabelDemo() -> impl IntoView {
       <div class="flex gap-4">
         <LabelRoot
           attr:class="text-[15px] font-semibold leading-[35px] dark:text-white text-mauve11"
-          for_html="firstName".into()
+          for_html="firstName"
         >
           "First name"
         </LabelRoot>
@@ -622,19 +622,19 @@ fn SeparatorDemo() -> impl IntoView {
         <div class="dark:text-white text-[15px] leading-5">
           "Accessible and unstyled components for Leptos"
         </div>
-        <Separator attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px my-[15px]"/>
+        <SeparatorRoot attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px my-[15px]"/>
         <div class="flex h-5 items-center">
           <div class="dark:text-white text-[15px] leading-5">"Blog"</div>
-          <Separator
+          <SeparatorRoot
             attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
-            decorative=true.into()
-            orientation=Orientation::Vertical.into()
+            decorative=true
+            orientation=Orientation::Vertical
           />
           <div class="dark:text-white text-[15px] leading-5">"Docs"</div>
-          <Separator
+          <SeparatorRoot
             attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
-            decorative=true.into()
-            orientation=Orientation::Vertical.into()
+            decorative=true
+            orientation=Orientation::Vertical
           />
           <div class="dark:text-white text-[15px] leading-5">"Source"</div>
         </div>
@@ -670,21 +670,21 @@ fn ToggleGroupDemo() -> impl IntoView {
         attr:aria-label="Text alignment"
       >
         <ToggleGroupItem
-          value="left".into()
+          value="left"
           attr:class=toggle_group_item_classes
           attr:aria-label="Left aligned"
         >
           <TextAlignLeftIcon/>
         </ToggleGroupItem>
         <ToggleGroupItem
-          value="center".into()
+          value="center"
           attr:class=toggle_group_item_classes
           attr:aria-label="Center aligned"
         >
           <TextAlignCenterIcon/>
         </ToggleGroupItem>
         <ToggleGroupItem
-          value="right".into()
+          value="right"
           attr:class=toggle_group_item_classes
           attr:aria-label="Right aligned"
         >
@@ -754,21 +754,21 @@ pub fn ToolbarDemo() -> impl IntoView {
         >
           <ToolbarToggleItem
             attr:class="flex-shrink-0 mr-0.5 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="bold".into()
+            value="bold"
             attr:aria-label="Bold"
           >
             <FontBoldIcon/>
           </ToolbarToggleItem>
           <ToolbarToggleItem
             attr:class="flex-shrink-0 mr-0.5 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="italic".into()
+            value="italic"
             attr:aria-label="Italic"
           >
             <FontItalicIcon/>
           </ToolbarToggleItem>
           <ToolbarToggleItem
             attr:class="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="strikethrough".into()
+            value="strikethrough"
             attr:aria-label="Strike through"
           >
             <StrikethroughIcon/>
@@ -786,21 +786,21 @@ pub fn ToolbarDemo() -> impl IntoView {
         >
           <ToolbarToggleItem
             attr:class="flex-shrink-0 flex-grow-0 mr-0.5 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="left".into()
+            value="left"
             attr:aria-label="Left aligned"
           >
             <TextAlignLeftIcon/>
           </ToolbarToggleItem>
           <ToolbarToggleItem
             attr:class="flex-shrink-0 flex-grow-0 mr-0.5 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="center".into()
+            value="center"
             attr:aria-label="Center aligned"
           >
             <TextAlignCenterIcon/>
           </ToolbarToggleItem>
           <ToolbarToggleItem
             attr:class="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-            value="right".into()
+            value="right"
             attr:aria-label="Right aligned"
           >
             <TextAlignRightIcon/>
@@ -867,13 +867,13 @@ fn RadioGroupDemo() -> impl IntoView {
       <form>
         <RadioGroupRoot
           attr:class="flex flex-col gap-2.5"
-          default_value="default".into()
+          default_value="default"
           attr:aria-label="View density"
         >
           <div class="flex items-center">
             <RadioGroupItem
               attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-              value="default".into()
+              value="default"
               attr:id="r1"
             >
               <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
@@ -885,7 +885,7 @@ fn RadioGroupDemo() -> impl IntoView {
           <div class="flex items-center">
             <RadioGroupItem
               attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-              value="comfortable".into()
+              value="comfortable"
               attr:id="r2"
             >
               <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
@@ -897,7 +897,7 @@ fn RadioGroupDemo() -> impl IntoView {
           <div class="flex items-center">
             <RadioGroupItem
               attr:class="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-blackA4 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
-              value="compact".into()
+              value="compact"
               attr:id="r3"
             >
               <RadioGroupIndicator attr:class="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-violet11"/>
@@ -939,7 +939,7 @@ fn TabsDemo() -> impl IntoView {
     view! {
       <TabsRoot
         attr:class="flex flex-col w-[300px] shadow-[0_2px_10px] shadow-blackA2"
-        default_value="tab1".into()
+        default_value="tab1"
       >
         <TabsList
           attr:class="shrink-0 flex border-b border-mauve6"
@@ -947,20 +947,20 @@ fn TabsDemo() -> impl IntoView {
         >
           <TabsTrigger
             attr:class="bg-white px-5 h-[45px] flex-1 flex items-center justify-center text-[15px] leading-none text-mauve11 select-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative data-[state=active]:focus:shadow-[0_0_0_2px] data-[state=active]:focus:shadow-black outline-none cursor-default"
-            value="tab1".into()
+            value="tab1"
           >
             "Account"
           </TabsTrigger>
           <TabsTrigger
             attr:class="bg-white px-5 h-[45px] flex-1 flex items-center justify-center text-[15px] leading-none text-mauve11 select-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative data-[state=active]:focus:shadow-[0_0_0_2px] data-[state=active]:focus:shadow-black outline-none cursor-default"
-            value="tab2".into()
+            value="tab2"
           >
             "Password"
           </TabsTrigger>
         </TabsList>
         <TabsContent
           attr:class="grow p-5 bg-white rounded-b-md outline-none focus:shadow-[0_0_0_2px] focus:shadow-black"
-          value="tab1".into()
+          value="tab1"
         >
           <p class="mb-5 text-mauve11 text-[15px] leading-normal">
             "Make changes to your account here. Click save when you're done."
@@ -1014,7 +1014,7 @@ fn TabsDemo() -> impl IntoView {
         </TabsContent>
         <TabsContent
           attr:class="grow p-5 bg-white rounded-b-md outline-none focus:shadow-[0_0_0_2px] focus:shadow-black"
-          value="tab2".into()
+          value="tab2"
         >
           <p class="mb-5 text-mauve11 text-[15px] leading-normal">
             "Change your password here. After saving, you'll be logged out."
@@ -1065,9 +1065,9 @@ fn SliderDemo() -> impl IntoView {
       <form>
         <SliderRoot
           attr:class="relative flex items-center select-none touch-none w-[200px] h-5"
-          default_value=vec![50.0f64].into()
-          max=100.0.into()
-          step=1.0.into()
+          default_value=vec![50.0f64]
+          max=100.0
+          step=1.0
         >
           <SliderTrack attr:class="bg-blackA7 relative grow rounded-full h-[3px]">
             <SliderRange attr:class="absolute bg-white rounded-full h-full">
@@ -1106,13 +1106,13 @@ fn ScrollAreaDemo() -> impl IntoView {
         </ScrollAreaViewport>
         <ScrollAreaScrollbar
           attr:class="flex select-none touch-none p-0.5 bg-blackA3 transition-colors duration-[160ms] ease-out hover:bg-blackA5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-          orientation=Orientation::Vertical.into()
+          orientation=Orientation::Vertical
         >
           <ScrollAreaThumb attr:class="flex-1 bg-mauve10 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]"/>
         </ScrollAreaScrollbar>
         <ScrollAreaScrollbar
           attr:class="flex select-none touch-none p-0.5 bg-blackA3 transition-colors duration-[160ms] ease-out hover:bg-blackA5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-          orientation=Orientation::Horizontal.into()
+          orientation=Orientation::Horizontal
         >
           <ScrollAreaThumb attr:class="flex-1 bg-mauve10 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]"/>
         </ScrollAreaScrollbar>
