@@ -3,7 +3,7 @@ use leptos::{html::AnyElement, *};
 use crate::{components::primitive::Primitive, util::Orientation, Attributes};
 
 #[component]
-pub fn Separator(
+pub fn SeparatorRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] decorative: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,

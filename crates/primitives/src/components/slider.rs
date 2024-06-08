@@ -41,7 +41,7 @@ struct SliderContextValue {
 
 #[component]
 pub fn SliderRoot(
-  #[prop(optional)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
   #[prop(default=0.0f64.into(), into)] min: MaybeSignal<f64>,
   #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
   #[prop(default=1.0f64.into(), into)] step: MaybeSignal<f64>,
@@ -712,18 +712,21 @@ pub fn SliderTrack(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let context = use_context::<SliderContextValue>()
-    .expect("SliderTrack must be used in a SliderRoot component");
+  let SliderContextValue {
+    disabled,
+    orientation,
+    ..
+  } = use_context().expect("SliderTrack must be used in a SliderRoot component");
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
     (
       "data-disabled",
-      (move || context.disabled.get().then_some("")).into_attribute(),
+      (move || disabled.get().then_some("")).into_attribute(),
     ),
     (
       "data-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
+      (move || orientation.get().to_string()).into_attribute(),
     ),
   ]);
 
@@ -816,7 +819,7 @@ pub fn SliderRange(
 
 #[component]
 pub fn SliderThumb(
-  #[prop(optional)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,

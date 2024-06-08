@@ -6,7 +6,7 @@ use crate::{
   components::{
     primitive::Primitive,
     roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-    separator::Separator,
+    separator::SeparatorRoot,
     toggle_group::{ToggleGroupItem, ToggleGroupRoot},
   },
   util::{Direction, Orientation},
@@ -100,7 +100,7 @@ pub fn ToolbarSeparator(
   });
 
   view! {
-    <Separator
+    <SeparatorRoot
       orientation=orientation
       attrs=attrs
       node_ref=node_ref
