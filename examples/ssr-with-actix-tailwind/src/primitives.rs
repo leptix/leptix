@@ -989,11 +989,30 @@ fn SwitchDemo() -> impl IntoView {
 }
 
 #[component]
-fn TabsDemo() -> impl IntoView {
+  fn TabsDemo() -> impl IntoView {
+  let username_node_ref = NodeRef::<Input>::new();
+  let name_node_ref = NodeRef::<Input>::new();
+
+  Effect::new(move |_| {
+    let Some(node) = username_node_ref.get() else {
+      return;
+    };
+
+    node.set_default_value("@peduarte");
+  });
+
+  Effect::new(move |_| {
+    let Some(node) = name_node_ref.get() else {
+      return;
+    };
+
+    node.set_default_value("Pedro Duarte");
+  });
+
   view! {
       <TabsRoot
           attr:class="flex flex-col w-[300px] shadow-[0_2px_10px] shadow-blackA2"
-          default_value="tab1".into()
+          default_value="tab1"
       >
           <TabsList
               attr:class="shrink-0 flex border-b border-mauve6"
@@ -1001,20 +1020,20 @@ fn TabsDemo() -> impl IntoView {
           >
               <TabsTrigger
                   attr:class="bg-white px-5 h-[45px] flex-1 flex items-center justify-center text-[15px] leading-none text-mauve11 select-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative data-[state=active]:focus:shadow-[0_0_0_2px] data-[state=active]:focus:shadow-black outline-none cursor-default"
-                  value="tab1".into()
+                  value="tab1"
               >
                   "Account"
               </TabsTrigger>
               <TabsTrigger
                   attr:class="bg-white px-5 h-[45px] flex-1 flex items-center justify-center text-[15px] leading-none text-mauve11 select-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative data-[state=active]:focus:shadow-[0_0_0_2px] data-[state=active]:focus:shadow-black outline-none cursor-default"
-                  value="tab2".into()
+                  value="tab2"
               >
                   "Password"
               </TabsTrigger>
           </TabsList>
           <TabsContent
               attr:class="grow p-5 bg-white rounded-b-md outline-none focus:shadow-[0_0_0_2px] focus:shadow-black"
-              value="tab1".into()
+              value="tab1"
           >
               <p class="mb-5 text-mauve11 text-[15px] leading-normal">
                   "Make changes to your account here. Click save when you're done."
@@ -1023,42 +1042,23 @@ fn TabsDemo() -> impl IntoView {
                   <label class="text-[13px] leading-none mb-2.5 text-violet12 block" for="name">
                       "Name"
                   </label>
-                  {|| {
-                      let name_node_ref = NodeRef::<Input>::new();
-                      name_node_ref
-                          .on_load(|node| {
-                              node.set_default_value("Pedro Duarte");
-                          });
-                      view! {
-                          <input
-                              class="grow shrink-0 rounded px-2.5 text-[15px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[35px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
-                              id="name"
-                              node_ref=name_node_ref
-                          />
-                      }
-                  }}
 
+                  <input
+                    class="grow shrink-0 rounded px-2.5 text-[15px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[35px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
+                    id="name"
+                    node_ref=name_node_ref
+                  />
               </fieldset>
               <fieldset class="mb-[15px] w-full flex flex-col justify-start">
                   <label class="text-[13px] leading-none mb-2.5 text-violet12 block" for="username">
                       "Username"
                   </label>
 
-                  {|| {
-                      let username_node_ref = NodeRef::<Input>::new();
-                      username_node_ref
-                          .on_load(|node| {
-                              node.set_default_value("@peduarte");
-                          });
-                      view! {
-                          <input
-                              class="grow shrink-0 rounded px-2.5 text-[15px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[35px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
-                              id="username"
-                              node_ref=username_node_ref
-                          />
-                      }
-                  }}
-
+                  <input
+                    class="grow shrink-0 rounded px-2.5 text-[15px] leading-none text-violet11 shadow-[0_0_0_1px] shadow-violet7 h-[35px] focus:shadow-[0_0_0_2px] focus:shadow-violet8 outline-none"
+                    id="username"
+                    node_ref=username_node_ref
+                  />
               </fieldset>
               <div class="flex justify-end mt-5">
                   <button class="inline-flex items-center justify-center rounded px-[15px] text-[15px] leading-none font-medium h-[35px] bg-green4 text-green11 hover:bg-green5 focus:shadow-[0_0_0_2px] focus:shadow-green7 outline-none cursor-default">
@@ -1068,7 +1068,7 @@ fn TabsDemo() -> impl IntoView {
           </TabsContent>
           <TabsContent
               attr:class="grow p-5 bg-white rounded-b-md outline-none focus:shadow-[0_0_0_2px] focus:shadow-black"
-              value="tab2".into()
+              value="tab2"
           >
               <p class="mb-5 text-mauve11 text-[15px] leading-normal">
                   "Change your password here. After saving, you'll be logged out."
