@@ -30,11 +30,11 @@ pub enum ToggleGroupKind {
 pub fn ToggleGroupRoot(
   kind: ToggleGroupKind,
 
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] roving_focus: Option<MaybeSignal<bool>>,
-  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(default=true.into(), into)] roving_focus: MaybeSignal<bool>,
+  #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -54,7 +54,7 @@ pub fn ToggleGroupRoot(
         direction=direction
         value=value
         default_value=default_value
-        on_value_change=on_value_change
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
         attrs=attrs
         node_ref=node_ref
       >
@@ -74,7 +74,7 @@ pub fn ToggleGroupRoot(
         direction=direction
         value=value
         default_value=default_value
-        on_value_change=on_value_change
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
         attrs=attrs
         node_ref=node_ref
       >
@@ -100,15 +100,16 @@ struct ToggleGroupValueContextValue {
 
 #[component]
 fn ToggleGroupSingle(
-  #[prop(optional_no_strip)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] roving_focus: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] should_loop: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  disabled: MaybeSignal<bool>,
+  roving_focus: MaybeSignal<bool>,
+  should_loop: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
+  direction: MaybeSignal<Direction>,
 
   #[prop(optional_no_strip)] value: Option<MaybeSignal<String>>,
   #[prop(optional_no_strip)] default_value: Option<MaybeSignal<String>>,
-  #[prop(optional_no_strip)] on_value_change: Option<Callback<String>>,
+
+  on_value_change: Callback<String>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -121,11 +122,7 @@ fn ToggleGroupSingle(
         .as_ref()
         .map(|default_value| default_value.get())
     }),
-    on_change: Callback::new(move |value| {
-      if let Some(on_value_change) = on_value_change {
-        on_value_change.call(value);
-      }
-    }),
+    on_change: on_value_change,
   });
 
   let set_on_item_activate = set_value.clone();
@@ -156,15 +153,16 @@ fn ToggleGroupSingle(
 
 #[component]
 fn ToggleGroupMultiple(
-  #[prop(optional_no_strip)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] roving_focus: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] should_loop: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  disabled: MaybeSignal<bool>,
+  roving_focus: MaybeSignal<bool>,
+  should_loop: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
+  direction: MaybeSignal<Direction>,
 
   #[prop(optional_no_strip)] value: Option<MaybeSignal<Vec<String>>>,
   #[prop(optional_no_strip)] default_value: Option<MaybeSignal<Vec<String>>>,
-  #[prop(optional_no_strip)] on_value_change: Option<Callback<Vec<String>>>,
+
+  on_value_change: Callback<Vec<String>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -177,11 +175,7 @@ fn ToggleGroupMultiple(
         .as_ref()
         .map(|default_value| default_value.get())
     }),
-    on_change: Callback::new(move |value| {
-      if let Some(on_value_change) = on_value_change {
-        on_value_change.call(value);
-      }
-    }),
+    on_change: on_value_change,
   });
 
   let set_on_item_activate = set_value.clone();
@@ -235,23 +229,19 @@ struct ToggleGroupStateContextValue {
 
 #[component]
 fn ToggleGroup(
-  #[prop(optional_no_strip)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] roving_focus: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] should_loop: Option<MaybeSignal<bool>>,
-  #[prop(optional_no_strip)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional_no_strip)] direction: Option<MaybeSignal<Direction>>,
+  disabled: MaybeSignal<bool>,
+  roving_focus: MaybeSignal<bool>,
+  should_loop: MaybeSignal<bool>,
+  orientation: MaybeSignal<Orientation>,
+  direction: MaybeSignal<Direction>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
   provide_context(ToggleGroupStateContextValue {
-    roving_focus: Signal::derive(move || {
-      roving_focus
-        .map(|roving_focus| roving_focus.get())
-        .unwrap_or(true)
-    }),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
+    roving_focus: Signal::derive(move || roving_focus.get()),
+    disabled: Signal::derive(move || disabled.get()),
   });
 
   view! {
@@ -262,17 +252,17 @@ fn ToggleGroup(
       merged_attrs.extend([
         ("role", "group".into_attribute()),
         ("dir", (move ||
-          direction.map(|direction| direction.get()).unwrap_or_default().to_string())
+          direction.get().to_string())
         .into_attribute())
       ]);
 
-      if roving_focus.map(|roving_focus| roving_focus.get()).unwrap_or(true) {
+      if roving_focus.get() {
         view! {
           <RovingFocusGroup
             as_child=true
-            orientation=orientation
-            direction=direction
-            should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
+            orientation=Some(orientation)
+            direction=Some(direction)
+            should_loop=Signal::derive(move || should_loop.get())
           >
             <Primitive
               element=html::div
@@ -300,27 +290,27 @@ fn ToggleGroup(
 
 #[component]
 pub fn ToggleGroupItem(
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
   value: MaybeSignal<String>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
-  let value_context = use_context::<ToggleGroupValueContextValue>()
-    .expect("ToggleGroupItem must be in a ToggleGroupRoot component");
-  let state_context = use_context::<ToggleGroupStateContextValue>()
-    .expect("ToggleGroupItem must be in a ToggleGroupRoot component");
+  let ToggleGroupValueContextValue {
+    kind,
+    value: context_value,
+    on_item_activate,
+    on_item_deactivate,
+  } = use_context().expect("ToggleGroupItem must be in a ToggleGroupRoot component");
+  let ToggleGroupStateContextValue {
+    disabled: context_disabled,
+    roving_focus,
+  } = use_context().expect("ToggleGroupItem must be in a ToggleGroupRoot component");
 
   let is_pressed_value = value.clone();
-  let is_pressed =
-    Signal::derive(move || value_context.value.get().contains(&is_pressed_value.get()));
-
-  let is_disabled = Signal::derive(move || {
-    // state_context.disabled.get() || disabled.map(|disabled| disabled.get()).unwrap_or(false)
-    disabled.map(|disabled| disabled.get()).unwrap_or(false)
-  });
-
+  let is_pressed = Signal::derive(move || context_value.get().contains(&is_pressed_value.get()));
+  let is_disabled = Signal::derive(move || context_disabled.get() || disabled.get());
   let focusable = Signal::derive(move || !is_disabled.get());
 
   let inner_value = value.clone();
@@ -329,13 +319,13 @@ pub fn ToggleGroupItem(
       let children = children.clone();
       let mut merged_attrs = attrs.clone();
 
-      if value_context.kind == ToggleGroupValueKind::Single {
+      if kind == ToggleGroupValueKind::Single {
         merged_attrs.extend([("role", "radio".into_attribute()), ("aria-checked", Signal::derive(move || is_pressed.get().to_string()).into_attribute())].into_iter());
       }
 
       let on_pressed_value = inner_value.clone();
 
-      if state_context.roving_focus.get() {
+      if roving_focus.get() {
         view! {
           <RovingFocusGroupItem
             as_child=true
@@ -343,17 +333,17 @@ pub fn ToggleGroupItem(
             active=is_pressed
           >
             <ToggleRoot
-              disabled=is_disabled.into()
-              pressed=is_pressed.into()
+              disabled=is_disabled
+              pressed=is_pressed
               attrs=merged_attrs
               node_ref=node_ref
-              on_pressed_changed=Callback::new(move |pressed| {
+              on_pressed_changed=move |pressed| {
                 if pressed {
-                  value_context.on_item_activate.call(on_pressed_value.get());
+                  on_item_activate.call(on_pressed_value.get());
                 } else {
-                  value_context.on_item_deactivate.call(on_pressed_value.get());
+                  on_item_deactivate.call(on_pressed_value.get());
                 }
-              })
+              }
             >
               {children()}
             </ToggleRoot>
@@ -362,17 +352,17 @@ pub fn ToggleGroupItem(
       } else {
         view! {
           <ToggleRoot
-            disabled=is_disabled.into()
-            pressed=is_pressed.into()
+            disabled=is_disabled
+            pressed=is_pressed
             attrs=merged_attrs
             node_ref=node_ref
-            on_pressed_changed=Callback::new(move |pressed| {
+            on_pressed_changed=move |pressed| {
               if pressed {
-                value_context.on_item_activate.call(on_pressed_value.get());
+                on_item_activate.call(on_pressed_value.get());
               } else {
-                value_context.on_item_deactivate.call(on_pressed_value.get());
+                on_item_deactivate.call(on_pressed_value.get());
               }
-            })
+            }
           >
             {children()}
           </ToggleRoot>

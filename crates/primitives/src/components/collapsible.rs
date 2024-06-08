@@ -26,8 +26,8 @@ pub fn CollapsibleRoot(
   #[prop(optional, into)] open: MaybeSignal<bool>,
   #[prop(optional, into)] default_open: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  #[prop(default=Callback::new(|_:bool| {}), into)] on_open_change: Callback<bool>,
-  #[prop(default=Callback::new(|_:MouseEvent| {}), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_open_change: Callback<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
   #[prop(optional, into)] as_child: Option<bool>,
   #[prop(optional, into)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
@@ -83,7 +83,7 @@ pub fn CollapsibleRoot(
 pub fn CollapsibleTrigger(
   #[prop(optional)] as_child: Option<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {

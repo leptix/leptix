@@ -35,9 +35,7 @@ pub fn AvatarRoot(
 
 #[component]
 pub fn AvatarImage(
-  #[prop(default=Callback::new(|_: ImageLoadingStatus| {}).into(), into)] on_loading_status_change: Callback<
-    ImageLoadingStatus,
-  >,
+  #[prop(default=(|_|{}).into(), into)] on_loading_status_change: Callback<ImageLoadingStatus>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<Img>,
 ) -> impl IntoView {

@@ -25,13 +25,13 @@ pub enum AccordionKind {
   Single {
     value: Option<MaybeSignal<String>>,
     default_value: Option<MaybeSignal<String>>,
-    on_value_change: Callback<String>,
+    on_value_change: Option<Callback<String>>,
     collapsible: MaybeSignal<bool>,
   },
   Multiple {
     value: MaybeSignal<Vec<String>>,
     default_value: MaybeSignal<Vec<String>>,
-    on_value_change: Callback<Vec<String>>,
+    on_value_change: Option<Callback<Vec<String>>>,
   },
 }
 
@@ -40,7 +40,7 @@ impl AccordionKind {
     Self::Single {
       value: None,
       default_value: None,
-      on_value_change: Callback::new(|_| {}),
+      on_value_change: None,
       collapsible: false.into(),
     }
   }
@@ -49,7 +49,7 @@ impl AccordionKind {
     Self::Multiple {
       value: vec![].into(),
       default_value: vec![].into(),
-      on_value_change: Callback::new(|_| {}),
+      on_value_change: None,
     }
   }
 }
@@ -97,7 +97,7 @@ pub fn AccordionRoot(
         node_ref=node_ref
         value=value
         default_value=default_value
-        on_value_change=on_value_change
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
         collapsible=Signal::derive(move || collapsible.get())
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
@@ -116,7 +116,7 @@ pub fn AccordionRoot(
         node_ref=node_ref
         value=value
         default_value=default_value
-        on_value_change=on_value_change
+        on_value_change=on_value_change.unwrap_or((|_|{}).into())
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
         orientation=Signal::derive(move || orientation.get())
@@ -273,9 +273,7 @@ fn Accordion(
   disabled: Signal<bool>,
   orientation: Signal<Orientation>,
   direction: Signal<Direction>,
-  #[prop(default=Callback::new(move|_: KeyboardEvent| {}), into)] on_key_down: Callback<
-    KeyboardEvent,
-  >,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,

@@ -52,8 +52,8 @@ pub fn SliderRoot(
   #[prop(optional, into)] value: Option<MaybeSignal<Vec<f64>>>,
   #[prop(optional, into)] default_value: Option<MaybeSignal<Vec<f64>>>,
   #[prop(optional, into)] inverted: MaybeSignal<bool>,
-  #[prop(default=Callback::new(move |_: Vec<f64>| {}), into)] on_value_change: Callback<Vec<f64>>,
-  #[prop(default=Callback::new(move |_: Vec<f64>| {}), into)] on_value_commit: Callback<Vec<f64>>,
+  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<Vec<f64>>,
+  #[prop(default=(|_|{}).into(), into)] on_value_commit: Callback<Vec<f64>>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,

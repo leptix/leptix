@@ -39,7 +39,7 @@ pub fn RadioGroupRoot(
   #[prop(optional, into)] default_value: Option<MaybeSignal<String>>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
-  #[prop(default=Callback::new(|_:String|{}), into)] on_value_change: Callback<String>,
+  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -101,8 +101,8 @@ pub fn RadioGroupRoot(
 #[component]
 pub fn RadioGroupItem(
   #[prop(into)] value: MaybeSignal<String>,
-  #[prop(default=Callback::new(|_:FocusEvent|{}), into)] on_focus: Callback<FocusEvent>,
-  #[prop(default=Callback::new(|_:KeyboardEvent|{}), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,

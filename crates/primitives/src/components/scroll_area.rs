@@ -570,8 +570,8 @@ fn ScrollAreaScrollbarAuto(
 #[component]
 fn ScrollAreaScrollbarVisible(
   orientation: MaybeSignal<Orientation>,
-  #[prop(default=Callback::new(move|_:()|{}), into)] on_pointer_enter: Callback<()>,
-  #[prop(default=Callback::new(move|_:()|{}), into)] on_pointer_leave: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -818,8 +818,8 @@ fn ScrollAreaScrollbarX(
 
 #[component]
 fn ScrollAreaScrollbarY(
-  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_enter: Callback<()>,
-  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_leave: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
@@ -954,8 +954,8 @@ struct Pointer {
 fn ScrollAreaScrollbarImpl(
   sizes: Signal<Sizes>,
 
-  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_enter: Callback<()>,
-  #[prop(default=Callback::new(|_:()|{}), into)] on_pointer_leave: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
   has_thumb: Signal<bool>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,

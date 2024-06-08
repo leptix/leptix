@@ -9,13 +9,13 @@ use crate::{
 
 #[component]
 pub fn ToggleRoot(
-  #[prop(optional)] pressed: Option<MaybeSignal<bool>>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] default_pressed: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_pressed_changed: Option<Callback<bool>>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(optional, into)] pressed: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] default_pressed: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_pressed_changed: Callback<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 ) -> impl IntoView {
@@ -24,11 +24,7 @@ pub fn ToggleRoot(
     default_value: Signal::derive(move || {
       default_pressed.map(|default_pressed| default_pressed.get())
     }),
-    on_change: Callback::new(move |value| {
-      if let Some(on_pressed_changed) = on_pressed_changed {
-        on_pressed_changed.call(value);
-      }
-    }),
+    on_change: on_pressed_changed,
   });
 
   let mut merged_attrs = vec![
@@ -48,11 +44,7 @@ pub fn ToggleRoot(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-        .into_attribute(),
-    ),
+    ("data-disabled", disabled.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -63,11 +55,9 @@ pub fn ToggleRoot(
       element=html::button
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-        if let Some(on_click) = on_click {
           on_click.call(ev.clone());
-        }
 
-        if !disabled.map(|disabled| disabled.get()).unwrap_or(false) {
+        if !disabled.get() {
           set_pressed.update(|pressed| *pressed = Some(!pressed.unwrap_or(false)));
         }
       }

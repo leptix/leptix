@@ -26,8 +26,8 @@ pub fn Radio(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] checked: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
-  #[prop(default=Callback::new(|_:()|{}), into)] on_check: Callback<()>,
-  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_check: Callback<()>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional_no_strip, into)] name: Option<MaybeSignal<String>>,

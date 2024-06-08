@@ -36,7 +36,7 @@ pub enum ActivationMode {
 pub fn TabsRoot(
   #[prop(optional, into)] value: Option<MaybeSignal<String>>,
   #[prop(optional, into)] default_value: Option<MaybeSignal<String>>,
-  #[prop(default=Callback::new(|_:String|{}), into)] on_value_change: Callback<String>,
+  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(optional, into)] activation_mode: MaybeSignal<ActivationMode>,
@@ -124,9 +124,9 @@ pub fn TabsList(
 pub fn TabsTrigger(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_mouse_down: Callback<MouseEvent>,
-  #[prop(default=Callback::new(|_:KeyboardEvent|{}), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(default=Callback::new(|_:FocusEvent|{}), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,

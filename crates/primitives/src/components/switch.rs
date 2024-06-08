@@ -32,8 +32,8 @@ pub fn SwitchRoot(
   #[prop(optional, into)] name: Option<MaybeSignal<String>>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
-  #[prop(default=Callback::new(|_:bool|{}), into)] on_checked_change: Callback<bool>,
-  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<bool>,
+  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,

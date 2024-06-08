@@ -25,7 +25,7 @@ struct ToolbarContextValue {
 pub fn ToolbarRoot(
   #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
   #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
-  #[prop(optional)] should_loop: Option<MaybeSignal<bool>>,
+  #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -73,7 +73,7 @@ pub fn ToolbarRoot(
     <RovingFocusGroup
       orientation=orientation
       direction=direction
-      should_loop=Signal::derive(move || should_loop.map(|should_loop| should_loop.get()).unwrap_or(true))
+      should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
         element=html::div
@@ -203,10 +203,10 @@ pub fn ToolbarToggleGroup(
     <ToggleGroupRoot
       kind=kind
       attrs=merged_attrs
-      disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default()).into()
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default()).into()
-      roving_focus=false.into()
+      disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
+      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
+      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
+      roving_focus=false
       node_ref=node_ref
     >
       {children()}
@@ -229,7 +229,7 @@ pub fn ToolbarToggleItem(
     >
       <ToggleGroupItem
         attrs=attrs
-        disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)).into()
+        disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
         value=value
         node_ref=node_ref
       >
