@@ -23,47 +23,27 @@ struct ToolbarContextValue {
 
 #[component]
 pub fn ToolbarRoot(
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
   provide_context(ToolbarContextValue {
-    orientation: Signal::derive(move || {
-      orientation
-        .map(|orientation| orientation.get())
-        .unwrap_or_default()
-    }),
-    direction: Signal::derive(move || {
-      direction
-        .map(|direction| direction.get())
-        .unwrap_or_default()
-    }),
+    orientation: Signal::derive(move || orientation.get()),
+    direction: Signal::derive(move || direction.get()),
   });
 
   let mut merged_attrs = vec![
     ("role", "toolbar".into_attribute()),
     (
       "aria-orientation",
-      (move || {
-        orientation
-          .map(|orientation| orientation.get())
-          .unwrap_or_default()
-          .to_string()
-      })
-      .into_attribute(),
+      (move || orientation.get().to_string()).into_attribute(),
     ),
     (
       "dir",
-      (move || {
-        direction
-          .map(|direction| direction.get())
-          .unwrap_or_default()
-          .to_string()
-      })
-      .into_attribute(),
+      (move || direction.get().to_string()).into_attribute(),
     ),
   ];
 
@@ -71,8 +51,8 @@ pub fn ToolbarRoot(
 
   view! {
     <RovingFocusGroup
-      orientation=orientation
-      direction=direction
+      orientation=Some(orientation)
+      direction=Some(direction)
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
@@ -111,7 +91,7 @@ pub fn ToolbarSeparator(
 #[component]
 pub fn ToolbarButton(
   #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -122,7 +102,7 @@ pub fn ToolbarButton(
   view! {
     <RovingFocusGroupItem
       as_child=true
-      focusable=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
+      focusable=Signal::derive(move || disabled.get())
     >
       <Primitive
         element=html::button
@@ -138,7 +118,7 @@ pub fn ToolbarButton(
 
 #[component]
 pub fn ToolbarLink(
-  #[prop(optional)] on_key_down: Option<Callback<KeyboardEvent>>,
+  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
@@ -153,9 +133,7 @@ pub fn ToolbarLink(
         attrs=attrs
         node_ref=node_ref
         on:keydown=move |ev: KeyboardEvent| {
-          if let Some(on_key_down) = on_key_down {
             on_key_down.call(ev.clone());
-          }
 
           if ev.key() == " " {
             if let Some(current_target) = ev.current_target() {
@@ -176,9 +154,9 @@ pub fn ToolbarLink(
 pub fn ToolbarToggleGroup(
   kind: ToggleGroupKind,
 
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] orientation: Option<MaybeSignal<Orientation>>,
-  #[prop(optional)] direction: Option<MaybeSignal<Direction>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
+  #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -203,9 +181,9 @@ pub fn ToolbarToggleGroup(
     <ToggleGroupRoot
       kind=kind
       attrs=merged_attrs
-      disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-      orientation=Signal::derive(move || orientation.map(|orientation| orientation.get()).unwrap_or_default())
-      direction=Signal::derive(move || direction.map(|direction| direction.get()).unwrap_or_default())
+      disabled=Signal::derive(move || disabled.get())
+      orientation=Signal::derive(move || orientation.get())
+      direction=Signal::derive(move || direction.get())
       roving_focus=false
       node_ref=node_ref
     >
@@ -216,8 +194,8 @@ pub fn ToolbarToggleGroup(
 
 #[component]
 pub fn ToolbarToggleItem(
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  value: MaybeSignal<String>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(into)] value: MaybeSignal<String>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -229,7 +207,7 @@ pub fn ToolbarToggleItem(
     >
       <ToggleGroupItem
         attrs=attrs
-        disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
+        disabled=Signal::derive(move || disabled.get())
         value=value
         node_ref=node_ref
       >
