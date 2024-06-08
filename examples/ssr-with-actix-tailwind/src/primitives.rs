@@ -18,7 +18,7 @@ use leptix_primitives::components::radio_group::{
 use leptix_primitives::components::scroll_area::{
   ScrollAreaCorner, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport,
 };
-use leptix_primitives::components::separator::Separator;
+use leptix_primitives::components::separator::SeparatorRoot;
 use leptix_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
 use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
 use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
@@ -640,16 +640,16 @@ fn SeparatorDemo() -> impl IntoView {
           <div class="dark:text-white text-[15px] leading-5">
               "Accessible and unstyled components for Leptos"
           </div>
-          <Separator attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px my-[15px]"/>
+          <SeparatorRoot attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px my-[15px]"/>
           <div class="flex h-5 items-center">
               <div class="dark:text-white text-[15px] leading-5">"Blog"</div>
-              <Separator
+              <SeparatorRoot
                   attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
                   decorative=true
                   orientation=Orientation::Vertical
               />
               <div class="dark:text-white text-[15px] leading-5">"Docs"</div>
-              <Separator
+              <SeparatorRoot
                   attr:class="bg-mauve11 dark:bg-white data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px mx-[15px]"
                   decorative=true
                   orientation=Orientation::Vertical
@@ -1128,7 +1128,7 @@ fn SliderDemo() -> impl IntoView {
       <form>
           <SliderRoot
               attr:class="relative flex items-center select-none touch-none w-[200px] h-5"
-              default_value=vec![50.0f64].into()
+              default_value=vec![50.0f64]
               max=100.0
               step=1.0
           >

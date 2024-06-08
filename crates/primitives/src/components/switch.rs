@@ -26,14 +26,14 @@ struct SwitchContextValue {
 
 #[component]
 pub fn SwitchRoot(
-  #[prop(optional)] checked: Option<MaybeSignal<bool>>,
-  #[prop(optional)] value: Option<MaybeSignal<String>>,
-  #[prop(optional)] name: Option<MaybeSignal<String>>,
-  #[prop(optional)] disabled: Option<MaybeSignal<bool>>,
-  #[prop(optional)] default_checked: Option<MaybeSignal<bool>>,
-  #[prop(optional)] required: Option<MaybeSignal<bool>>,
-  #[prop(optional)] on_checked_change: Option<Callback<bool>>,
-  #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
+  #[prop(optional, into)] checked: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] default_checked: Option<MaybeSignal<bool>>,
+  #[prop(optional, into)] value: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] name: Option<MaybeSignal<String>>,
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+  #[prop(optional, into)] required: MaybeSignal<bool>,
+  #[prop(default=Callback::new(|_:bool|{}), into)] on_checked_change: Callback<bool>,
+  #[prop(default=Callback::new(|_:MouseEvent|{}), into)] on_click: Callback<MouseEvent>,
 
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
@@ -49,11 +49,7 @@ pub fn SwitchRoot(
     default_value: Signal::derive(move || {
       default_checked.map(|default_checked| default_checked.get())
     }),
-    on_change: Callback::new(move |value| {
-      if let Some(on_checked_change) = on_checked_change {
-        on_checked_change.call(value);
-      }
-    }),
+    on_change: on_checked_change,
   });
 
   Effect::new(move |_| {
@@ -66,7 +62,7 @@ pub fn SwitchRoot(
 
   provide_context(SwitchContextValue {
     checked: Signal::derive(move || checked.get().unwrap_or(false)),
-    disabled: Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false)),
+    disabled: Signal::derive(move || disabled.get()),
   });
 
   let attr_value = value.clone();
@@ -79,10 +75,7 @@ pub fn SwitchRoot(
       "aria-checked",
       Signal::derive(move || checked.get()).into_attribute(),
     ),
-    (
-      "aria-required",
-      Signal::derive(move || required.map(|required| required.get())).into_attribute(),
-    ),
+    ("aria-required", required.into_attribute()),
     (
       "data-state",
       Signal::derive(move || {
@@ -94,10 +87,7 @@ pub fn SwitchRoot(
       })
       .into_attribute(),
     ),
-    (
-      "data-disabled",
-      Signal::derive(move || disabled.map(|disabled| disabled.get())).into_attribute(),
-    ),
+    ("data-disabled", disabled.into_attribute()),
     (
       "value",
       Signal::derive(move || attr_value.as_ref().map(|value| value.get())).into_attribute(),
@@ -113,9 +103,7 @@ pub fn SwitchRoot(
       attrs=merged_attrs
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-        if let Some(on_click) = on_click {
           on_click.call(ev.clone());
-        }
 
         set_checked.update(|checked| *checked = Some(!checked.unwrap_or(false)));
 
@@ -136,8 +124,8 @@ pub fn SwitchRoot(
             bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
             name=name.clone().map(|name| Signal::derive(move || name.get()))
             value=value.clone().map(|value| Signal::derive(move || value.get())).unwrap_or(Signal::derive(|| "on".to_string()))
-            disabled=Signal::derive(move || disabled.map(|disabled| disabled.get()).unwrap_or(false))
-            required=Signal::derive(move || required.map(|required| required.get()).unwrap_or(false))
+            disabled=Signal::derive(move || disabled.get())
+            required=Signal::derive(move || required.get())
             control=node_ref
         />
       </Show>
@@ -150,15 +138,15 @@ pub fn SwitchThumb(
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
 ) -> impl IntoView {
-  let context = use_context::<SwitchContextValue>()
-    .expect("SwitchThumb must be used in a SwitchRoot component");
+  let SwitchContextValue { checked, disabled } =
+    use_context().expect("SwitchThumb must be used in a SwitchRoot component");
 
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
     (
       "data-state",
       Signal::derive(move || {
-        if context.checked.get() {
+        if checked.get() {
           "checked"
         } else {
           "unchecked"
@@ -168,7 +156,7 @@ pub fn SwitchThumb(
     ),
     (
       "data-disabled",
-      Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
+      Signal::derive(move || disabled.get().then_some("")).into_attribute(),
     ),
   ]);
 
