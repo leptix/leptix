@@ -163,7 +163,7 @@ fn ThemeToggle() -> impl IntoView {
       <ToggleRoot
           attr:aria-label="Toggle italic"
           attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
-          pressed=true.into()
+          pressed=true
           on:click=move |_| {
               set_dark_theme
                   .update(|dark_theme| {
@@ -515,7 +515,7 @@ fn AccordionDemo() -> impl IntoView {
               value: None,
               default_value: Some("item-1".into()),
               collapsible: true.into(),
-              on_value_change: (|_| {}).into(),
+              on_value_change: None,
           }
       >
 
