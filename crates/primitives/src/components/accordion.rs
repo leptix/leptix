@@ -278,17 +278,11 @@ fn Accordion(
     direction: Signal::derive(move || direction.get()),
   });
 
-  let mut merged_attrs = vec![(
-    "data-orientation",
-    (move || orientation.get().to_string()).into_attribute(),
-  )];
-
-  merged_attrs.extend(attrs);
-
   view! {
     <Primitive
+      {..attrs}
+      attr:data-orientation=move || orientation.get().to_string()
       element=html::div
-      attrs=merged_attrs
       node_ref=node_ref
       on:keydown=move |ev: KeyboardEvent| {
         on_key_down.call(ev.clone());
@@ -432,24 +426,13 @@ pub fn AccordionItem(
     trigger_id: Signal::derive(move || trigger_id.get()),
   });
 
-  let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "data-state",
-      (move || if is_open.get() { "open" } else { "closed" }).into_attribute(),
-    ),
-    ("data-disabled", (move || disabled.get()).into_attribute()),
-  ];
-
-  merged_attrs.extend(attrs);
-
   let open_value = value.clone();
   view! {
     <CollapsibleRoot
-      attrs=merged_attrs
+      {..attrs}
+      attr:data-orientation=move || state_context.orientation.get().to_string()
+      attr:data-state=move || if is_open.get() { "open" } else { "closed" }
+      attr:data-disabled=disabled
       open=is_open
       disabled=is_disabled
       node_ref=node_ref
@@ -472,39 +455,18 @@ pub fn AccordionHeader(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let state_context = use_context::<AccordionStateContextValue>()
-    .expect("AccordionHeader must be in an Accordion component");
-  let item_context = use_context::<AccordionItemContextValue>()
-    .expect("AccordionHeader must be in an AccordionRoot component");
-
-  let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "data-state",
-      (move || {
-        if item_context.open.get() {
-          "open"
-        } else {
-          "closed"
-        }
-      })
-      .into_attribute(),
-    ),
-    (
-      "data-disabled",
-      (move || item_context.disabled.get()).into_attribute(),
-    ),
-  ];
-
-  merged_attrs.extend(attrs);
+  let AccordionStateContextValue { orientation, .. } =
+    use_context().expect("AccordionHeader must be in an Accordion component");
+  let AccordionItemContextValue { open, disabled, .. } =
+    use_context().expect("AccordionHeader must be in an AccordionRoot component");
 
   view! {
     <Primitive
+      {..attrs}
+      attr:data-orientation=move || orientation.get().to_string()
+      attr:data-state=move || if open.get() { "open" } else { "closed" }
+      attr:data-disabled=disabled
       element=html::h3
-      attrs=merged_attrs
       node_ref=node_ref
     >
       {children()}
@@ -518,36 +480,23 @@ pub fn AccordionTrigger(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let state_context = use_context::<AccordionStateContextValue>()
-    .expect("AccordionTrigger must be in an Accordion component");
-  let item_context = use_context::<AccordionItemContextValue>()
-    .expect("AccordionTrigger must be in an AccordionRoot component");
-  let collapsible_context = use_context::<AccordionCollapsibleContextValue>()
-    .expect("AccordionTrigger must be in an AccordionRoot component");
+  let AccordionStateContextValue { orientation, .. } =
+    use_context().expect("AccordionTrigger must be in an Accordion component");
+  let AccordionItemContextValue {
+    trigger_id, open, ..
+  } = use_context().expect("AccordionTrigger must be in an AccordionRoot component");
+  let AccordionCollapsibleContextValue { collapsible } =
+    use_context().expect("AccordionTrigger must be in an AccordionRoot component");
 
   use_collection_item_ref(node_ref, AccordionCollectionItem);
 
-  let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "id",
-      (move || item_context.trigger_id.get()).into_attribute(),
-    ),
-    (
-      "aria-disabled",
-      (move || item_context.open.get() && !collapsible_context.collapsible.get()).into_attribute(),
-    ),
-  ];
-
-  merged_attrs.extend(attrs);
-
   view! {
     <CollapsibleTrigger
+      {..attrs}
+      attr:data-orientation=move || orientation.get().to_string()
+      attr:id=trigger_id
+      attr:aria-disabled=move || open.get() && !collapsible.get()
       node_ref=node_ref
-      attrs=merged_attrs
     >
       {children()}
     </CollapsibleTrigger>
@@ -560,10 +509,10 @@ pub fn AccordionContent(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
 ) -> impl IntoView {
-  let state_context = use_context::<AccordionStateContextValue>()
-    .expect("AccordionTrigger must be in an Accordion component");
-  let item_context = use_context::<AccordionItemContextValue>()
-    .expect("AccordionTrigger must be in an AccordionRoot component");
+  let AccordionStateContextValue { orientation, .. } =
+    use_context().expect("AccordionTrigger must be in an Accordion component");
+  let AccordionItemContextValue { trigger_id, .. } =
+    use_context().expect("AccordionTrigger must be in an AccordionRoot component");
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
@@ -581,24 +530,13 @@ pub fn AccordionContent(
       );
   });
 
-  let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "aria-labelledby",
-      (move || item_context.trigger_id.get()).into_attribute(),
-    ),
-    ("role", "region".into_attribute()),
-  ];
-
-  merged_attrs.extend(attrs);
-
   view! {
     <CollapsibleContent
+      {..attrs}
+      attr:data-orientation=move || orientation.get().to_string()
+      attr:aria-labelledby=trigger_id
+      attr:role="region"
       node_ref=node_ref
-      attrs=merged_attrs
     >
       {children()}
     </CollapsibleContent>

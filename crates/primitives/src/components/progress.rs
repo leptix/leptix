@@ -52,39 +52,30 @@ pub fn ProgressRoot(
     max: Signal::derive(move || max.get()),
   });
 
-  let mut merged_attrs = attrs.clone();
-
-  merged_attrs.extend([
-    ("role", "progressbar".into_attribute()),
-    ("aria-valuemax", max.into_attribute()),
-    ("aria-valuemin", 0.into_attribute()),
-    ("aria-valuenow", value.into_attribute()),
-    ("aria-valuetext", value_label.into_attribute()),
-    (
-      "data-state",
-      (move || {
-        value
-          .get()
-          .map(|value| {
-            if value == max.get() {
-              "complete"
-            } else {
-              "loading"
-            }
-          })
-          .unwrap_or("indeterminate")
-      })
-      .into_attribute(),
-    ),
-    ("data-value", value.into_attribute()),
-    ("data-max", max.into_attribute()),
-  ]);
-
   view! {
     <Primitive
+      {..attrs}
+      attr:role="progressbar"
+      attr:aria-valuemax=max
+      attr:aria-valuemin=0
+      attr:aria-valuenow=value
+      attr:aria-valuetext=value_label
+      attr:data-state=move || {
+        value
+        .get()
+        .map(|value| {
+          if value == max.get() {
+            "complete"
+          } else {
+            "loading"
+          }
+        })
+        .unwrap_or("indeterminate")
+      }
+      attr:data-value=value
+      attr:data-max=max
       element=html::div
       node_ref=node_ref
-      attrs=merged_attrs
     >
       {children()}
     </Primitive>
@@ -99,31 +90,23 @@ pub fn ProgressIndicator(
   let ProgressContextValue { max, value } =
     use_context().expect("ProgressIndicator needs to be in a Progress component");
 
-  let mut merged_attrs = attrs.clone();
-
-  merged_attrs.extend([
-    (
-      "data-state",
-      (move || {
-        value
-          .get()
-          .map(|value| {
-            if value == max.get() {
-              "complete"
-            } else {
-              "loading"
-            }
-          })
-          .unwrap_or("indeterminate")
-      })
-      .into_attribute(),
-    ),
-    ("data-value", value.into_attribute()),
-    ("data-max", max.into_attribute()),
-  ]);
-
   view! {
     <Primitive
+      {..attrs}
+      attr:data-state=move || {
+        value
+        .get()
+        .map(|value| {
+          if value == max.get() {
+            "complete"
+          } else {
+            "loading"
+          }
+        })
+        .unwrap_or("indeterminate")
+      }
+      attr:data-value=value
+      attr:data-max=max
       element=html::div
       node_ref=node_ref
       attrs=merged_attrs

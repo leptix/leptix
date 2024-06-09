@@ -35,20 +35,6 @@ pub fn ToolbarRoot(
     direction: Signal::derive(move || direction.get()),
   });
 
-  let mut merged_attrs = vec![
-    ("role", "toolbar".into_attribute()),
-    (
-      "aria-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    ),
-  ];
-
-  merged_attrs.extend(attrs);
-
   view! {
     <RovingFocusGroup
       orientation=Signal::derive(move || orientation.get())
@@ -56,8 +42,11 @@ pub fn ToolbarRoot(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
+        {..attrs}
+        attr:role="toolbar"
+        attr:aria-orientation=move || orientation.get().to_string()
+        attr:dir=move || direction.get().to_string()
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
       >
         {children()}
@@ -96,18 +85,16 @@ pub fn ToolbarButton(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: Children,
 ) -> impl IntoView {
-  let mut merged_attrs = vec![("type", "button".into_attribute())];
-  merged_attrs.extend(attrs);
-
   view! {
     <RovingFocusGroupItem
       as_child=true
       focusable=Signal::derive(move || disabled.get())
     >
       <Primitive
+        {..attrs}
+        attr:type="button"
         element=html::button
         as_child=as_child
-        attrs=merged_attrs
         node_ref=node_ref
       >
         {children()}
@@ -165,22 +152,12 @@ pub fn ToolbarToggleGroup(
   let context = use_context::<ToolbarContextValue>()
     .expect("ToolbarToggleGroup must be in a ToolbarRoot component");
 
-  let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "dir",
-      (move || context.direction.get().to_string()).into_attribute(),
-    ),
-  ];
-  merged_attrs.extend(attrs);
-
   view! {
     <ToggleGroupRoot
+      {..attrs}
+      attr:data-orientation=move || context.orientation.get().to_string()
+      attr:dir=move || context.direction.get().to_string()
       kind=kind
-      attrs=merged_attrs
       disabled=Signal::derive(move || disabled.get())
       orientation=Signal::derive(move || orientation.get())
       direction=Signal::derive(move || direction.get())

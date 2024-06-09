@@ -87,15 +87,6 @@ pub fn TabsList(
     ..
   } = use_context().expect("TabsList must be used in a TabsRoot component");
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    ("role", "tablist".into_attribute()),
-    (
-      "aria-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
-  ]);
-
   view! {
     <RovingFocusGroup
       as_child=true
@@ -104,8 +95,10 @@ pub fn TabsList(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
+        {..attrs}
+        attr:role="tablist"
+        attr:aria-orientation=move || orientation.get().to_string()
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
       >
         {children()}
@@ -145,41 +138,6 @@ pub fn TabsTrigger(
   let is_selected_value = value.clone();
   let is_selected = Signal::derive(move || context_value.get() == Some(is_selected_value.get()));
 
-  let data_disabled = disabled;
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    ("type", "button".into_attribute()),
-    ("role", "tab".into_attribute()),
-    (
-      "aria-selected",
-      Signal::derive(move || is_selected.get()).into_attribute(),
-    ),
-    (
-      "aria-controls",
-      Signal::derive(move || content_id.get()).into_attribute(),
-    ),
-    (
-      "data-state",
-      Signal::derive(move || {
-        if is_selected.get() {
-          "active"
-        } else {
-          "inactive"
-        }
-      })
-      .into_attribute(),
-    ),
-    (
-      "data-disabled",
-      Signal::derive(move || data_disabled.get().then_some("")).into_attribute(),
-    ),
-    ("disabled", disabled.into_attribute()),
-    (
-      "id",
-      Signal::derive(move || trigger_id.get()).into_attribute(),
-    ),
-  ]);
-
   let keydown_value = value.clone();
   let focus_value = value.clone();
   view! {
@@ -189,8 +147,22 @@ pub fn TabsTrigger(
       active=is_selected
     >
       <Primitive
+        {..attrs}
+        attr:type="button"
+        attr:role="tab"
+        attr:aria-selected=is_selected
+        attr:aria-controls=content_id
+        attr:data-state=move || {
+          if is_selected.get() {
+            "active"
+          } else {
+            "inactive"
+          }
+        }
+        attr:data-disabled=move || disabled.get().then_some("")
+        attr:disabled=disabled
+        attr:id=trigger_id
         element=html::button
-        attrs=merged_attrs
         node_ref=node_ref
         on:mousedown=move|ev: MouseEvent| {
             on_mouse_down.call(ev.clone());
@@ -282,41 +254,26 @@ pub fn TabsContent(
     }
   });
 
-  let mut merged_attrs = vec![
-    ("role", "tabpanel".into_attribute()),
-    (
-      "data-state",
-      (move || {
-        if is_selected.get() {
-          "active"
-        } else {
-          "inactive"
-        }
-      })
-      .into_attribute(),
-    ),
-    (
-      "data-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "aria-labelledby",
-      (move || trigger_id.get()).into_attribute(),
-    ),
-    ("hidden", (move || !is_present.get()).into_attribute()),
-    ("id", (move || content_id.get()).into_attribute()),
-    ("tabindex", 0.into_attribute()),
-  ];
-
-  merged_attrs.extend(attrs.clone());
-
   let children = StoredValue::new(children);
 
   view! {
       <Show when=move || presence.get()>
         <Primitive
+            {..attrs.clone()}
+            attr:role="tabpanel"
+            attr:data-state=move || {
+              if is_selected.get() {
+                "active"
+              } else {
+                "inactive"
+              }
+            }
+            attr:data-orientation=move || orientation.get().to_string()
+            attr:aria-labelledby=trigger_id.clone()
+            attr:hidden=move || !is_present.get()
+            attr:id=content_id.clone()
+            attr:tabindex=0
             element=html::div
-            attrs=merged_attrs.clone()
             node_ref=node_ref
         >
             {children.with_value(|children| children())}

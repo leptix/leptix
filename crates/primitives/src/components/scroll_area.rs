@@ -115,12 +115,6 @@ pub fn ScrollAreaRoot(
     }),
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([(
-    "dir",
-    (move || direction.get().to_string()).into_attribute(),
-  )]);
-
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
       return;
@@ -138,8 +132,9 @@ pub fn ScrollAreaRoot(
 
   view! {
     <Primitive
+      {..attrs}
+      attr:dir=move || direction.get().to_string()
       element=html::div
-      attrs=merged_attrs
       node_ref=node_ref
     >
       {children()}
@@ -157,9 +152,6 @@ pub fn ScrollAreaViewport(
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaViewport must be used in a ScrollAreaRoot component");
-
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-primitive-scroll-area-viewport", "".into_attribute())]);
 
   let content_ref = context.content;
 
@@ -206,20 +198,21 @@ pub fn ScrollAreaViewport(
   view! {
     <>
       <style nonce=nonce.into_attribute()>
-        r"[data-primitive-scroll-area-viewport] {
+        r"[data-leptix-scroll-area-viewport] {
             scrollbar-width:none;
             -ms-overflow-style:none;
             -webkit-overflow-scrolling:touch;
         }
 
-        [data-primitive-scroll-area-viewport]::-webkit-scrollbar{
+        [data-leptix-scroll-area-viewport]::-webkit-scrollbar{
             display:none
         }"
       </style>
 
       <Primitive
+        {..attrs}
+        attr:data-leptix-scroll-area-viewport=""
         element=html::div
-        attrs=merged_attrs
         node_ref=context.viewport
       >
         <div
@@ -372,20 +365,15 @@ fn ScrollAreaScrollbarHover(
 
   let presence = create_presence(is_present, node_ref);
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([(
-    "data-state",
-    Signal::derive(move || if visible.get() { "visible" } else { "hidden" }).into_attribute(),
-  )]);
-
   let children = StoredValue::new(children);
 
   view! {
     <Show when=move || presence.get()>
         <ScrollAreaScrollbarAuto
+            {..attrs}
+            attr:data-state=move || if visible.get() { "visible" } else { "hidden" }
             force_mount=force_mount
             orientation=orientation
-            attrs=merged_attrs.clone()
             node_ref=node_ref
         >
             {children.with_value(|children| children())}
@@ -471,27 +459,21 @@ fn ScrollAreaScrollbarScroll(
 
   let presence = create_presence(is_present, node_ref);
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([(
-    "data-state",
-    (move || {
-      if state.get() == ScrollAreaScrollbarScrollState::Hidden {
-        "hidden"
-      } else {
-        "visible"
-      }
-    })
-    .into_attribute(),
-  )]);
-
   let children = StoredValue::new(children);
 
   view! {
     <Show when=move || presence.get()>
         <ScrollAreaScrollbarVisible
+            {..attrs.clone()}
+            attr:data-state=move || {
+              if state.get() == ScrollAreaScrollbarScrollState::Hidden {
+                "hidden"
+              } else {
+                "visible"
+              }
+            }
             orientation=orientation
             node_ref=node_ref
-            attrs=merged_attrs.clone()
             on_pointer_enter=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerEnter))
             on_pointer_leave=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerLeave))
         >
@@ -546,19 +528,14 @@ fn ScrollAreaScrollbarAuto(
 
   let presence = create_presence(is_present, node_ref);
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([(
-    "data-state",
-    (move || if visible.get() { "visible" } else { "hidden" }).into_attribute(),
-  )]);
-
   let children = StoredValue::new(children);
 
   view! {
     <Show when=move || presence.get()>
         <ScrollAreaScrollbarVisible
+            {..attrs.clone()}
+            attr:data-state=move || if visible.get() { "visible" } else { "hidden" }
             orientation=orientation
-            attrs=merged_attrs.clone()
             node_ref=node_ref
         >
             {children.with_value(|children| children())}
@@ -752,11 +729,10 @@ fn ScrollAreaScrollbarX(
       );
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-orientation", "horizontal".into_attribute())]);
-
   view! {
     <ScrollAreaScrollbarImpl
+      {..attrs}
+      attr:data-orientation="horizontal"
       sizes=Signal::derive(move || sizes.get())
 
       on_pointer_enter=on_pointer_enter
@@ -807,8 +783,6 @@ fn ScrollAreaScrollbarX(
           }
         });
       })
-
-      attrs=merged_attrs
       node_ref=node_ref
     >
       {children()}
@@ -867,11 +841,10 @@ fn ScrollAreaScrollbarY(
       );
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([("data-orientation", "vertical".into_attribute())]);
-
   view! {
     <ScrollAreaScrollbarImpl
+      {..attrs}
+      attr:data-orientation="vertical"
       sizes=Signal::derive(move || sizes.get())
 
       on_pointer_enter=on_pointer_enter
@@ -922,8 +895,6 @@ fn ScrollAreaScrollbarY(
           }
         });
       })
-
-      attrs=merged_attrs
       node_ref=node_ref
     >
       {children()}

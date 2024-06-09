@@ -254,14 +254,6 @@ fn ToggleGroup(
   view! {
     {move || {
       let children = children.clone();
-      let mut merged_attrs = attrs.clone();
-
-      merged_attrs.extend([
-        ("role", "group".into_attribute()),
-        ("dir", (move ||
-          direction.get().to_string())
-        .into_attribute())
-      ]);
 
       if roving_focus.get() {
         view! {
@@ -272,8 +264,10 @@ fn ToggleGroup(
             should_loop=Signal::derive(move || should_loop.get())
           >
             <Primitive
+              {..attrs.clone()}
+              attr:role="group"
+              attr:dir=move || direction.get().to_string()
               element=html::div
-              attrs=merged_attrs
               node_ref=node_ref
             >
               {children()}
@@ -283,8 +277,10 @@ fn ToggleGroup(
       } else {
         view! {
           <Primitive
+            {..attrs.clone()}
+            attr:role="group"
+            attr:dir=move || direction.get().to_string()
             element=html::div
-            attrs=merged_attrs
             node_ref=node_ref
           >
             {children()}
@@ -324,12 +320,6 @@ pub fn ToggleGroupItem(
   view! {
     {move || {
       let children = children.clone();
-      let mut merged_attrs = attrs.clone();
-
-      if kind == ToggleGroupValueKind::Single {
-        merged_attrs.extend([("role", "radio".into_attribute()), ("aria-checked", Signal::derive(move || is_pressed.get().to_string()).into_attribute())].into_iter());
-      }
-
       let on_pressed_value = inner_value.clone();
 
       if roving_focus.get() {
@@ -340,9 +330,11 @@ pub fn ToggleGroupItem(
             active=is_pressed
           >
             <ToggleRoot
+              {..attrs}
+              attr:role=move || (kind == ToggleGroupValueKind::Single).then_some("radio")
+              attr:aria-checked=move || (kind == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
               disabled=is_disabled
               pressed=is_pressed
-              attrs=merged_attrs
               node_ref=node_ref
               on_pressed_changed=Callback::new(move |pressed| {
                 if pressed {
@@ -359,9 +351,11 @@ pub fn ToggleGroupItem(
       } else {
         view! {
           <ToggleRoot
+            {..attrs}
+            attr:role=move || (kind == ToggleGroupValueKind::Single).then_some("radio")
+            attr:aria-checked=move || (kind == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
             disabled=is_disabled
             pressed=is_pressed
-            attrs=merged_attrs
             node_ref=node_ref
             on_pressed_changed=Callback::new(move |pressed| {
               if pressed {

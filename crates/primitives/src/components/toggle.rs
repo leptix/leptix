@@ -25,31 +25,19 @@ pub fn ToggleRoot(
     on_change: on_pressed_changed,
   });
 
-  let mut merged_attrs = vec![
-    ("type", "button".into_attribute()),
-    (
-      "aria-pressed",
-      Signal::derive(move || pressed.get().unwrap_or(false).to_string()).into_attribute(),
-    ),
-    (
-      "data-state",
-      Signal::derive(move || {
-        if pressed.get().unwrap_or(false) {
+  view! {
+    <Primitive
+      {..attrs}
+      attr:type="button"
+      attr:aria-pressed=move || pressed.get().unwrap_or_default().to_string()
+      attr:data-state=move || {
+        if pressed.get().unwrap_or_default() {
           "on"
         } else {
           "off"
         }
-      })
-      .into_attribute(),
-    ),
-    ("data-disabled", disabled.into_attribute()),
-  ];
-
-  merged_attrs.extend(attrs);
-
-  view! {
-    <Primitive
-      attrs=merged_attrs
+      }
+      attr:data-disabled=disabled
       element=html::button
       node_ref=node_ref
       on:click=move |ev: MouseEvent| {
