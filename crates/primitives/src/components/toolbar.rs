@@ -26,9 +26,12 @@ pub fn ToolbarRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   provide_context(ToolbarContextValue {
     orientation: Signal::derive(move || orientation.get()),
@@ -57,8 +60,9 @@ pub fn ToolbarRoot(
     >
       <Primitive
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs
+        as_child=as_child
       >
         {children()}
       </Primitive>
@@ -70,6 +74,9 @@ pub fn ToolbarRoot(
 pub fn ToolbarSeparator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<Children>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let ToolbarContextValue { orientation, .. } =
     use_context().expect("ToolbarSeparator must be used in a ToolbarRoot component");
@@ -82,19 +89,24 @@ pub fn ToolbarSeparator(
   view! {
     <SeparatorRoot
       orientation=orientation
-      attrs=attrs
       node_ref=node_ref
-    />
+      attrs=attrs
+      as_child=as_child
+    >
+      {children.map(|children| children())}
+    </SeparatorRoot>
   }
 }
 
 #[component]
 pub fn ToolbarButton(
-  #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let mut merged_attrs = vec![("type", "button".into_attribute())];
   merged_attrs.extend(attrs);
@@ -106,9 +118,9 @@ pub fn ToolbarButton(
     >
       <Primitive
         element=html::button
-        as_child=as_child
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs
+        as_child=as_child
       >
         {children()}
       </Primitive>
@@ -119,9 +131,12 @@ pub fn ToolbarButton(
 #[component]
 pub fn ToolbarLink(
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   view! {
     <RovingFocusGroupItem
@@ -130,10 +145,11 @@ pub fn ToolbarLink(
     >
       <Primitive
         element=html::a
-        attrs=attrs
         node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
         on:keydown=move |ev: KeyboardEvent| {
-            on_key_down.call(ev.clone());
+          on_key_down.call(ev.clone());
 
           if ev.key() == " " {
             if let Some(current_target) = ev.current_target() {
@@ -158,9 +174,11 @@ pub fn ToolbarToggleGroup(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ToolbarContextValue>()
     .expect("ToolbarToggleGroup must be in a ToolbarRoot component");
@@ -180,12 +198,13 @@ pub fn ToolbarToggleGroup(
   view! {
     <ToggleGroupRoot
       kind=kind
-      attrs=merged_attrs
       disabled=Signal::derive(move || disabled.get())
       orientation=Signal::derive(move || orientation.get())
       direction=Signal::derive(move || direction.get())
       roving_focus=false
       node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </ToggleGroupRoot>
@@ -197,19 +216,20 @@ pub fn ToolbarToggleItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   view! {
-    <ToolbarButton
-      as_child=true
-    >
+    <ToolbarButton as_child=true>
       <ToggleGroupItem
-        attrs=attrs
         disabled=Signal::derive(move || disabled.get())
         value=value
         node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </ToggleGroupItem>
