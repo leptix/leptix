@@ -70,9 +70,11 @@ pub fn AccordionRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=Orientation::Vertical.into(), into)] orientation: MaybeSignal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   provide_context(
     CollectionContextValue::<AccordionCollectionItem, AnyElement> {
@@ -89,8 +91,6 @@ pub fn AccordionRoot(
       collapsible,
     } => view! {
       <AccordionSingleImpl
-        attrs=attrs
-        node_ref=node_ref
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or((|_|{}).into())
@@ -98,6 +98,9 @@ pub fn AccordionRoot(
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
         orientation=Signal::derive(move || orientation.get())
+        node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </AccordionSingleImpl>
@@ -108,14 +111,15 @@ pub fn AccordionRoot(
       on_value_change,
     } => view! {
       <AccordionMultipleImpl
-        attrs=attrs
-        node_ref=node_ref
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or((|_|{}).into())
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
         orientation=Signal::derive(move || orientation.get())
+        node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </AccordionMultipleImpl>
@@ -135,9 +139,11 @@ fn AccordionSingleImpl(
   direction: Signal<Direction>,
   orientation: Signal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -173,6 +179,7 @@ fn AccordionSingleImpl(
       orientation=orientation
       node_ref=node_ref
       attrs=attrs
+      as_child=as_child
     >
       {children()}
     </Accordion>
@@ -190,9 +197,11 @@ fn AccordionMultipleImpl(
   direction: Signal<Direction>,
   orientation: Signal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -240,6 +249,7 @@ fn AccordionMultipleImpl(
       orientation=orientation
       node_ref=node_ref
       attrs=attrs
+      as_child=as_child
     >
       {children()}
     </Accordion>
@@ -263,9 +273,11 @@ fn Accordion(
   direction: Signal<Direction>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let get_items = use_collection_context::<AccordionCollectionItem, AnyElement>();
 
@@ -288,8 +300,8 @@ fn Accordion(
   view! {
     <Primitive
       element=html::div
-      attrs=merged_attrs
       node_ref=node_ref
+      attrs=merged_attrs
       on:keydown=move |ev: KeyboardEvent| {
         on_key_down.call(ev.clone());
 
@@ -389,6 +401,7 @@ fn Accordion(
           Some(())
         })();
       }
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -406,9 +419,12 @@ struct AccordionItemContextValue {
 pub fn AccordionItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let state_context = use_context::<AccordionStateContextValue>()
     .expect("AccordionItem must be in an Accordion component");
@@ -460,6 +476,7 @@ pub fn AccordionItem(
           value_context.on_item_close.call(open_value.get());
         }
       })
+      as_child=as_child
     >
       {children()}
     </CollapsibleRoot>
@@ -468,9 +485,11 @@ pub fn AccordionItem(
 
 #[component]
 pub fn AccordionHeader(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let state_context = use_context::<AccordionStateContextValue>()
     .expect("AccordionHeader must be in an Accordion component");
@@ -504,8 +523,9 @@ pub fn AccordionHeader(
   view! {
     <Primitive
       element=html::h3
-      attrs=merged_attrs
       node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -514,9 +534,11 @@ pub fn AccordionHeader(
 
 #[component]
 pub fn AccordionTrigger(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let state_context = use_context::<AccordionStateContextValue>()
     .expect("AccordionTrigger must be in an Accordion component");
@@ -548,6 +570,7 @@ pub fn AccordionTrigger(
     <CollapsibleTrigger
       node_ref=node_ref
       attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </CollapsibleTrigger>
@@ -556,9 +579,11 @@ pub fn AccordionTrigger(
 
 #[component]
 pub fn AccordionContent(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let state_context = use_context::<AccordionStateContextValue>()
     .expect("AccordionTrigger must be in an Accordion component");
@@ -599,6 +624,7 @@ pub fn AccordionContent(
     <CollapsibleContent
       node_ref=node_ref
       attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </CollapsibleContent>
