@@ -33,17 +33,20 @@ struct CheckboxValueContext {
 
 #[component]
 pub fn CheckboxRoot(
-  #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] checked: MaybeProp<CheckedState>,
   #[prop(optional, into)] default_checked: MaybeProp<CheckedState>,
+
   #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<CheckedState>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional)] as_child: Option<bool>,
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
@@ -103,6 +106,51 @@ pub fn CheckboxRoot(
     disabled: Signal::derive(move || disabled.get()),
   });
 
+  let mut merged_attrs = vec![
+    ("type", "button".into_attribute()),
+    ("role", "checkbox".into_attribute()),
+    (
+      "aria-checked",
+      Signal::derive(move || {
+        checked.get().map(|checked| match checked {
+          CheckedState::Checked(checked) => checked.into_attribute(),
+          CheckedState::Indeterminate => "mixed".into_attribute(),
+        })
+      })
+      .into_attribute(),
+    ),
+    (
+      "aria-required",
+      Signal::derive(move || required.get()).into_attribute(),
+    ),
+    (
+      "data-state",
+      Signal::derive(move || {
+        checked.get().map(|checked| match checked {
+          CheckedState::Checked(checked) => {
+            if checked {
+              "checked"
+            } else {
+              "unchecked"
+            }
+          }
+          CheckedState::Indeterminate => "indeterminate",
+        })
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.get()).into_attribute(),
+    ),
+    (
+      "disabled",
+      Signal::derive(move || disabled.get()).into_attribute(),
+    ),
+  ];
+
+  merged_attrs.extend(attrs);
+
   let bubble_ref = NodeRef::<Input>::new();
 
   Effect::new(move |_| {
@@ -115,33 +163,7 @@ pub fn CheckboxRoot(
 
   view! {
     <Primitive
-      {..attrs}
       element=html::button
-      node_ref=node_ref
-      attr:type="button"
-      attr:role="checkbox"
-      attr:aria-checked=move || {
-        checked.get().map(|checked| match checked {
-          CheckedState::Checked(checked) => checked.into_attribute(),
-          CheckedState::Indeterminate => "mixed".into_attribute(),
-        })
-      }
-      attr:aria-required=required
-      attr:data-state=move || {
-        checked.get().map(|checked| match checked {
-          CheckedState::Checked(checked) => {
-            if checked {
-              "checked"
-            } else {
-              "unchecked"
-            }
-          }
-          CheckedState::Indeterminate => "indeterminate",
-        })
-      }
-      attr:data-disabled=disabled
-      attr:disabled=disabled
-      as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
         on_key_down.call(ev.clone());
 
@@ -164,6 +186,9 @@ pub fn CheckboxRoot(
           ev.stop_propagation();
         }
       }
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -181,9 +206,12 @@ pub fn CheckboxRoot(
 #[component]
 pub fn CheckboxIndicator(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
+
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let CheckboxValueContext { state, disabled } = use_context::<CheckboxValueContext>()
     .expect("CheckboxIndicator must be used inside of a CheckboxRoot component");
@@ -193,27 +221,40 @@ pub fn CheckboxIndicator(
 
   let presence = create_presence(is_present, node_ref);
 
+  let mut merged_attrs = vec![
+    (
+      "data-state",
+      Signal::derive(move || match state.get() {
+        CheckedState::Checked(checked) => {
+          if checked {
+            "checked"
+          } else {
+            "unchecked"
+          }
+        }
+        CheckedState::Indeterminate => "indeterminate",
+      })
+      .into_attribute(),
+    ),
+    (
+      "data-disabled",
+      Signal::derive(move || disabled.get()).into_attribute(),
+    ),
+  ];
+
+  merged_attrs.extend(attrs.clone());
+
   let children = StoredValue::new(children);
 
   view! {
     <Show when=move || presence.get()>
       <Primitive
-          {..attrs.clone()}
-          attr:data-state=move || match state.get() {
-            CheckedState::Checked(checked) => {
-              if checked {
-                "checked"
-              } else {
-                "unchecked"
-              }
-            }
-            CheckedState::Indeterminate => "indeterminate",
-          }
-          attr:disabled=disabled.clone()
-          element=html::span
-          node_ref=node_ref
+        element=html::span
+        node_ref=node_ref
+        attrs=merged_attrs.clone()
+        as_child=as_child.clone()
       >
-          {children.with_value(|children| children())}
+        {children.with_value(|children| children())}
       </Primitive>
     </Show>
   }
@@ -224,6 +265,7 @@ fn BubbleInput(
   checked: Signal<CheckedState>,
   control: NodeRef<AnyElement>,
   bubbles: Signal<bool>,
+
   node_ref: NodeRef<Input>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {
