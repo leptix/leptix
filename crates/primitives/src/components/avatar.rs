@@ -3,7 +3,7 @@ use leptos::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 use wasm_bindgen::{closure::Closure, JsCast};
 
-use crate::Attributes;
+use crate::{components::primitive::Primitive, Attributes};
 
 #[derive(Clone)]
 pub struct AvatarContextValue {
@@ -13,9 +13,11 @@ pub struct AvatarContextValue {
 
 #[component]
 pub fn AvatarRoot(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<Span>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (image_loading_status, set_image_loading_status) = create_signal(ImageLoadingStatus::Idle);
 
@@ -27,17 +29,26 @@ pub fn AvatarRoot(
   });
 
   view! {
-    <span {..attrs} node_ref=node_ref>
+    <Primitive
+      element=html::span
+      node_ref=node_ref
+      attrs=attrs
+      as_child=as_child
+    >
       {children()}
-    </span>
+    </Primitive>
   }
 }
 
 #[component]
 pub fn AvatarImage(
   #[prop(default=(|_|{}).into(), into)] on_loading_status_change: Callback<ImageLoadingStatus>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<Img>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<Children>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<AvatarContextValue>()
     .expect("AvatarImage needs to be in an AvatarRoot component");
@@ -62,9 +73,18 @@ pub fn AvatarImage(
     }
   });
 
+  let children = StoredValue::new(children);
+
   view! {
     <Show when=move || image_loading_status.get() == ImageLoadingStatus::Loaded>
-      <img {..attrs.clone()} node_ref=node_ref />
+      <Primitive
+        element=html::img
+        node_ref=node_ref
+        attrs=attrs.clone()
+        as_child=as_child.clone()
+      >
+        {children.with_value(|children| children.map(|children| children()))}
+      </Primitive>
     </Show>
   }
 }
@@ -72,9 +92,12 @@ pub fn AvatarImage(
 #[component]
 pub fn AvatarFallback(
   #[prop(optional, into)] delay_ms: MaybeSignal<f64>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<Span>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<AvatarContextValue>()
     .expect("AvatarFallback needs to be in an AvatarRoot component");
@@ -93,7 +116,13 @@ pub fn AvatarFallback(
 
   view! {
     <Show when=move || can_render.get() && context.image_loading_status.get() != ImageLoadingStatus::Loaded>
-      <span {..attrs.clone()} node_ref=node_ref>{children()}</span>
+      <Primitive
+        element=html::span
+        node_ref=node_ref
+        as_child=as_child.clone()
+      >
+        {children()}
+      </Primitive>
     </Show>
   }
 }
