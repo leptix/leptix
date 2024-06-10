@@ -39,10 +39,14 @@ pub fn RadioGroupRoot(
   #[prop(optional, into)] default_value: MaybeProp<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
+
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -87,6 +91,7 @@ pub fn RadioGroupRoot(
         element=html::div
         attrs=merged_attrs
         node_ref=node_ref
+        as_child=as_child
       >
         {children()}
       </Primitive>
@@ -96,13 +101,17 @@ pub fn RadioGroupRoot(
 
 #[component]
 pub fn RadioGroupItem(
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
+
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let RadioGroupContextValue {
     disabled,
@@ -142,8 +151,6 @@ pub fn RadioGroupItem(
         required=required
         checked=is_checked
         name=name
-        node_ref=node_ref
-        attrs=attrs
         on_check=Callback::new(move |_| on_value_change.call(on_check_value.get()))
         on:keydown=move |ev: KeyboardEvent| {
           on_key_down.call(ev.clone());
@@ -167,6 +174,9 @@ pub fn RadioGroupItem(
             node_el.click();
           }
         }
+        node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </Radio>
@@ -178,14 +188,17 @@ pub fn RadioGroupItem(
 pub fn RadioGroupIndicator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  // children: ChildrenFn,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   view! {
     <RadioIndicator
       attrs=attrs
       node_ref=node_ref
+      as_child=as_child
     >
-      {().into_view()}
+      {children.map(|children| children())}
     </RadioIndicator>
   }
 }
