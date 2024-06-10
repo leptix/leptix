@@ -89,8 +89,8 @@ pub fn RadioGroupRoot(
     >
       <Primitive
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs
         as_child=as_child
       >
         {children()}
