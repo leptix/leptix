@@ -6,8 +6,12 @@ use crate::{components::primitive::Primitive, util::Orientation, Attributes};
 pub fn SeparatorRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] decorative: MaybeSignal<bool>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<Children>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let mut merged_attrs = if decorative.get_untracked() {
     vec![("role", "none".into_attribute())]
@@ -33,7 +37,7 @@ pub fn SeparatorRoot(
       attrs=merged_attrs
       node_ref=node_ref
     >
-      {().into_view()}
+      {children.map(|children| children())}
     </Primitive>
   }
 }
