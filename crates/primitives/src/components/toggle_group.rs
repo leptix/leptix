@@ -51,9 +51,11 @@ pub fn ToggleGroupRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   match kind {
     ToggleGroupKind::Single {
@@ -70,8 +72,9 @@ pub fn ToggleGroupRoot(
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or((|_|{}).into())
-        attrs=attrs
         node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </ToggleGroupSingleImpl>
@@ -90,8 +93,9 @@ pub fn ToggleGroupRoot(
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or((|_|{}).into())
-        attrs=attrs
         node_ref=node_ref
+        attrs=attrs
+        as_child=as_child
       >
         {children()}
       </ToggleGroupMultipleImpl>
@@ -120,15 +124,16 @@ fn ToggleGroupSingleImpl(
   should_loop: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
-
   #[prop(optional, into)] value: MaybeProp<String>,
   #[prop(optional, into)] default_value: MaybeProp<String>,
 
   on_value_change: Callback<String>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -156,6 +161,7 @@ fn ToggleGroupSingleImpl(
       direction=direction
       node_ref=node_ref
       attrs=attrs
+      as_child=as_child
     >
       {children()}
     </ToggleGroup>
@@ -169,15 +175,16 @@ fn ToggleGroupMultipleImpl(
   should_loop: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
-
   #[prop(optional, into)] value: MaybeProp<Vec<String>>,
   #[prop(optional, into)] default_value: MaybeProp<Vec<String>>,
 
   on_value_change: Callback<Vec<String>>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -222,6 +229,7 @@ fn ToggleGroupMultipleImpl(
       direction=direction
       node_ref=node_ref
       attrs=attrs
+      as_child=as_child
     >
       {children()}
     </ToggleGroup>
@@ -242,9 +250,11 @@ fn ToggleGroup(
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   provide_context(ToggleGroupStateContextValue {
     roving_focus: Signal::derive(move || roving_focus.get()),
@@ -254,6 +264,7 @@ fn ToggleGroup(
   view! {
     {move || {
       let children = children.clone();
+      let as_child = as_child.clone();
       let mut merged_attrs = attrs.clone();
 
       merged_attrs.extend([
@@ -273,8 +284,9 @@ fn ToggleGroup(
           >
             <Primitive
               element=html::div
-              attrs=merged_attrs
               node_ref=node_ref
+              attrs=merged_attrs
+              as_child=as_child
             >
               {children()}
             </Primitive>
@@ -284,8 +296,9 @@ fn ToggleGroup(
         view! {
           <Primitive
             element=html::div
-            attrs=merged_attrs
             node_ref=node_ref
+            attrs=merged_attrs
+            as_child=as_child
           >
             {children()}
           </Primitive>
@@ -300,9 +313,11 @@ pub fn ToggleGroupItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let ToggleGroupValueContextValue {
     kind,
@@ -324,6 +339,7 @@ pub fn ToggleGroupItem(
   view! {
     {move || {
       let children = children.clone();
+      let as_child = as_child.clone();
       let mut merged_attrs = attrs.clone();
 
       if kind == ToggleGroupValueKind::Single {
@@ -342,8 +358,6 @@ pub fn ToggleGroupItem(
             <ToggleRoot
               disabled=is_disabled
               pressed=is_pressed
-              attrs=merged_attrs
-              node_ref=node_ref
               on_pressed_changed=Callback::new(move |pressed| {
                 if pressed {
                   on_item_activate.call(on_pressed_value.get());
@@ -351,6 +365,9 @@ pub fn ToggleGroupItem(
                   on_item_deactivate.call(on_pressed_value.get());
                 }
               })
+              node_ref=node_ref
+              attrs=merged_attrs
+              as_child=as_child
             >
               {children()}
             </ToggleRoot>
@@ -361,8 +378,6 @@ pub fn ToggleGroupItem(
           <ToggleRoot
             disabled=is_disabled
             pressed=is_pressed
-            attrs=merged_attrs
-            node_ref=node_ref
             on_pressed_changed=Callback::new(move |pressed| {
               if pressed {
                 on_item_activate.call(on_pressed_value.get());
@@ -370,6 +385,9 @@ pub fn ToggleGroupItem(
                 on_item_deactivate.call(on_pressed_value.get());
               }
             })
+            node_ref=node_ref
+            attrs=merged_attrs
+            as_child=as_child
           >
             {children()}
           </ToggleRoot>
