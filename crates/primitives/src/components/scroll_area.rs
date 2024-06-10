@@ -1165,11 +1165,10 @@ fn ScrollAreaScrollbarImpl(
 #[component]
 pub fn ScrollAreaThumb(
   #[prop(optional)] force_mount: MaybeSignal<bool>,
-  #[prop(optional)] as_child: Option<bool>,
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<ChildrenFn>
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -1199,7 +1198,7 @@ pub fn ScrollAreaThumb(
 fn ScrollAreaThumbImpl(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<ChildrenFn>
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {

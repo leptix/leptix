@@ -46,7 +46,7 @@ pub fn CheckboxRoot(
   #[prop(attrs)] attrs: Attributes,
   children: Children,
 
-  #[prop(optional)] as_child: Option<bool>,
+  #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
