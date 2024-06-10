@@ -300,8 +300,6 @@ fn Accordion(
   view! {
     <Primitive
       element=html::div
-      node_ref=node_ref
-      attrs=merged_attrs
       on:keydown=move |ev: KeyboardEvent| {
         on_key_down.call(ev.clone());
 
@@ -401,6 +399,8 @@ fn Accordion(
           Some(())
         })();
       }
+      node_ref=node_ref
+      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
@@ -465,10 +465,8 @@ pub fn AccordionItem(
   let open_value = value.clone();
   view! {
     <CollapsibleRoot
-      attrs=merged_attrs
       open=is_open
       disabled=is_disabled
-      node_ref=node_ref
       on_open_change=Callback::new(move |open| {
         if open {
           value_context.on_item_open.call(open_value.get());
@@ -476,6 +474,8 @@ pub fn AccordionItem(
           value_context.on_item_close.call(open_value.get());
         }
       })
+      node_ref=node_ref
+      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
