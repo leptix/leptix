@@ -36,14 +36,17 @@ pub enum ActivationMode {
 pub fn TabsRoot(
   #[prop(optional, into)] value: MaybeProp<String>,
   #[prop(optional, into)] default_value: MaybeProp<String>,
-  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(optional, into)] activation_mode: MaybeSignal<ActivationMode>,
 
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -65,8 +68,9 @@ pub fn TabsRoot(
   view! {
     <Primitive
       element=html::div
-      attrs=attrs
       node_ref=node_ref
+      attrs=attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -77,9 +81,11 @@ pub fn TabsRoot(
 pub fn TabsList(
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     orientation,
@@ -105,8 +111,9 @@ pub fn TabsList(
     >
       <Primitive
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs
+        as_child=as_child
       >
         {children()}
       </Primitive>
@@ -118,13 +125,16 @@ pub fn TabsList(
 pub fn TabsTrigger(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     base_id,
@@ -190,8 +200,6 @@ pub fn TabsTrigger(
     >
       <Primitive
         element=html::button
-        attrs=merged_attrs
-        node_ref=node_ref
         on:mousedown=move|ev: MouseEvent| {
             on_mouse_down.call(ev.clone());
 
@@ -217,6 +225,9 @@ pub fn TabsTrigger(
             on_value_change.call(focus_value.get());
           }
         }
+        node_ref=node_ref
+        attrs=merged_attrs
+        as_child=as_child
       >
         {children()}
       </Primitive>
@@ -229,9 +240,11 @@ pub fn TabsContent(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     base_id,
@@ -313,14 +326,15 @@ pub fn TabsContent(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=move || presence.get()>
-        <Primitive
-            element=html::div
-            attrs=merged_attrs.clone()
-            node_ref=node_ref
-        >
-            {children.with_value(|children| children())}
-        </Primitive>
-      </Show>
+    <Show when=move || presence.get()>
+      <Primitive
+        element=html::div
+        node_ref=node_ref
+        attrs=merged_attrs.clone()
+        as_child=as_child
+      >
+        {children.with_value(|children| children())}
+      </Primitive>
+    </Show>
   }
 }
