@@ -52,12 +52,15 @@ pub fn SliderRoot(
   #[prop(optional, into)] value: MaybeProp<Vec<f64>>,
   #[prop(optional, into)] default_value: MaybeProp<Vec<f64>>,
   #[prop(optional, into)] inverted: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<Vec<f64>>,
   #[prop(default=(|_|{}).into(), into)] on_value_commit: Callback<Vec<f64>>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
   let value_index_to_change = StoredValue::new(Some(0usize));
@@ -179,8 +182,6 @@ pub fn SliderRoot(
 
   view! {
     <Slider
-      node_ref=node_ref
-      attrs=merged_attrs
       min=Signal::derive(move || min.get())
       max=Signal::derive(move || max.get())
       inverted=Signal::derive(move || inverted.get())
@@ -217,6 +218,9 @@ pub fn SliderRoot(
 
         update_values(value + step_in_direction, at_index, true);
       })
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Slider>
@@ -278,6 +282,7 @@ fn Slider(
   inverted: Signal<bool>,
   orientation: Signal<Orientation>,
   direction: Signal<Direction>,
+
   on_slide_start: Callback<f64>,
   on_slide_move: Callback<f64>,
   on_slide_end: Callback<()>,
@@ -288,6 +293,8 @@ fn Slider(
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let dom_rect = StoredValue::<Option<DomRect>>::new(None);
 
@@ -297,6 +304,7 @@ fn Slider(
 
   move || {
     let attrs = attrs.clone();
+    let as_child = as_child.clone();
 
     match orientation.get() {
       Orientation::Horizontal => view! {
@@ -319,8 +327,9 @@ fn Slider(
                   on_home_key_down=on_home_key_down
                   on_end_key_down=on_end_key_down
                   on_step_key_down=on_step_key_down
-                  attrs=attrs
                   node_ref=node_ref
+                  attrs=attrs
+                  as_child=as_child
               >
                   {children.with_value(|children| children())}
               </SliderImpl>
@@ -346,8 +355,9 @@ fn Slider(
                   on_home_key_down=on_home_key_down
                   on_end_key_down=on_end_key_down
                   on_step_key_down=on_step_key_down
-                  attrs=attrs
                   node_ref=node_ref
+                  attrs=attrs
+                  as_child=as_child
               >
                   {children.with_value(|children| children())}
               </SliderImpl>
@@ -521,6 +531,7 @@ fn SliderImpl(
   inverted: Signal<bool>,
   orientation: Signal<Orientation>,
   direction: Signal<Direction>,
+
   on_slide_start: Callback<f64>,
   on_slide_move: Callback<f64>,
   on_slide_end: Callback<()>,
@@ -528,9 +539,11 @@ fn SliderImpl(
   on_end_key_down: Callback<KeyboardEvent>,
   on_step_key_down: Callback<Step>,
 
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let SliderImplContextValue { dom_rect } =
     use_context().expect("SliderImpl must be used in a Slider component");
@@ -573,8 +586,6 @@ fn SliderImpl(
   view! {
     <Primitive
       element=html::span
-      node_ref=node_ref
-      attrs=merged_attrs
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
             on_home_key_down.call(ev.clone());
@@ -654,6 +665,9 @@ fn SliderImpl(
           on_slide_end.call(());
         }
       }
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -662,9 +676,11 @@ fn SliderImpl(
 
 #[component]
 pub fn SliderTrack(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let SliderContextValue {
     disabled,
@@ -687,8 +703,9 @@ pub fn SliderTrack(
   view! {
     <Primitive
       element=html::span
-      attrs=merged_attrs
       node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -697,9 +714,11 @@ pub fn SliderTrack(
 
 #[component]
 pub fn SliderRange(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<SliderContextValue>()
     .expect("SliderRange must be used in a SliderRoot component");
@@ -763,8 +782,9 @@ pub fn SliderRange(
   view! {
     <Primitive
       element=html::span
-      attrs=merged_attrs
       node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -774,9 +794,12 @@ pub fn SliderRange(
 #[component]
 pub fn SliderThumb(
   #[prop(optional, into)] name: MaybeProp<String>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: Children,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   use_collection_item_ref::<html::AnyElement, SliderCollectionItem>(node_ref, SliderCollectionItem);
   let get_items = use_collection_context::<SliderCollectionItem, AnyElement>();
@@ -944,8 +967,9 @@ pub fn SliderThumb(
     <span style:transform="var(--primitive-slider-thumb-transform)" style:position="absolute" node_ref=span_ref>
       <Primitive
         element=html::span
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs
+        as_child=as_child
       >
         {children()}
       </Primitive>
