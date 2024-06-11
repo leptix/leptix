@@ -36,14 +36,17 @@ pub enum ActivationMode {
 pub fn TabsRoot(
   #[prop(optional, into)] value: MaybeProp<String>,
   #[prop(optional, into)] default_value: MaybeProp<String>,
-  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(optional, into)] activation_mode: MaybeSignal<ActivationMode>,
 
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -65,8 +68,9 @@ pub fn TabsRoot(
   view! {
     <Primitive
       element=html::div
-      attrs=attrs
       node_ref=node_ref
+      attrs=attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -77,15 +81,19 @@ pub fn TabsRoot(
 pub fn TabsList(
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     orientation,
     direction,
     ..
   } = use_context().expect("TabsList must be used in a TabsRoot component");
+
+  let children = StoredValue::new(children);
 
   view! {
     <RovingFocusGroup
@@ -100,8 +108,9 @@ pub fn TabsList(
         attr:aria-orientation=move || orientation.get().to_string()
         element=html::div
         node_ref=node_ref
+        as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroup>
   }
@@ -111,13 +120,16 @@ pub fn TabsList(
 pub fn TabsTrigger(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     base_id,
@@ -138,8 +150,9 @@ pub fn TabsTrigger(
   let is_selected_value = value.clone();
   let is_selected = Signal::derive(move || context_value.get() == Some(is_selected_value.get()));
 
-  let keydown_value = value.clone();
-  let focus_value = value.clone();
+  let children = StoredValue::new(children);
+  let value = StoredValue::new(value);
+
   view! {
     <RovingFocusGroupItem
       as_child=true
@@ -163,34 +176,35 @@ pub fn TabsTrigger(
         attr:disabled=disabled
         attr:id=trigger_id
         element=html::button
-        node_ref=node_ref
         on:mousedown=move|ev: MouseEvent| {
-            on_mouse_down.call(ev.clone());
+          on_mouse_down.call(ev.clone());
 
           if !disabled.get() && ev.button() == 0 && !ev.ctrl_key() {
-            on_value_change.call(value.get());
+            on_value_change.call(value.get_value().get());
           } else {
             ev.prevent_default();
           }
         }
         on:keydown=move |ev: KeyboardEvent| {
-            on_key_down.call(ev.clone());
+          on_key_down.call(ev.clone());
 
           if [" ", "Enter"].contains(&ev.key().as_str()) {
-            on_value_change.call(keydown_value.get());
+            on_value_change.call(value.get_value().get());
           }
         }
         on:focus=move |ev: FocusEvent| {
-            on_focus.call(ev.clone());
+          on_focus.call(ev.clone());
 
           let is_automatic_activation = activation_mode.get() != ActivationMode::Manual;
 
           if !is_selected.get() && !disabled.get() && is_automatic_activation {
-            on_value_change.call(focus_value.get());
+            on_value_change.call(value.get_value().get());
           }
         }
+        node_ref=node_ref
+        as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroupItem>
   }
@@ -201,9 +215,11 @@ pub fn TabsContent(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let TabsContextValue {
     base_id,
@@ -257,27 +273,28 @@ pub fn TabsContent(
   let children = StoredValue::new(children);
 
   view! {
-      <Show when=move || presence.get()>
-        <Primitive
-            {..attrs.clone()}
-            attr:role="tabpanel"
-            attr:data-state=move || {
-              if is_selected.get() {
-                "active"
-              } else {
-                "inactive"
-              }
-            }
-            attr:data-orientation=move || orientation.get().to_string()
-            attr:aria-labelledby=trigger_id.clone()
-            attr:hidden=move || !is_present.get()
-            attr:id=content_id.clone()
-            attr:tabindex=0
-            element=html::div
-            node_ref=node_ref
-        >
-            {children.with_value(|children| children())}
-        </Primitive>
-      </Show>
+    <Show when=move || presence.get()>
+      <Primitive
+        {..attrs.clone()}
+        attr:role="tabpanel"
+        attr:data-state=move || {
+          if is_selected.get() {
+            "active"
+          } else {
+            "inactive"
+          }
+        }
+        attr:data-orientation=move || orientation.get().to_string()
+        attr:aria-labelledby=trigger_id.clone()
+        attr:hidden=move || !is_present.get()
+        attr:id=content_id.clone()
+        attr:tabindex=0
+        element=html::div
+        node_ref=node_ref
+        as_child=as_child
+      >
+        {children.with_value(|children| children())}
+      </Primitive>
+    </Show>
   }
 }

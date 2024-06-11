@@ -73,9 +73,11 @@ pub fn ScrollAreaRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=600.into(), into)] scroll_hide_delay: MaybeSignal<u64>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let viewport = NodeRef::<AnyElement>::new();
   let content = NodeRef::<Div>::new();
@@ -136,6 +138,7 @@ pub fn ScrollAreaRoot(
       attr:dir=move || direction.get().to_string()
       element=html::div
       node_ref=node_ref
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -146,9 +149,11 @@ pub fn ScrollAreaRoot(
 pub fn ScrollAreaViewport(
   #[prop(optional, into)] nonce: MaybeProp<String>,
 
-  #[prop(attrs)] attrs: Attributes,
   //#[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaViewport must be used in a ScrollAreaRoot component");
@@ -214,6 +219,7 @@ pub fn ScrollAreaViewport(
         attr:data-leptix-scroll-area-viewport=""
         element=html::div
         node_ref=context.viewport
+        as_child=as_child
       >
         <div
           node_ref=content_ref
@@ -231,9 +237,11 @@ pub fn ScrollAreaScrollbar(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbar must be used in a ScrollAreaRoot component");
@@ -264,10 +272,11 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Hover => {
       view! {
         <ScrollAreaScrollbarHover
-            force_mount=force_mount
+          force_mount=force_mount
           orientation=orientation
-          attrs=attrs
           node_ref=node_ref
+          attrs=attrs
+          as_child=as_child
         >
           {children()}
         </ScrollAreaScrollbarHover>
@@ -276,10 +285,11 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Scroll => {
       view! {
         <ScrollAreaScrollbarScroll
-            force_mount=force_mount
+          force_mount=force_mount
           orientation=orientation
-          attrs=attrs
           node_ref=node_ref
+          attrs=attrs
+          as_child=as_child
         >
           {children()}
         </ScrollAreaScrollbarScroll>
@@ -288,10 +298,11 @@ pub fn ScrollAreaScrollbar(
     ScrollAreaKind::Auto => {
       view! {
         <ScrollAreaScrollbarAuto
-            force_mount=force_mount
+          force_mount=force_mount
           orientation=orientation
-          attrs=attrs
           node_ref=node_ref
+          attrs=attrs
+          as_child=as_child
         >
           {children()}
         </ScrollAreaScrollbarAuto>
@@ -301,8 +312,9 @@ pub fn ScrollAreaScrollbar(
       view! {
         <ScrollAreaScrollbarVisible
           orientation=orientation
-          attrs=attrs
           node_ref=node_ref
+          attrs=attrs
+          as_child=as_child
         >
           {children()}
         </ScrollAreaScrollbarVisible>
@@ -316,9 +328,11 @@ fn ScrollAreaScrollbarHover(
   force_mount: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarHover must be used in a ScrollAreaRoot component");
@@ -375,6 +389,7 @@ fn ScrollAreaScrollbarHover(
             force_mount=force_mount
             orientation=orientation
             node_ref=node_ref
+            as_child=as_child
         >
             {children.with_value(|children| children())}
         </ScrollAreaScrollbarAuto>
@@ -387,9 +402,11 @@ fn ScrollAreaScrollbarScroll(
   force_mount: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarAuto must be used in a ScrollAreaRoot component");
@@ -464,18 +481,19 @@ fn ScrollAreaScrollbarScroll(
   view! {
     <Show when=move || presence.get()>
         <ScrollAreaScrollbarVisible
-            {..attrs.clone()}
-            attr:data-state=move || {
-              if state.get() == ScrollAreaScrollbarScrollState::Hidden {
-                "hidden"
-              } else {
-                "visible"
-              }
+          {..attrs.clone()}
+          attr:data-state=move || {
+            if state.get() == ScrollAreaScrollbarScrollState::Hidden {
+              "hidden"
+            } else {
+              "visible"
             }
-            orientation=orientation
-            node_ref=node_ref
-            on_pointer_enter=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerEnter))
-            on_pointer_leave=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerLeave))
+          }
+          orientation=orientation
+          on_pointer_enter=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerEnter))
+          on_pointer_leave=Callback::new(move |_| send.call(ScrollAreaScrollbarScrollEvent::PointerLeave))
+          node_ref=node_ref
+          as_child=as_child
         >
             {children.with_value(|children| children())}
         </ScrollAreaScrollbarVisible>
@@ -488,9 +506,11 @@ fn ScrollAreaScrollbarAuto(
   force_mount: MaybeSignal<bool>,
   orientation: MaybeSignal<Orientation>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarAuto must be used in a ScrollAreaRoot component");
@@ -537,6 +557,7 @@ fn ScrollAreaScrollbarAuto(
             attr:data-state=move || if visible.get() { "visible" } else { "hidden" }
             orientation=orientation
             node_ref=node_ref
+            as_child=as_child
         >
             {children.with_value(|children| children())}
         </ScrollAreaScrollbarVisible>
@@ -547,12 +568,15 @@ fn ScrollAreaScrollbarAuto(
 #[component]
 fn ScrollAreaScrollbarVisible(
   orientation: MaybeSignal<Orientation>,
+
   #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
   #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarVisible must be used in a ScrollAreaRoot component");
@@ -580,8 +604,6 @@ fn ScrollAreaScrollbarVisible(
       match orientation.get() {
         Orientation::Horizontal => view! {
           <ScrollAreaScrollbarX
-            attrs=merged_attrs
-            node_ref=node_ref
             on_sizes_change=Callback::new(move |sizes| {
               set_sizes.set(sizes);
             })
@@ -618,14 +640,15 @@ fn ScrollAreaScrollbarVisible(
                 viewport.set_scroll_top(get_scroll_position(pointer_position, context.direction.get()) as i32);
               }
             })
+            node_ref=node_ref
+            attrs=merged_attrs
+            as_child=as_child
           >
             {children()}
           </ScrollAreaScrollbarX>
         },
         Orientation::Vertical => view! {
           <ScrollAreaScrollbarY
-            attrs=merged_attrs
-            node_ref=node_ref
             on_sizes_change=Callback::new(move |sizes| {
               set_sizes.set(sizes);
             })
@@ -662,6 +685,9 @@ fn ScrollAreaScrollbarVisible(
                 viewport.set_scroll_top(get_scroll_position(pointer_position, context.direction.get()) as i32);
               }
             })
+            node_ref=node_ref
+            attrs=merged_attrs
+            as_child=as_child
           >
             {children()}
           </ScrollAreaScrollbarY>
@@ -673,11 +699,9 @@ fn ScrollAreaScrollbarVisible(
 
 #[component]
 fn ScrollAreaScrollbarX(
-  #[prop(default=Callback::new(|_:()|{}))] on_pointer_enter: Callback<()>,
-  #[prop(default=Callback::new(|_:()|{}))] on_pointer_leave: Callback<()>,
-
   sizes: MaybeSignal<Sizes>,
   has_thumb: MaybeSignal<bool>,
+
   on_sizes_change: Callback<Sizes>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
   on_thumb_pointer_up: Callback<()>,
@@ -685,10 +709,14 @@ fn ScrollAreaScrollbarX(
   on_thumb_position_change: Callback<()>,
   on_wheel_scroll: Callback<f64>,
   on_drag_scroll: Callback<f64>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_enter: Callback<()>,
+  #[prop(default=Callback::new(|_:()|{}))] on_pointer_leave: Callback<()>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarX must be used in a ScrollAreaRoot component");
@@ -734,11 +762,9 @@ fn ScrollAreaScrollbarX(
       {..attrs}
       attr:data-orientation="horizontal"
       sizes=Signal::derive(move || sizes.get())
-
+      has_thumb=Signal::derive(move || has_thumb.get())
       on_pointer_enter=on_pointer_enter
       on_pointer_leave=on_pointer_leave
-
-      has_thumb=Signal::derive(move || has_thumb.get())
       on_thumb_pointer_up=on_thumb_pointer_up
       on_thumb_change=on_thumb_change
       on_thumb_pointer_down=Callback::new(move |Pointer{x, ..}| {
@@ -784,6 +810,7 @@ fn ScrollAreaScrollbarX(
         });
       })
       node_ref=node_ref
+      as_child=as_child
     >
       {children()}
     </ScrollAreaScrollbarImpl>
@@ -808,6 +835,8 @@ fn ScrollAreaScrollbarY(
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarY must be used in a ScrollAreaRoot component");
@@ -846,11 +875,9 @@ fn ScrollAreaScrollbarY(
       {..attrs}
       attr:data-orientation="vertical"
       sizes=Signal::derive(move || sizes.get())
-
+      has_thumb=Signal::derive(move || has_thumb.get())
       on_pointer_enter=on_pointer_enter
       on_pointer_leave=on_pointer_leave
-
-      has_thumb=Signal::derive(move || has_thumb.get())
       on_thumb_pointer_up=on_thumb_pointer_up
       on_thumb_change=on_thumb_change
       on_thumb_pointer_down=Callback::new(move |Pointer{x, ..}| {
@@ -896,6 +923,7 @@ fn ScrollAreaScrollbarY(
         });
       })
       node_ref=node_ref
+      as_child=as_child
     >
       {children()}
     </ScrollAreaScrollbarImpl>
@@ -924,11 +952,10 @@ struct Pointer {
 #[component]
 fn ScrollAreaScrollbarImpl(
   sizes: Signal<Sizes>,
+  has_thumb: Signal<bool>,
 
   #[prop(default=(|_|{}).into(), into)] on_pointer_enter: Callback<()>,
   #[prop(default=(|_|{}).into(), into)] on_pointer_leave: Callback<()>,
-
-  has_thumb: Signal<bool>,
   on_thumb_change: Callback<HtmlElement<AnyElement>>,
   on_thumb_pointer_up: Callback<()>,
   on_thumb_pointer_down: Callback<Pointer>,
@@ -937,9 +964,11 @@ fn ScrollAreaScrollbarImpl(
   on_wheel_scroll: Callback<(WheelEvent, f64)>,
   on_resize: Callback<()>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarImpl must be used in a ScrollArea component");
@@ -1096,9 +1125,10 @@ fn ScrollAreaScrollbarImpl(
 
   view! {
     <Primitive
-      attrs=attrs
       element=html::div
       node_ref=node_ref
+      attrs=attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -1108,9 +1138,12 @@ fn ScrollAreaScrollbarImpl(
 #[component]
 pub fn ScrollAreaThumb(
   #[prop(optional)] force_mount: MaybeSignal<bool>,
-  #[prop(optional)] as_child: Option<bool>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let ScrollbarContextValue { has_thumb, .. } = use_context::<ScrollbarContextValue>()
     .expect("ScrollAreaThumb must be used in a ScrollAreaScrollbarImpl component");
@@ -1119,22 +1152,28 @@ pub fn ScrollAreaThumb(
 
   let presence = create_presence(is_present, node_ref);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Show when=move || presence.get()>
-        <ScrollAreaThumbImpl
-            as_child=as_child
-            attrs=attrs.clone()
-            node_ref=node_ref
-        />
+      <ScrollAreaThumbImpl
+        node_ref=node_ref
+        attrs=attrs.clone()
+        as_child=as_child
+      >
+        {children.with_value(|children| children.as_ref().map(|children| children()))}
+      </ScrollAreaThumbImpl>
     </Show>
   }
 }
 
 #[component]
 fn ScrollAreaThumbImpl(
-  as_child: Option<bool>,
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaThumb must be used in a ScrollArea component");
@@ -1212,6 +1251,8 @@ fn ScrollAreaThumbImpl(
     scrollbar_context.on_thumb_change.call(node);
   });
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
@@ -1219,15 +1260,18 @@ fn ScrollAreaThumbImpl(
       node_ref=node_ref
       attrs=attrs
     >
-      {().into_view()}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }
 
 #[component]
 pub fn ScrollAreaCorner(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaCorner must be used in a ScrollArea component");
@@ -1282,6 +1326,7 @@ pub fn ScrollAreaCorner(
   });
 
   let attrs = StoredValue::new(attrs);
+  let children = StoredValue::new(children);
 
   view! {
     <Show when=move || has_corner() || has_size()>
@@ -1289,8 +1334,9 @@ pub fn ScrollAreaCorner(
         attrs=attrs.get_value()
         element=html::div
         node_ref=node_ref
+        as_child=as_child
       >
-        {().into_view()}
+        {children.with_value(|children| children.as_ref().map(|children| children()))}
       </Primitive>
     </Show>
   }

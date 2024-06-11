@@ -6,9 +6,15 @@ use crate::{components::primitive::Primitive, util::Orientation, Attributes};
 pub fn SeparatorRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] decorative: MaybeSignal<bool>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       {..attrs}
@@ -17,8 +23,9 @@ pub fn SeparatorRoot(
       attr:data-orientation=move || orientation.get().to_string()
       element=html::div
       node_ref=node_ref
+      as_child=as_child
     >
-      {().into_view()}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }

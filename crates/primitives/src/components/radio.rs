@@ -31,9 +31,12 @@ pub fn Radio(
 
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] name: MaybeProp<String>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (is_form_control, set_is_form_control) = create_signal(true);
   let has_consumer_stopped_propagation = StoredValue::new(false);
@@ -66,15 +69,13 @@ pub fn Radio(
       }
       attr:data-disabled=disabled
       attr:disabled=move || disabled.get().then_some("")
-      attr:value=value
+      attr:value=value.clone()
       element=html::button
-      attrs=merged_attrs
-      node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-          on_click.call(ev.clone());
+        on_click.call(ev.clone());
 
         if !checked.get() {
-            on_check.call(())
+          on_check.call(())
         }
 
         if is_form_control.get() {
@@ -85,30 +86,35 @@ pub fn Radio(
           }
         }
       }
+      node_ref=node_ref
+      as_child=as_child
     >
       {children()}
-
-        <Show when=move || is_form_control.get()>
-            <BubbleInput
-                checked=Signal::derive(move || checked.get())
-                bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-                name=name.clone()
-                value=value.clone()
-                required=Signal::derive(move || required.get())
-                disabled=Signal::derive(move || disabled.get())
-                control=node_ref
-            />
-        </Show>
     </Primitive>
+
+    <Show when=move || is_form_control.get()>
+      <BubbleInput
+        checked=Signal::derive(move || checked.get())
+        bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
+        name=name.clone()
+        value=value.clone()
+        required=Signal::derive(move || required.get())
+        disabled=Signal::derive(move || disabled.get())
+        control=node_ref
+      />
+    </Show>
   }
 }
 
 #[component]
 pub fn RadioIndicator(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let RadioContextValue { checked, disabled } =
     use_context().expect("RadioIndicator must be used in a Radio component");
@@ -121,20 +127,20 @@ pub fn RadioIndicator(
   view! {
     <Show when=move || presence.get()>
         <Primitive
-            {..attrs.clone()}
-            attr:data-state=move || {
-              if checked.get() {
-                "checked"
-              } else {
-                "unchecked"
-              }
+          {..attrs.clone()}
+          attr:data-state=move || {
+            if checked.get() {
+              "checked"
+            } else {
+              "unchecked"
             }
-            attr:data-disabled=disabled.clone()
-            element=html::span
-            node_ref=node_ref
-            attrs=merged_attrs.clone()
+          }
+          attr:data-disabled=disabled.clone()
+          element=html::span
+          node_ref=node_ref
+          as_child=as_child
         >
-            {children.with_value(|children| children())}
+          {children.with_value(|children| children())}
         </Primitive>
     </Show>
   }

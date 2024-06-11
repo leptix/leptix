@@ -72,20 +72,23 @@ impl EventDescriptor for OnEntryFocus {
 
 #[component]
 pub(crate) fn RovingFocusGroup(
-  #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] orientation: MaybeProp<Orientation>,
   #[prop(optional, into)] direction: MaybeProp<Direction>,
   #[prop(optional, into)] should_loop: MaybeSignal<bool>,
   #[prop(optional, into)] current_tab_stop_id: MaybeProp<String>,
   #[prop(optional, into)] default_current_tab_stop_id: MaybeProp<String>,
+  #[prop(optional, into)] prevent_scroll_on_entry_focus: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_current_tab_stop_id_change: Callback<Option<String>>,
   #[prop(default=(|_|{}).into(), into)] on_entry_focus: Callback<Event>,
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
   #[prop(default=(|_|{}).into(), into)] on_blur: Callback<FocusEvent>,
-  #[prop(optional, into)] prevent_scroll_on_entry_focus: MaybeSignal<bool>,
+
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let collection_ref = NodeRef::<html::AnyElement>::new();
 
@@ -148,8 +151,6 @@ pub(crate) fn RovingFocusGroup(
         }
       }
       attr:data-orientation=move || orientation.get().map(|orientation| orientation.to_string())
-      as_child=as_child
-      node_ref=collection_ref
       on:mousedown=move |ev: MouseEvent| {
           on_mouse_down.call(ev);
         is_click_focus.set_value(true);
@@ -196,6 +197,8 @@ pub(crate) fn RovingFocusGroup(
           on_blur.call(ev);
         set_is_tabbing_back_out.set(false);
       }
+      node_ref=collection_ref
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -204,16 +207,19 @@ pub(crate) fn RovingFocusGroup(
 
 #[component]
 pub(crate) fn RovingFocusGroupItem(
-  #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] tab_stop_id: MaybeProp<String>,
   #[prop(optional, into)] focusable: MaybeSignal<bool>,
   #[prop(optional, into)] active: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let RovingContextValue {
     orientation,
@@ -258,8 +264,6 @@ pub(crate) fn RovingFocusGroupItem(
       attr:tabindex=move || if is_current_tab_stop.get() { 0 } else { -1 }
       attr:data-orientation=move || orientation.get().map(|orientation| orientation.to_string())
       element=html::span
-      as_child=as_child
-      node_ref=node_ref
       on:mousedown=move |ev: MouseEvent| {
         on_mouse_down.call(ev.clone());
 
@@ -342,6 +346,8 @@ pub(crate) fn RovingFocusGroupItem(
           focus_first(candidate_nodes, false);
         }
       }
+      node_ref=node_ref
+      as_child=as_child
     >
       {children()}
     </Primitive>

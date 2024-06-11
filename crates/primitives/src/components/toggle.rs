@@ -12,12 +12,15 @@ pub fn ToggleRoot(
   #[prop(optional, into)] pressed: MaybeProp<bool>,
   #[prop(optional, into)] default_pressed: MaybeProp<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_pressed_changed: Callback<bool>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (pressed, set_pressed) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || pressed.get()),
@@ -39,14 +42,15 @@ pub fn ToggleRoot(
       }
       attr:data-disabled=disabled
       element=html::button
-      node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-          on_click.call(ev.clone());
+        on_click.call(ev.clone());
 
         if !disabled.get() {
           set_pressed.update(|pressed| *pressed = Some(!pressed.unwrap_or(false)));
         }
       }
+      node_ref=node_ref
+      as_child=as_child
     >
       {children()}
     </Primitive>
