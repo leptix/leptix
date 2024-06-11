@@ -34,7 +34,7 @@ pub fn Radio(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -162,7 +162,7 @@ pub fn RadioIndicator(
         element=html::span
         node_ref=node_ref
         attrs=merged_attrs.clone()
-        as_child=as_child.clone()
+        as_child=as_child
       >
         {children.with_value(|children| children())}
       </Primitive>

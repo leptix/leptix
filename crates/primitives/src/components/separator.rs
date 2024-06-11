@@ -9,7 +9,7 @@ pub fn SeparatorRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<Children>,
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -31,13 +31,15 @@ pub fn SeparatorRoot(
     Signal::derive(move || orientation.get().to_string()).into_attribute(),
   )]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
       attrs=merged_attrs
       node_ref=node_ref
     >
-      {children.map(|children| children())}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }

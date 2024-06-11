@@ -8,7 +8,7 @@ pub fn AspectRatioRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {

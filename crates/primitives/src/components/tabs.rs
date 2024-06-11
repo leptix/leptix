@@ -44,7 +44,7 @@ pub fn TabsRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -83,7 +83,7 @@ pub fn TabsList(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -102,6 +102,8 @@ pub fn TabsList(
     ),
   ]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <RovingFocusGroup
       as_child=true
@@ -112,10 +114,10 @@ pub fn TabsList(
       <Primitive
         element=html::div
         node_ref=node_ref
-        attrs=merged_attrs
+        attrs=merged_attrs.clone()
         as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroup>
   }
@@ -132,7 +134,7 @@ pub fn TabsTrigger(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -190,8 +192,9 @@ pub fn TabsTrigger(
     ),
   ]);
 
-  let keydown_value = value.clone();
-  let focus_value = value.clone();
+  let children = StoredValue::new(children);
+  let value = StoredValue::new(value);
+
   view! {
     <RovingFocusGroupItem
       as_child=true
@@ -201,35 +204,35 @@ pub fn TabsTrigger(
       <Primitive
         element=html::button
         on:mousedown=move|ev: MouseEvent| {
-            on_mouse_down.call(ev.clone());
+          on_mouse_down.call(ev.clone());
 
           if !disabled.get() && ev.button() == 0 && !ev.ctrl_key() {
-            on_value_change.call(value.get());
+            on_value_change.call(value.get_value().get());
           } else {
             ev.prevent_default();
           }
         }
         on:keydown=move |ev: KeyboardEvent| {
-            on_key_down.call(ev.clone());
+          on_key_down.call(ev.clone());
 
           if [" ", "Enter"].contains(&ev.key().as_str()) {
-            on_value_change.call(keydown_value.get());
+            on_value_change.call(value.get_value().get());
           }
         }
         on:focus=move |ev: FocusEvent| {
-            on_focus.call(ev.clone());
+          on_focus.call(ev.clone());
 
           let is_automatic_activation = activation_mode.get() != ActivationMode::Manual;
 
           if !is_selected.get() && !disabled.get() && is_automatic_activation {
-            on_value_change.call(focus_value.get());
+            on_value_change.call(value.get_value().get());
           }
         }
         node_ref=node_ref
-        attrs=merged_attrs
+        attrs=merged_attrs.clone()
         as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroupItem>
   }

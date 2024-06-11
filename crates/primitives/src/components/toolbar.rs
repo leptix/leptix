@@ -29,7 +29,7 @@ pub fn ToolbarRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -52,6 +52,8 @@ pub fn ToolbarRoot(
 
   merged_attrs.extend(attrs);
 
+  let children = StoredValue::new(children);
+
   view! {
     <RovingFocusGroup
       orientation=Signal::derive(move || orientation.get())
@@ -61,10 +63,10 @@ pub fn ToolbarRoot(
       <Primitive
         element=html::div
         node_ref=node_ref
-        attrs=merged_attrs
+        attrs=merged_attrs.clone()
         as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroup>
   }
@@ -74,7 +76,7 @@ pub fn ToolbarRoot(
 pub fn ToolbarSeparator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<Children>,
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -86,6 +88,8 @@ pub fn ToolbarSeparator(
     Orientation::Vertical => Orientation::Horizontal,
   });
 
+  let children = StoredValue::new(children);
+
   view! {
     <SeparatorRoot
       orientation=orientation
@@ -93,7 +97,7 @@ pub fn ToolbarSeparator(
       attrs=attrs
       as_child=as_child
     >
-      {children.map(|children| children())}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </SeparatorRoot>
   }
 }
@@ -104,12 +108,14 @@ pub fn ToolbarButton(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let mut merged_attrs = vec![("type", "button".into_attribute())];
   merged_attrs.extend(attrs);
+
+  let children = StoredValue::new(children);
 
   view! {
     <RovingFocusGroupItem
@@ -119,10 +125,10 @@ pub fn ToolbarButton(
       <Primitive
         element=html::button
         node_ref=node_ref
-        attrs=merged_attrs
+        attrs=merged_attrs.clone()
         as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroupItem>
   }
@@ -134,10 +140,12 @@ pub fn ToolbarLink(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
+  let children = StoredValue::new(children);
+
   view! {
     <RovingFocusGroupItem
       as_child=true
@@ -146,7 +154,7 @@ pub fn ToolbarLink(
       <Primitive
         element=html::a
         node_ref=node_ref
-        attrs=attrs
+        attrs=attrs.clone()
         as_child=as_child
         on:keydown=move |ev: KeyboardEvent| {
           on_key_down.call(ev.clone());
@@ -160,7 +168,7 @@ pub fn ToolbarLink(
           }
         }
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroupItem>
   }
@@ -222,16 +230,18 @@ pub fn ToolbarToggleItem(
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
+  let children = StoredValue::new(children);
+
   view! {
     <ToolbarButton as_child=true>
       <ToggleGroupItem
         disabled=Signal::derive(move || disabled.get())
-        value=value
+        value=value.clone()
         node_ref=node_ref
-        attrs=attrs
+        attrs=attrs.clone()
         as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </ToggleGroupItem>
     </ToolbarButton>
   }

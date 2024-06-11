@@ -75,7 +75,7 @@ pub fn ScrollAreaRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -156,7 +156,7 @@ pub fn ScrollAreaViewport(
 
   //#[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -401,7 +401,7 @@ fn ScrollAreaScrollbarHover(
         orientation=orientation
         node_ref=node_ref
         attrs=merged_attrs.clone()
-        as_child=as_child.clone()
+        as_child=as_child
       >
         {children.with_value(|children| children())}
       </ScrollAreaScrollbarAuto>
@@ -528,7 +528,7 @@ fn ScrollAreaScrollbarAuto(
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
 
-  #[prop(optional, into)] as_child: MaybeSignal<bool>,
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let context = use_context::<ScrollAreaContextValue>()
     .expect("ScrollAreaScrollbarAuto must be used in a ScrollAreaRoot component");
@@ -580,7 +580,7 @@ fn ScrollAreaScrollbarAuto(
         orientation=orientation
         node_ref=node_ref
         attrs=merged_attrs.clone()
-        as_child=as_child.clone()
+        as_child=as_child
       >
         {children.with_value(|children| children())}
       </ScrollAreaScrollbarVisible>
@@ -1186,9 +1186,9 @@ pub fn ScrollAreaThumb(
       <ScrollAreaThumbImpl
         node_ref=node_ref
         attrs=attrs.clone()
-        as_child=as_child.clone()
+        as_child=as_child
       >
-        {children.with_value(|children| children.map(|children| children()))}
+        {children.with_value(|children| children.as_ref().map(|children| children()))}
       </ScrollAreaThumbImpl>
     </Show>
   }
@@ -1278,6 +1278,8 @@ fn ScrollAreaThumbImpl(
     scrollbar_context.on_thumb_change.call(node);
   });
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
@@ -1285,7 +1287,7 @@ fn ScrollAreaThumbImpl(
       node_ref=node_ref
       attrs=attrs
     >
-      {children.map(|children| children())}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }
@@ -1359,8 +1361,9 @@ pub fn ScrollAreaCorner(
         attrs=attrs.get_value()
         element=html::div
         node_ref=node_ref
+        as_child=as_child
       >
-        {children.with_value(|children| children.map(|children| children()))}
+        {children.with_value(|children| children.as_ref().map(|children| children()))}
       </Primitive>
     </Show>
   }

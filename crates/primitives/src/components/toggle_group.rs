@@ -261,50 +261,49 @@ fn ToggleGroup(
     disabled: Signal::derive(move || disabled.get()),
   });
 
+  let mut merged_attrs = vec![
+    ("role", "group".into_attribute()),
+    (
+      "dir",
+      (move || direction.get().to_string()).into_attribute(),
+    ),
+  ];
+
+  merged_attrs.extend(attrs);
+
+  let children = StoredValue::new(children);
+  let attrs = StoredValue::new(merged_attrs);
+
   view! {
-    {move || {
-      let children = children.clone();
-      let as_child = as_child.clone();
-      let mut merged_attrs = attrs.clone();
-
-      merged_attrs.extend([
-        ("role", "group".into_attribute()),
-        ("dir", (move ||
-          direction.get().to_string())
-        .into_attribute())
-      ]);
-
-      if roving_focus.get() {
-        view! {
-          <RovingFocusGroup
-            as_child=true
-            orientation=Signal::derive(move || orientation.get())
-            direction=Signal::derive(move || direction.get())
-            should_loop=Signal::derive(move || should_loop.get())
-          >
-            <Primitive
-              element=html::div
-              node_ref=node_ref
-              attrs=merged_attrs
-              as_child=as_child
-            >
-              {children()}
-            </Primitive>
-          </RovingFocusGroup>
-        }
-      } else {
-        view! {
-          <Primitive
-            element=html::div
-            node_ref=node_ref
-            attrs=merged_attrs
-            as_child=as_child
-          >
-            {children()}
-          </Primitive>
-        }
+    <Show
+      when=move || roving_focus.get()
+      fallback=move || view! {
+        <Primitive
+          element=html::div
+          node_ref=node_ref
+          attrs=attrs.get_value()
+          as_child=as_child
+        >
+          {children.with_value(|children| children())}
+        </Primitive>
       }
-    }}
+    >
+      <RovingFocusGroup
+        as_child=true
+        orientation=Signal::derive(move || orientation.get())
+        direction=Signal::derive(move || direction.get())
+        should_loop=Signal::derive(move || should_loop.get())
+      >
+        <Primitive
+          element=html::div
+          node_ref=node_ref
+          attrs=attrs.get_value()
+          as_child=as_child
+        >
+          {children.with_value(|children| children())}
+        </Primitive>
+      </RovingFocusGroup>
+    </Show>
   }
 }
 
@@ -335,64 +334,66 @@ pub fn ToggleGroupItem(
   let is_disabled = Signal::derive(move || context_disabled.get() || disabled.get());
   let focusable = Signal::derive(move || !is_disabled.get());
 
-  let inner_value = value.clone();
+  let mut merged_attrs = attrs.clone();
+
+  if kind == ToggleGroupValueKind::Single {
+    merged_attrs.extend([
+      ("role", "radio".into_attribute()),
+      (
+        "aria-checked",
+        Signal::derive(move || is_pressed.get().to_string()).into_attribute(),
+      ),
+    ]);
+  }
+
+  let children = StoredValue::new(children);
+  let attrs = StoredValue::new(merged_attrs);
+  let value = StoredValue::new(value);
+
   view! {
-    {move || {
-      let children = children.clone();
-      let as_child = as_child.clone();
-      let mut merged_attrs = attrs.clone();
-
-      if kind == ToggleGroupValueKind::Single {
-        merged_attrs.extend([("role", "radio".into_attribute()), ("aria-checked", Signal::derive(move || is_pressed.get().to_string()).into_attribute())].into_iter());
+    <Show
+      when=move || roving_focus.get()
+      fallback=move || view! {
+        <ToggleRoot
+          disabled=is_disabled
+          pressed=is_pressed
+          on_pressed_changed=Callback::new(move |pressed| {
+            if pressed {
+              on_item_activate.call(value.get_value().get());
+            } else {
+              on_item_deactivate.call(value.get_value().get());
+            }
+          })
+          node_ref=node_ref
+          attrs=attrs.get_value()
+          as_child=as_child
+        >
+          {children.with_value(|children| children())}
+        </ToggleRoot>
       }
-
-      let on_pressed_value = inner_value.clone();
-
-      if roving_focus.get() {
-        view! {
-          <RovingFocusGroupItem
-            as_child=true
-            focusable=focusable
-            active=is_pressed
-          >
-            <ToggleRoot
-              disabled=is_disabled
-              pressed=is_pressed
-              on_pressed_changed=Callback::new(move |pressed| {
-                if pressed {
-                  on_item_activate.call(on_pressed_value.get());
-                } else {
-                  on_item_deactivate.call(on_pressed_value.get());
-                }
-              })
-              node_ref=node_ref
-              attrs=merged_attrs
-              as_child=as_child
-            >
-              {children()}
-            </ToggleRoot>
-          </RovingFocusGroupItem>
-        }
-      } else {
-        view! {
-          <ToggleRoot
-            disabled=is_disabled
-            pressed=is_pressed
-            on_pressed_changed=Callback::new(move |pressed| {
-              if pressed {
-                on_item_activate.call(on_pressed_value.get());
-              } else {
-                on_item_deactivate.call(on_pressed_value.get());
-              }
-            })
-            node_ref=node_ref
-            attrs=merged_attrs
-            as_child=as_child
-          >
-            {children()}
-          </ToggleRoot>
-        }
-      }
-    }}
+    >
+      <RovingFocusGroupItem
+        as_child=true
+        focusable=focusable
+        active=is_pressed
+      >
+        <ToggleRoot
+          disabled=is_disabled
+          pressed=is_pressed
+          on_pressed_changed=Callback::new(move |pressed| {
+            if pressed {
+              on_item_activate.call(value.get_value().get());
+            } else {
+              on_item_deactivate.call(value.get_value().get());
+            }
+          })
+          node_ref=node_ref
+          attrs=attrs.get_value()
+          as_child=as_child
+        >
+          {children.with_value(|children| children())}
+        </ToggleRoot>
+      </RovingFocusGroupItem>
+    </Show>
   }
 }

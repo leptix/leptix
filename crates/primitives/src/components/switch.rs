@@ -38,7 +38,7 @@ pub fn SwitchRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -131,7 +131,7 @@ pub fn SwitchRoot(
 pub fn SwitchThumb(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<Children>,
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -157,6 +157,8 @@ pub fn SwitchThumb(
     ),
   ]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::span
@@ -164,7 +166,7 @@ pub fn SwitchThumb(
       attrs=merged_attrs
       as_child=as_child
     >
-      {children.map(|children| children())}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }

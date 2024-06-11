@@ -86,7 +86,7 @@ pub(crate) fn RovingFocusGroup(
   #[prop(default=(|_|{}).into(), into)] on_blur: Callback<FocusEvent>,
 
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -228,7 +228,7 @@ pub(crate) fn RovingFocusGroupItem(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {

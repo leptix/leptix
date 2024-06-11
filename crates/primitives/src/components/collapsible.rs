@@ -32,7 +32,7 @@ pub fn CollapsibleRoot(
 
   #[prop(optional, into)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -88,7 +88,7 @@ pub fn CollapsibleTrigger(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -153,7 +153,7 @@ pub fn CollapsibleContent(
         is_present=presence
         node_ref=node_ref
         attrs=attrs.clone()
-        as_child=as_child.clone()
+        as_child=as_child
       >
         {children.with_value(|children| children())}
       </CollapsibleContentImpl>
@@ -298,6 +298,8 @@ fn CollapsibleContentImpl(
 
   merged_attrs.extend(attrs);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
@@ -306,7 +308,7 @@ fn CollapsibleContentImpl(
       as_child=as_child
     >
       <Show when=move || is_open.get()>
-        {children()}
+        {children.with_value(|children| children())}
       </Show>
     </Primitive>
   }

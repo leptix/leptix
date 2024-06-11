@@ -304,7 +304,6 @@ fn Slider(
 
   move || {
     let attrs = attrs.clone();
-    let as_child = as_child.clone();
 
     match orientation.get() {
       Orientation::Horizontal => view! {
@@ -678,7 +677,7 @@ fn SliderImpl(
 pub fn SliderTrack(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -716,7 +715,7 @@ pub fn SliderTrack(
 pub fn SliderRange(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -797,7 +796,7 @@ pub fn SliderThumb(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {

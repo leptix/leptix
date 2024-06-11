@@ -11,23 +11,31 @@ pub fn Primitive<El: ElementDescriptor + 'static>(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
+  let children = StoredValue::new(children);
+  let attrs = StoredValue::new(attrs);
+
   view! {
-    {move || {
-      if as_child.get().unwrap_or_default() {
-        map_items_to_children(children().as_children(), attrs, node_ref)
-      } else {
-        element()
-          .attrs(attrs)
-          .child(children().into_view())
-          .into_any()
-          .node_ref(node_ref)
-          .into_view()
+    <Show
+      when=move || as_child.get().unwrap_or_default()
+      fallback=move || element()
+        .attrs(attrs.get_value())
+        .child(children.with_value(|children| children()).into_view())
+        .into_any()
+        .node_ref(node_ref)
+        .into_view()
+    >
+      {
+        map_items_to_children(
+          children.with_value(|children| children()).as_children(),
+          attrs.get_value(),
+          node_ref,
+        )
       }
-    }}
+    </Show>
   }
 }
 

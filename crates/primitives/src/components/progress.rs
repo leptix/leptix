@@ -19,7 +19,7 @@ pub fn ProgressRoot(
 
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -100,7 +100,7 @@ pub fn ProgressRoot(
 pub fn ProgressIndicator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] children: Option<Children>,
+  #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
@@ -130,6 +130,8 @@ pub fn ProgressIndicator(
     ("data-max", max.into_attribute()),
   ]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
@@ -137,7 +139,7 @@ pub fn ProgressIndicator(
       attrs=merged_attrs
       as_child=as_child
     >
-      {children.map(|children| children())}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }
