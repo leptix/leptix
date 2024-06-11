@@ -14,10 +14,14 @@ struct ProgressContextValue {
 pub fn ProgressRoot(
   #[prop(optional, into)] value: MaybeProp<f64>,
   #[prop(default=100.0f64.into(), into)] max: MaybeSignal<f64>,
+
   #[prop(optional)] get_value_label: Option<Callback<(f64, f64), String>>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let max = Signal::derive(move || {
     let max = max.get();
@@ -85,6 +89,7 @@ pub fn ProgressRoot(
       element=html::div
       node_ref=node_ref
       attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -95,6 +100,9 @@ pub fn ProgressRoot(
 pub fn ProgressIndicator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let ProgressContextValue { max, value } =
     use_context().expect("ProgressIndicator needs to be in a Progress component");
@@ -122,13 +130,16 @@ pub fn ProgressIndicator(
     ("data-max", max.into_attribute()),
   ]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
       node_ref=node_ref
       attrs=merged_attrs
+      as_child=as_child
     >
-      {().into_view()}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }

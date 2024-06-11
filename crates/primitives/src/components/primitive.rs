@@ -8,21 +8,34 @@ use crate::Attributes;
 #[component]
 pub fn Primitive<El: ElementDescriptor + 'static>(
   element: fn() -> HtmlElement<El>,
-  children: Children,
 
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  #[prop(optional_no_strip)] as_child: Option<bool>,
-  #[prop(optional_no_strip)] node_ref: NodeRef<AnyElement>,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  if as_child.unwrap_or(false) {
-    map_items_to_children(children().as_children(), attrs, node_ref)
-  } else {
-    element()
-      .attrs(attrs)
-      .child(children().into_view())
-      .into_any()
-      .node_ref(node_ref)
-      .into_view()
+  let children = StoredValue::new(children);
+  let attrs = StoredValue::new(attrs);
+
+  view! {
+    <Show
+      when=move || as_child.get().unwrap_or_default()
+      fallback=move || element()
+        .attrs(attrs.get_value())
+        .child(children.with_value(|children| children()).into_view())
+        .into_any()
+        .node_ref(node_ref)
+        .into_view()
+    >
+      {
+        map_items_to_children(
+          children.with_value(|children| children()).as_children(),
+          attrs.get_value(),
+          node_ref,
+        )
+      }
+    </Show>
   }
 }
 

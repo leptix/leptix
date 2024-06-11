@@ -39,10 +39,14 @@ pub fn RadioGroupRoot(
   #[prop(optional, into)] default_value: MaybeProp<String>,
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
+
   #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (value, set_value) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || value.get()),
@@ -76,6 +80,8 @@ pub fn RadioGroupRoot(
 
   merged_attrs.extend(attrs);
 
+  let children = StoredValue::new(children);
+
   view! {
     <RovingFocusGroup
       as_child=true
@@ -85,10 +91,11 @@ pub fn RadioGroupRoot(
     >
       <Primitive
         element=html::div
-        attrs=merged_attrs
         node_ref=node_ref
+        attrs=merged_attrs.clone()
+        as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Primitive>
     </RovingFocusGroup>
   }
@@ -96,13 +103,17 @@ pub fn RadioGroupRoot(
 
 #[component]
 pub fn RadioGroupItem(
+  #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
+
   #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let RadioGroupContextValue {
     disabled,
@@ -128,7 +139,8 @@ pub fn RadioGroupItem(
   //   is_arrow_key_pressed.set_value(false);
   // });
 
-  let on_check_value = value.clone();
+  let children = StoredValue::new(children);
+  let value = StoredValue::new(value);
 
   view! {
     <RovingFocusGroupItem
@@ -137,14 +149,12 @@ pub fn RadioGroupItem(
       active=is_checked
     >
       <Radio
-        value=value
+        value=value.get_value()
         disabled=is_disabled
         required=required
         checked=is_checked
-        name=name
-        node_ref=node_ref
-        attrs=attrs
-        on_check=Callback::new(move |_| on_value_change.call(on_check_value.get()))
+        name=name.clone()
+        on_check=Callback::new(move |_| on_value_change.call(value.get_value().get()))
         on:keydown=move |ev: KeyboardEvent| {
           on_key_down.call(ev.clone());
 
@@ -167,8 +177,11 @@ pub fn RadioGroupItem(
             node_el.click();
           }
         }
+        node_ref=node_ref
+        attrs=attrs.clone()
+        as_child=as_child
       >
-        {children()}
+        {children.with_value(|children| children())}
       </Radio>
     </RovingFocusGroupItem>
   }
@@ -178,14 +191,19 @@ pub fn RadioGroupItem(
 pub fn RadioGroupIndicator(
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  // children: ChildrenFn,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
+  let children = StoredValue::new(children);
+
   view! {
     <RadioIndicator
       attrs=attrs
       node_ref=node_ref
+      as_child=as_child
     >
-      {().into_view()}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </RadioIndicator>
   }
 }
