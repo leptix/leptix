@@ -547,7 +547,7 @@ fn AccordionDemo() -> impl IntoView {
 }
 
 #[component]
-fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: Children) -> impl IntoView {
+fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: ChildrenFn) -> impl IntoView {
   view! {
       <AccordionItem
           value=value
@@ -559,11 +559,13 @@ fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: Childre
 }
 
 #[component]
-fn AccordionTriggerDemo(children: Children) -> impl IntoView {
+fn AccordionTriggerDemo(children: ChildrenFn) -> impl IntoView {
+    let children = StoredValue::new(children);
+
   view! {
       <AccordionHeader attr:class="flex">
           <AccordionTrigger attr:class="text-violet11 shadow-mauve6 hover:bg-mauve2 group flex h-[45px] flex-1 cursor-default items-center justify-between bg-white px-5 text-[15px] leading-none shadow-[0_1px_0] outline-none">
-              {children()}
+              {children.with_value(|children| children())}
               <ChevronDownIcon
                   attr:class="text-violet10 ease-[cubic-bezier(0.87,_0,_0.13,_1)] transition-transform duration-300 group-data-[state=open]:rotate-180"
                   attr:aria-hidden=true.into_attribute()
@@ -1149,17 +1151,17 @@ fn SliderDemo() -> impl IntoView {
 
 #[component]
 fn ScrollAreaDemo() -> impl IntoView {
-  let tags = (1..=50)
+  let tags = StoredValue::new((1..=50)
     .rev()
     .map(|num| format!("v1.2.0-beta.{num}"))
-    .collect::<Vec<_>>();
+    .collect::<Vec<_>>());
 
   view! {
       <ScrollAreaRoot attr:class="w-[200px] h-[225px] rounded overflow-hidden shadow-[0_2px_10px] shadow-blackA4 bg-white">
           <ScrollAreaViewport attr:class="w-full h-full rounded">
               <div class="py-[15px] px-5">
                   <div class="text-violet11 text-[15px] leading-[18px] font-medium">"Tags"</div>
-                  <For each=move || tags.clone() key=|n| n.clone() let:data>
+                  <For each=move || tags.get_value() key=|n| n.clone() let:data>
                       <div class="text-mauve12 text-[13px] leading-[18px] mt-2.5 pt-2.5 border-t border-t-mauve6">
                           {data}
                       </div>
