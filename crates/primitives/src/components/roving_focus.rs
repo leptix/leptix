@@ -2,22 +2,19 @@ use std::collections::HashMap;
 
 use leptos::{ev::EventDescriptor, html::AnyElement, *};
 use leptos_use::use_event_listener;
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::JsCast;
 use web_sys::{Event, FocusEvent, KeyboardEvent, MouseEvent};
 
 use itertools::Either;
 
 use crate::{
-  components::{
-    collection::{use_collection_context, CollectionContextValue},
-    primitive::Primitive,
-  },
+  collection::{use_collection_context, CollectionContextValue},
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Direction, Orientation,
   },
-  Attributes,
+  Attributes, Direction, Orientation,
 };
 
 use super::collection::use_collection_item_ref;
