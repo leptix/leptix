@@ -1,6 +1,6 @@
 use leptos::{html::AnyElement, *};
 
-use crate::{components::primitive::Primitive, Attributes};
+use crate::{primitive::Primitive, util::Attributes};
 
 const DEFAULT_MAX: f64 = 100.0;
 

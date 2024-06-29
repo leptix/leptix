@@ -3,7 +3,7 @@ use leptos::{
   *,
 };
 
-use crate::Attributes;
+use crate::util::Attributes;
 
 #[component]
 pub fn Primitive<El: ElementDescriptor + 'static>(

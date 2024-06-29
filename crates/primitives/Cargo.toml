@@ -1,13 +1,13 @@
 [package]
 name = "leptix_primitives"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 readme = "README.md"
 repository = "https://github.com/leptix/leptix"
 description = "Accessible and unstyled components for Leptos"
 license = "MIT"
 homepage = "https://upbolt.github.io/leptos_primitives"
-authors = ["Upbolt", "DanielleHuisman"]
+authors = ["Upbolt"]
 keywords = ["leptos", "components", "radix-ui", "accessibility", "unstyled"]
 exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
