@@ -18,9 +18,9 @@ use crate::{
   primitive::Primitive,
   util::{
     create_state_machine::{create_state_machine, InvalidState, MachineState},
-    linear_scale,
+    linear_scale, Attributes,
   },
-  Attributes, Direction, Orientation,
+  Direction, Orientation,
 };
 
 #[derive(Clone, Default)]

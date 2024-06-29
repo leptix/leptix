@@ -1,6 +1,6 @@
 use leptos::{html::AnyElement, *};
 
-use crate::{components::primitive::Primitive, Attributes};
+use crate::{primitive::Primitive, util::Attributes};
 
 #[component]
 pub fn AspectRatioRoot(

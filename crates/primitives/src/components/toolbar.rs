@@ -7,7 +7,8 @@ use crate::{
   roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
   separator::SeparatorRoot,
   toggle_group::{ToggleGroupItem, ToggleGroupRoot},
-  Attributes, Direction, Orientation,
+  util::Attributes,
+  Direction, Orientation,
 };
 
 use super::toggle_group::ToggleGroupKind;

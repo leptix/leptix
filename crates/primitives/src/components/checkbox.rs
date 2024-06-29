@@ -11,12 +11,13 @@ use web_sys::{
 };
 
 use crate::{
-  components::{presence::create_presence, primitive::Primitive},
+  presence::create_presence,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
+    Attributes,
   },
-  Attributes,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -42,7 +42,7 @@ ssr = [
 
   # the rest of your leptos ssr dependencies ...
   "leptos/ssr",
-  "dep:leptox_actix",
+  "dep:leptos_actix",
   ...
 ]
 ```
@@ -106,7 +106,7 @@ You would have this in Rust using Leptos:
 
 ```rust
 use leptos::*;
-use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
+use leptix_primitives::checkbox::*;
 
 #[component]
 fn CheckboxDemo() -> impl IntoView {

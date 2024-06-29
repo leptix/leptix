@@ -3,7 +3,7 @@ use leptos::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 use wasm_bindgen::{closure::Closure, JsCast};
 
-use crate::{components::primitive::Primitive, Attributes};
+use crate::{primitive::Primitive, util::Attributes};
 
 #[derive(Clone)]
 pub struct AvatarContextValue {

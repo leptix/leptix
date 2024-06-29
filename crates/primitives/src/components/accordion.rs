@@ -12,8 +12,9 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
+    Attributes,
   },
-  Attributes, Direction, Orientation,
+  Direction, Orientation,
 };
 
 use super::collection::CollectionContextValue;

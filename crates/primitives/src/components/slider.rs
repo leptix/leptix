@@ -20,9 +20,9 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
-    linear_scale,
+    linear_scale, Attributes,
   },
-  Attributes, Direction, Orientation,
+  Direction, Orientation,
 };
 
 #[derive(Clone)]

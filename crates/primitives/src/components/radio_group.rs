@@ -11,8 +11,11 @@ use crate::{
   primitive::Primitive,
   radio::{Radio, RadioIndicator},
   roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-  Attributes, Direction, Orientation,
+  util::{
+    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
+    Attributes,
+  },
+  Direction, Orientation,
 };
 
 #[derive(Clone)]

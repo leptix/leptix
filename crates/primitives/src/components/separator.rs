@@ -1,6 +1,6 @@
 use leptos::{html::AnyElement, *};
 
-use crate::{primitive::Primitive, Attributes, Orientation};
+use crate::{primitive::Primitive, util::Attributes, Orientation};
 
 #[component]
 pub fn SeparatorRoot(
