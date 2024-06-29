@@ -16,3 +16,6 @@ pub(crate) fn linear_scale(
     output_start + ratio * (value - input_start)
   }
 }
+
+pub(crate) type AttributePair = (&'static str, leptos::Attribute);
+pub(crate) type Attributes = Vec<AttributePair>;

@@ -3,12 +3,12 @@ use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
 use crate::{
-  components::primitive::Primitive,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
+    Attributes,
   },
-  Attributes,
 };
 
 use super::presence::create_presence;

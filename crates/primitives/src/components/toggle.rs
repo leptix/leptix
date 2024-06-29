@@ -3,8 +3,10 @@ use web_sys::MouseEvent;
 
 use crate::{
   primitive::Primitive,
-  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-  Attributes,
+  util::{
+    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
+    Attributes,
+  },
 };
 
 #[component]

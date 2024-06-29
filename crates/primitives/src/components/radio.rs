@@ -10,9 +10,9 @@ use web_sys::{
 };
 
 use crate::{
-  components::{presence::create_presence, primitive::Primitive},
-  util::create_previous::create_previous,
-  Attributes,
+  presence::create_presence,
+  primitive::Primitive,
+  util::{create_previous::create_previous, Attributes},
 };
 
 #[derive(Clone)]

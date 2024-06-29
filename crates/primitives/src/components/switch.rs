@@ -14,8 +14,8 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
+    Attributes,
   },
-  Attributes,
 };
 
 #[derive(Clone)]

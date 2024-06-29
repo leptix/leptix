@@ -1,7 +1,7 @@
 use leptos::{html::AnyElement, *};
 use web_sys::MouseEvent;
 
-use crate::{components::primitive::Primitive, Attributes};
+use crate::{primitive::Primitive, util::Attributes};
 
 #[component]
 pub fn LabelRoot(
