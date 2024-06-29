@@ -1,37 +1,10 @@
-use leptos::html::Input;
-use leptos::*;
+use leptos::{html::Input, *};
 
-use leptix_primitives::components::accordion::{
-  AccordionContent, AccordionHeader, AccordionItem, AccordionKind, AccordionMultiple,
-  AccordionRoot, AccordionSingle, AccordionTrigger,
+use leptix_primitives::{
+  accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,
+  radio_group::*, scroll_area::*, separator::*, slider::*, switch::*, tabs::*, toggle::*,
+  toggle_group::*, toolbar::*, Orientation,
 };
-use leptix_primitives::components::aspect_ratio::AspectRatioRoot;
-use leptix_primitives::components::avatar::{AvatarFallback, AvatarImage, AvatarRoot};
-use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
-use leptix_primitives::components::collapsible::{
-  CollapsibleContent, CollapsibleRoot, CollapsibleTrigger,
-};
-use leptix_primitives::components::label::LabelRoot;
-use leptix_primitives::components::progress::{ProgressIndicator, ProgressRoot};
-use leptix_primitives::components::radio_group::{
-  RadioGroupIndicator, RadioGroupItem, RadioGroupRoot,
-};
-use leptix_primitives::components::scroll_area::{
-  ScrollAreaCorner, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport,
-};
-use leptix_primitives::components::separator::SeparatorRoot;
-use leptix_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
-use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
-use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
-use leptix_primitives::components::toggle::ToggleRoot;
-use leptix_primitives::components::toggle_group::{
-  ToggleGroupItem, ToggleGroupKind, ToggleGroupMultiple, ToggleGroupRoot, ToggleGroupSingle,
-};
-use leptix_primitives::components::toolbar::{
-  ToolbarButton, ToolbarLink, ToolbarRoot, ToolbarSeparator, ToolbarToggleGroup, ToolbarToggleItem,
-};
-use leptix_primitives::util::Orientation;
-use leptix_primitives::Attributes;
 
 use leptos_use::{use_interval_fn, utils::Pausable};
 
@@ -514,7 +487,7 @@ fn AccordionDemo() -> impl IntoView {
 #[component]
 fn AccordionItemDemo(
   #[prop(into)] value: MaybeSignal<String>,
-  children: Children,
+  children: ChildrenFn,
 ) -> impl IntoView {
   view! {
       <AccordionItem
@@ -527,11 +500,13 @@ fn AccordionItemDemo(
 }
 
 #[component]
-fn AccordionTriggerDemo(children: Children) -> impl IntoView {
+fn AccordionTriggerDemo(children: ChildrenFn) -> impl IntoView {
+  let children = StoredValue::new(children);
+
   view! {
       <AccordionHeader attr:class="flex">
           <AccordionTrigger attr:class="text-violet11 shadow-mauve6 hover:bg-mauve2 group flex h-[45px] flex-1 cursor-default items-center justify-between bg-white px-5 text-[15px] leading-none shadow-[0_1px_0] outline-none">
-              {children()}
+              {children.with_value(|children| children())}
               <ChevronDownIcon
                   attr:class="text-violet10 ease-[cubic-bezier(0.87,_0,_0.13,_1)] transition-transform duration-300 group-data-[state=open]:rotate-180"
                   attr:aria-hidden=true.into_attribute()
@@ -551,7 +526,7 @@ fn AccordionContentDemo(children: ChildrenFn) -> impl IntoView {
 }
 
 #[component]
-fn ChevronDownIcon(#[prop(attrs)] attrs: Attributes) -> impl IntoView {
+fn ChevronDownIcon(#[prop(attrs)] attrs: Vec<(&'static str, Attribute)>) -> impl IntoView {
   view! {
       <svg
           width="15"
@@ -1117,17 +1092,19 @@ fn SliderDemo() -> impl IntoView {
 
 #[component]
 fn ScrollAreaDemo() -> impl IntoView {
-  let tags = (1..=50)
-    .rev()
-    .map(|num| format!("v1.2.0-beta.{num}"))
-    .collect::<Vec<_>>();
+  let tags = StoredValue::new(
+    (1..=50)
+      .rev()
+      .map(|num| format!("v1.2.0-beta.{num}"))
+      .collect::<Vec<_>>(),
+  );
 
   view! {
       <ScrollAreaRoot attr:class="w-[200px] h-[225px] rounded overflow-hidden shadow-[0_2px_10px] shadow-blackA4 bg-white">
           <ScrollAreaViewport attr:class="w-full h-full rounded">
               <div class="py-[15px] px-5">
                   <div class="text-violet11 text-[15px] leading-[18px] font-medium">"Tags"</div>
-                  <For each=move || tags.clone() key=|n| n.clone() let:data>
+                  <For each=move || tags.get_value() key=|n| n.clone() let:data>
                       <div class="text-mauve12 text-[13px] leading-[18px] mt-2.5 pt-2.5 border-t border-t-mauve6">
                           {data}
                       </div>

@@ -1,6 +1,6 @@
 use leptos::{html::ElementDescriptor, *};
 
-use crate::Attributes;
+use crate::util::Attributes;
 
 #[slot]
 pub struct Slot<El>

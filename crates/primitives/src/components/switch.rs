@@ -10,12 +10,12 @@ use web_sys::{
 };
 
 use crate::{
-  components::primitive::Primitive,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
+    Attributes,
   },
-  Attributes,
 };
 
 #[derive(Clone)]
@@ -32,12 +32,15 @@ pub fn SwitchRoot(
   #[prop(optional, into)] name: MaybeProp<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<bool>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
 
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let node_ref = NodeRef::<AnyElement>::new();
   let (is_form_control, set_is_form_control) = create_signal(true);
@@ -90,10 +93,8 @@ pub fn SwitchRoot(
   view! {
     <Primitive
       element=html::button
-      attrs=merged_attrs
-      node_ref=node_ref
       on:click=move |ev: MouseEvent| {
-          on_click.call(ev.clone());
+        on_click.call(ev.clone());
 
         set_checked.update(|checked| *checked = Some(!checked.unwrap_or(false)));
 
@@ -105,28 +106,34 @@ pub fn SwitchRoot(
           }
         }
       }
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
-
-      <Show when=move || is_form_control.get()>
-        <BubbleInput
-            checked=Signal::derive(move || checked.get().unwrap_or(false))
-            bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
-            name=name.clone()
-            value=value.clone()
-            disabled=Signal::derive(move || disabled.get())
-            required=Signal::derive(move || required.get())
-            control=node_ref
-        />
-      </Show>
     </Primitive>
+
+    <Show when=move || is_form_control.get()>
+      <BubbleInput
+        checked=Signal::derive(move || checked.get().unwrap_or(false))
+        bubbles=Signal::derive(move || !has_consumer_stopped_propagation.get_value())
+        name=name.clone()
+        value=value.clone()
+        disabled=Signal::derive(move || disabled.get())
+        required=Signal::derive(move || required.get())
+        control=node_ref
+      />
+    </Show>
   }
 }
 
 #[component]
 pub fn SwitchThumb(
-  #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] children: Option<ChildrenFn>,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let SwitchContextValue { checked, disabled } =
     use_context().expect("SwitchThumb must be used in a SwitchRoot component");
@@ -150,13 +157,16 @@ pub fn SwitchThumb(
     ),
   ]);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::span
       node_ref=node_ref
       attrs=merged_attrs
+      as_child=as_child
     >
-      {().into_view()}
+      {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
   }
 }

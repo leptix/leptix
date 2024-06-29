@@ -23,3 +23,21 @@ pub mod toolbar;
 pub(crate) mod collection;
 pub(crate) mod presence;
 pub(crate) mod roving_focus;
+
+#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
+pub enum Direction {
+  #[default]
+  #[strum(to_string = "ltr")]
+  LeftToRight,
+  #[strum(to_string = "rtl")]
+  RightToLeft,
+}
+
+#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
+pub enum Orientation {
+  #[default]
+  #[strum(to_string = "horizontal")]
+  Horizontal,
+  #[strum(to_string = "vertical")]
+  Vertical,
+}

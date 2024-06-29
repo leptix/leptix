@@ -11,12 +11,13 @@ use web_sys::{
 };
 
 use crate::{
-  components::{presence::create_presence, primitive::Primitive},
+  presence::create_presence,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
+    Attributes,
   },
-  Attributes,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -33,17 +34,20 @@ struct CheckboxValueContext {
 
 #[component]
 pub fn CheckboxRoot(
-  #[prop(optional)] as_child: Option<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] checked: MaybeProp<CheckedState>,
   #[prop(optional, into)] default_checked: MaybeProp<CheckedState>,
+
   #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<CheckedState>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
   #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(attrs)] attrs: Attributes,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  children: Children,
+  #[prop(attrs)] attrs: Attributes,
+  children: ChildrenFn,
+
+  #[prop(optional)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let has_consumer_stropped_propagation = StoredValue::new(false);
 
@@ -161,9 +165,6 @@ pub fn CheckboxRoot(
   view! {
     <Primitive
       element=html::button
-      node_ref=node_ref
-      attrs=merged_attrs
-      as_child=as_child
       on:keydown=move |ev: KeyboardEvent| {
         on_key_down.call(ev.clone());
 
@@ -186,6 +187,9 @@ pub fn CheckboxRoot(
           ev.stop_propagation();
         }
       }
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -203,9 +207,12 @@ pub fn CheckboxRoot(
 #[component]
 pub fn CheckboxIndicator(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
+
   #[prop(attrs)] attrs: Attributes,
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let CheckboxValueContext { state, disabled } = use_context::<CheckboxValueContext>()
     .expect("CheckboxIndicator must be used inside of a CheckboxRoot component");
@@ -243,11 +250,12 @@ pub fn CheckboxIndicator(
   view! {
     <Show when=move || presence.get()>
       <Primitive
-          element=html::span
-          attrs=merged_attrs.clone()
-          node_ref=node_ref
+        element=html::span
+        node_ref=node_ref
+        attrs=merged_attrs.clone()
+        as_child=as_child
       >
-          {children.with_value(|children| children())}
+        {children.with_value(|children| children())}
       </Primitive>
     </Show>
   }
@@ -258,6 +266,7 @@ fn BubbleInput(
   checked: Signal<CheckedState>,
   control: NodeRef<AnyElement>,
   bubbles: Signal<bool>,
+
   node_ref: NodeRef<Input>,
   #[prop(attrs)] attrs: Attributes,
 ) -> impl IntoView {

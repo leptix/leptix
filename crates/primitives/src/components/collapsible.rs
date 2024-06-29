@@ -3,12 +3,12 @@ use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
 use crate::{
-  components::primitive::Primitive,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
+    Attributes,
   },
-  Attributes,
 };
 
 use super::presence::create_presence;
@@ -26,12 +26,15 @@ pub fn CollapsibleRoot(
   #[prop(optional, into)] open: MaybeSignal<bool>,
   #[prop(optional, into)] default_open: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
+
   #[prop(default=(|_|{}).into(), into)] on_open_change: Callback<bool>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
-  #[prop(optional, into)] as_child: Option<bool>,
+
   #[prop(optional, into)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let (open, set_open) = create_controllable_signal(CreateControllableSignalProps {
     value: Signal::derive(move || Some(open.get())),
@@ -71,8 +74,8 @@ pub fn CollapsibleRoot(
     <Primitive
       element=html::div
       node_ref=node_ref
-      as_child=as_child
       attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -81,11 +84,13 @@ pub fn CollapsibleRoot(
 
 #[component]
 pub fn CollapsibleTrigger(
-  #[prop(optional)] as_child: Option<bool>,
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+
+  #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
-  children: Children,
+  children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let CollapsibleContextValue {
     content_id,
@@ -111,13 +116,13 @@ pub fn CollapsibleTrigger(
   view! {
     <Primitive
       element=html::button
-      attrs=merged_attrs
-      node_ref=node_ref
-      as_child=as_child
       on:click=move |ev: MouseEvent| {
         on_click.call(ev);
         on_open_toggle.call(());
       }
+      node_ref=node_ref
+      attrs=merged_attrs
+      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -127,10 +132,12 @@ pub fn CollapsibleTrigger(
 #[component]
 pub fn CollapsibleContent(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
-  #[prop(optional)] as_child: Option<bool>,
+
   #[prop(optional)] node_ref: NodeRef<AnyElement>,
   #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let CollapsibleContextValue { open, .. } = use_context::<CollapsibleContextValue>()
     .expect("CollapsibleContent must be used in a CollapsibleRoot component");
@@ -142,25 +149,27 @@ pub fn CollapsibleContent(
 
   view! {
     <Show when=move || presence.get()>
-        <CollapsibleContentImpl
-            as_child=as_child
-            attrs=attrs.clone()
-            node_ref=node_ref
-            is_present=presence
-        >
-            {children.with_value(|children| children())}
-        </CollapsibleContentImpl>
+      <CollapsibleContentImpl
+        is_present=presence
+        node_ref=node_ref
+        attrs=attrs.clone()
+        as_child=as_child
+      >
+        {children.with_value(|children| children())}
+      </CollapsibleContentImpl>
     </Show>
   }
 }
 
 #[component]
 fn CollapsibleContentImpl(
-  as_child: Option<bool>,
-  #[prop(attrs)] attrs: Attributes,
-  node_ref: NodeRef<AnyElement>,
   is_present: Signal<bool>,
+
+  node_ref: NodeRef<AnyElement>,
+  #[prop(attrs)] attrs: Attributes,
   children: ChildrenFn,
+
+  #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   let CollapsibleContextValue {
     content_id,
@@ -289,15 +298,17 @@ fn CollapsibleContentImpl(
 
   merged_attrs.extend(attrs);
 
+  let children = StoredValue::new(children);
+
   view! {
     <Primitive
       element=html::div
+      node_ref=node_ref
       attrs=merged_attrs
       as_child=as_child
-      node_ref=node_ref
     >
       <Show when=move || is_open.get()>
-        {children()}
+        {children.with_value(|children| children())}
       </Show>
     </Primitive>
   }
