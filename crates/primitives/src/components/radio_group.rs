@@ -4,20 +4,15 @@ use leptos::{
   *,
 };
 use leptos_use::{use_document, use_event_listener};
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::JsCast;
 use web_sys::{FocusEvent, HtmlButtonElement, KeyboardEvent};
 
 use crate::{
-  components::{
-    primitive::Primitive,
-    radio::{Radio, RadioIndicator},
-    roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-  },
-  util::{
-    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-    Direction, Orientation,
-  },
-  Attributes,
+  primitive::Primitive,
+  radio::{Radio, RadioIndicator},
+  roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
+  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
+  Attributes, Direction, Orientation,
 };
 
 #[derive(Clone)]

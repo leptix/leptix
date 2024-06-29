@@ -6,17 +6,14 @@ use web_sys::KeyboardEvent;
 use wasm_bindgen::JsCast;
 
 use crate::{
-  components::{
-    collapsible::{CollapsibleContent, CollapsibleRoot, CollapsibleTrigger},
-    collection::{use_collection_context, use_collection_item_ref, CollectionItemId},
-    primitive::Primitive,
-  },
+  collapsible::{CollapsibleContent, CollapsibleRoot, CollapsibleTrigger},
+  collection::{use_collection_context, use_collection_item_ref},
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Direction, Orientation,
   },
-  Attributes,
+  Attributes, Direction, Orientation,
 };
 
 use super::collection::CollectionContextValue;

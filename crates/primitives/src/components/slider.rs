@@ -15,16 +15,14 @@ use web_sys::{
 };
 
 use crate::{
-  components::{
-    collection::{use_collection_context, use_collection_item_ref, CollectionContextValue},
-    primitive::Primitive,
-  },
+  collection::{use_collection_context, use_collection_item_ref, CollectionContextValue},
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
-    linear_scale, Direction, Orientation,
+    linear_scale,
   },
-  Attributes,
+  Attributes, Direction, Orientation,
 };
 
 #[derive(Clone)]

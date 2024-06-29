@@ -6,11 +6,8 @@ use crate::{
     roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
     toggle::ToggleRoot,
   },
-  util::{
-    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-    Direction, Orientation,
-  },
-  Attributes,
+  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
+  Attributes, Direction, Orientation,
 };
 
 pub enum ToggleGroupKind {

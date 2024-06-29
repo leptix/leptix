@@ -10,7 +10,7 @@ use web_sys::{
 };
 
 use crate::{
-  components::primitive::Primitive,
+  primitive::Primitive,
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,

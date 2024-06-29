@@ -1,37 +1,10 @@
-use leptos::html::Input;
-use leptos::*;
+use leptos::{html::Input, *};
 
-use leptix_primitives::components::accordion::{
-  AccordionContent, AccordionHeader, AccordionItem, AccordionKind, AccordionMultiple,
-  AccordionRoot, AccordionSingle, AccordionTrigger,
+use leptix_primitives::{
+  accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,
+  radio_group::*, scroll_area::*, separator::*, slider::*, switch::*, tabs::*, toggle::*,
+  toggle_group::*, toolbar::*, Orientation,
 };
-use leptix_primitives::components::aspect_ratio::AspectRatioRoot;
-use leptix_primitives::components::avatar::{AvatarFallback, AvatarImage, AvatarRoot};
-use leptix_primitives::components::checkbox::{CheckboxIndicator, CheckboxRoot, CheckedState};
-use leptix_primitives::components::collapsible::{
-  CollapsibleContent, CollapsibleRoot, CollapsibleTrigger,
-};
-use leptix_primitives::components::label::LabelRoot;
-use leptix_primitives::components::progress::{ProgressIndicator, ProgressRoot};
-use leptix_primitives::components::radio_group::{
-  RadioGroupIndicator, RadioGroupItem, RadioGroupRoot,
-};
-use leptix_primitives::components::scroll_area::{
-  ScrollAreaCorner, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport,
-};
-use leptix_primitives::components::separator::SeparatorRoot;
-use leptix_primitives::components::slider::{SliderRange, SliderRoot, SliderThumb, SliderTrack};
-use leptix_primitives::components::switch::{SwitchRoot, SwitchThumb};
-use leptix_primitives::components::tabs::{TabsContent, TabsList, TabsRoot, TabsTrigger};
-use leptix_primitives::components::toggle::ToggleRoot;
-use leptix_primitives::components::toggle_group::{
-  ToggleGroupItem, ToggleGroupKind, ToggleGroupMultiple, ToggleGroupRoot, ToggleGroupSingle,
-};
-use leptix_primitives::components::toolbar::{
-  ToolbarButton, ToolbarLink, ToolbarRoot, ToolbarSeparator, ToolbarToggleGroup, ToolbarToggleItem,
-};
-use leptix_primitives::util::Orientation;
-use leptix_primitives::Attributes;
 
 use leptos_use::{use_interval_fn, utils::Pausable};
 
@@ -553,7 +526,7 @@ fn AccordionContentDemo(children: ChildrenFn) -> impl IntoView {
 }
 
 #[component]
-fn ChevronDownIcon(#[prop(attrs)] attrs: Attributes) -> impl IntoView {
+fn ChevronDownIcon(#[prop(attrs)] attrs: Vec<(&'static str, Attribute)>) -> impl IntoView {
   view! {
       <svg
           width="15"

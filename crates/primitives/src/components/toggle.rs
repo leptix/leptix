@@ -2,7 +2,7 @@ use leptos::{html::AnyElement, *};
 use web_sys::MouseEvent;
 
 use crate::{
-  components::primitive::Primitive,
+  primitive::Primitive,
   util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
   Attributes,
 };
