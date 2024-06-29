@@ -3,14 +3,11 @@ use wasm_bindgen::JsCast;
 use web_sys::{HtmlAnchorElement, KeyboardEvent};
 
 use crate::{
-  components::{
-    primitive::Primitive,
-    roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-    separator::SeparatorRoot,
-    toggle_group::{ToggleGroupItem, ToggleGroupRoot},
-  },
-  util::{Direction, Orientation},
-  Attributes,
+  primitive::Primitive,
+  roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
+  separator::SeparatorRoot,
+  toggle_group::{ToggleGroupItem, ToggleGroupRoot},
+  Attributes, Direction, Orientation,
 };
 
 use super::toggle_group::ToggleGroupKind;

@@ -2,17 +2,14 @@ use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle,
 use web_sys::{FocusEvent, KeyboardEvent, MouseEvent};
 
 use crate::{
-  components::{
-    presence::create_presence,
-    primitive::Primitive,
-    roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-  },
+  presence::create_presence,
+  primitive::Primitive,
+  roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Direction, Orientation,
   },
-  Attributes,
+  Attributes, Direction, Orientation,
 };
 
 #[derive(Clone)]

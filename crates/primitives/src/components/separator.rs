@@ -1,6 +1,6 @@
 use leptos::{html::AnyElement, *};
 
-use crate::{components::primitive::Primitive, util::Orientation, Attributes};
+use crate::{primitive::Primitive, Attributes, Orientation};
 
 #[component]
 pub fn SeparatorRoot(
@@ -38,6 +38,7 @@ pub fn SeparatorRoot(
       element=html::div
       attrs=merged_attrs
       node_ref=node_ref
+      as_child=as_child
     >
       {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
