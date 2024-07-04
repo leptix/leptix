@@ -119,10 +119,7 @@ pub fn ScrollAreaRoot(
   });
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([(
-    "dir",
-    (move || direction.get().to_string()).into_attribute(),
-  )]);
+  merged_attrs.extend([("dir", direction.into_attribute())]);
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {

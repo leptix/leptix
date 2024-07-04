@@ -38,14 +38,8 @@ pub fn ToolbarRoot(
 
   let mut merged_attrs = vec![
     ("role", "toolbar".into_attribute()),
-    (
-      "aria-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    ),
+    ("aria-orientation", orientation.into_attribute()),
+    ("dir", direction.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -190,14 +184,8 @@ pub fn ToolbarToggleGroup(
     .expect("ToolbarToggleGroup must be in a ToolbarRoot component");
 
   let mut merged_attrs = vec![
-    (
-      "data-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "dir",
-      (move || context.direction.get().to_string()).into_attribute(),
-    ),
+    ("data-orientation", context.orientation.into_attribute()),
+    ("dir", context.direction.into_attribute()),
   ];
   merged_attrs.extend(attrs);
 

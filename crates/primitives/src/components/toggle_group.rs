@@ -263,10 +263,7 @@ fn ToggleGroup(
 
   let mut merged_attrs = vec![
     ("role", "group".into_attribute()),
-    (
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    ),
+    ("dir", direction.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);

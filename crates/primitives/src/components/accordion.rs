@@ -288,10 +288,7 @@ fn Accordion(
     direction: Signal::derive(move || direction.get()),
   });
 
-  let mut merged_attrs = vec![(
-    "data-orientation",
-    (move || orientation.get().to_string()).into_attribute(),
-  )];
+  let mut merged_attrs = vec![("data-orientation", orientation.into_attribute())];
 
   merged_attrs.extend(attrs);
 
@@ -449,7 +446,7 @@ pub fn AccordionItem(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
+      state_context.orientation.into_attribute(),
     ),
     (
       "data-state",
@@ -497,7 +494,7 @@ pub fn AccordionHeader(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
+      state_context.orientation.into_attribute(),
     ),
     (
       "data-state",
@@ -550,7 +547,7 @@ pub fn AccordionTrigger(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
+      state_context.orientation.into_attribute(),
     ),
     (
       "id",
@@ -607,7 +604,7 @@ pub fn AccordionContent(
   let mut merged_attrs = vec![
     (
       "data-orientation",
-      (move || state_context.orientation.get().to_string()).into_attribute(),
+      state_context.orientation.into_attribute(),
     ),
     (
       "aria-labelledby",

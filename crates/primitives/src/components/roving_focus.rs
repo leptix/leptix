@@ -149,10 +149,7 @@ pub(crate) fn RovingFocusGroup(
       })
       .into_attribute(),
     ),
-    (
-      "data-orientation",
-      (move || orientation.with(|orientation| orientation.to_string())).into_attribute(),
-    ),
+    ("data-orientation", orientation.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
@@ -272,10 +269,7 @@ pub(crate) fn RovingFocusGroupItem(
       "tabindex",
       Signal::derive(move || if is_current_tab_stop.get() { 0 } else { -1 }).into_attribute(),
     ),
-    (
-      "data-orientation",
-      (move || orientation.get().map(|orientation| orientation.to_string())).into_attribute(),
-    ),
+    ("data-orientation", orientation.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);

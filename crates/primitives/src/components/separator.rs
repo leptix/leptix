@@ -17,19 +17,13 @@ pub fn SeparatorRoot(
     vec![("role", "none".into_attribute())]
   } else {
     vec![
-      (
-        "aria-orientation",
-        Signal::derive(move || orientation.get().to_string()).into_attribute(),
-      ),
+      ("aria-orientation", orientation.into_attribute()),
       ("role", "separator".into_attribute()),
     ]
   };
 
   merged_attrs.extend(attrs);
-  merged_attrs.extend([(
-    "data-orientation",
-    Signal::derive(move || orientation.get().to_string()).into_attribute(),
-  )]);
+  merged_attrs.extend([("data-orientation", orientation.into_attribute())]);
 
   let children = StoredValue::new(children);
 

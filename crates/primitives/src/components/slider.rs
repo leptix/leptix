@@ -25,6 +25,8 @@ use crate::{
   Direction, Orientation,
 };
 
+use super::Side;
+
 #[derive(Clone)]
 struct SliderContextValue {
   name: Signal<Option<String>>,
@@ -223,14 +225,6 @@ pub fn SliderRoot(
       {children()}
     </Slider>
   }
-}
-
-#[derive(Clone, PartialEq, EnumString, strum::Display, strum::IntoStaticStr)]
-enum Side {
-  Top,
-  Right,
-  Bottom,
-  Left,
 }
 
 #[derive(Clone, PartialEq)]
@@ -552,16 +546,10 @@ fn SliderImpl(
     .expect("SliderImpl must be used in either a SliderHorizontal or SliderVertical component");
 
   let mut merged_attrs = attrs.clone();
-  merged_attrs.push((
-    "data-orientation",
-    (move || orientation.get().to_string()).into_attribute(),
-  ));
+  merged_attrs.push(("data-orientation", orientation.into_attribute()));
 
   if orientation.get_untracked() == Orientation::Horizontal {
-    merged_attrs.push((
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    ));
+    merged_attrs.push(("dir", direction.into_attribute()));
   }
 
   let context =
@@ -691,10 +679,7 @@ pub fn SliderTrack(
       "data-disabled",
       (move || disabled.get().then_some("")).into_attribute(),
     ),
-    (
-      "data-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
+    ("data-orientation", orientation.into_attribute()),
   ]);
 
   view! {
@@ -756,21 +741,18 @@ pub fn SliderRange(
       "data-disabled",
       Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
     ),
-    (
-      "data-orientation",
-      Signal::derive(move || context.orientation.get().to_string()).into_attribute(),
-    ),
+    ("data-orientation", context.orientation.into_attribute()),
   ]);
 
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
       _ = node
         .style(
-          orientation.start_edge.get().to_string().to_lowercase(),
+          Oco::Borrowed(orientation.start_edge.get().into()),
           format!("{}%", offset_start.get()),
         )
         .style(
-          orientation.end_edge.get().to_string().to_lowercase(),
+          Oco::Borrowed(orientation.end_edge.get().into()),
           format!("{}%", offset_end.get()),
         );
     }
@@ -927,14 +909,8 @@ pub fn SliderThumb(
       "aria-valuemax",
       (move || context.max.get()).into_attribute(),
     ),
-    (
-      "aria-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
-    ),
-    (
-      "data-orientation",
-      (move || context.orientation.get().to_string()).into_attribute(),
-    ),
+    ("aria-orientation", context.orientation.into_attribute()),
+    ("data-orientation", context.orientation.into_attribute()),
     (
       "data-disabled",
       (move || context.disabled.get().then_some("")).into_attribute(),
@@ -950,7 +926,7 @@ pub fn SliderThumb(
   Effect::new(move |_| {
     if let Some(node) = span_ref.get() {
       _ = node.style(
-        orientation.start_edge.get().to_string().to_lowercase(),
+        Oco::Borrowed(orientation.start_edge.get().into()),
         format!(
           "calc({}% + {}px)",
           percent.get(),

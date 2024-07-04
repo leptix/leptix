@@ -94,10 +94,7 @@ pub fn TabsList(
   let mut merged_attrs = attrs.clone();
   merged_attrs.extend([
     ("role", "tablist".into_attribute()),
-    (
-      "aria-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
+    ("aria-orientation", orientation.into_attribute()),
   ]);
 
   let children = StoredValue::new(children);
@@ -309,10 +306,7 @@ pub fn TabsContent(
       })
       .into_attribute(),
     ),
-    (
-      "data-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
+    ("data-orientation", orientation.into_attribute()),
     (
       "aria-labelledby",
       (move || trigger_id.get()).into_attribute(),

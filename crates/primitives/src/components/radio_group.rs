@@ -65,15 +65,9 @@ pub fn RadioGroupRoot(
   let mut merged_attrs = vec![
     ("role", "radiogroup".into_attribute()),
     ("aria-required", required.into_attribute()),
-    (
-      "aria-orientation",
-      (move || orientation.get().to_string()).into_attribute(),
-    ),
+    ("aria-orientation", orientation.into_attribute()),
     ("data-disabled", disabled.into_attribute()),
-    (
-      "dir",
-      (move || direction.get().to_string()).into_attribute(),
-    ),
+    ("dir", direction.into_attribute()),
   ];
 
   merged_attrs.extend(attrs);
