@@ -46,7 +46,7 @@ pub enum Orientation {
 
 #[derive(Clone, PartialEq, EnumString, Display, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
-enum Side {
+pub enum Side {
   Top,
   Right,
   Bottom,

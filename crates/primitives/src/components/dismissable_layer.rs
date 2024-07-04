@@ -363,7 +363,7 @@ fn use_pointer_down_outside(
   owner_document: Signal<Document>,
 ) -> impl Fn() {
   let is_pointer_inside_tree = StoredValue::new(false);
-  let handle_click = StoredValue::new(Callback::new(move |_| {}));
+  // let handle_click = StoredValue::new(Callback::new(move |_| {}));
 
   Effect::new(move |_| {
     let handle_pointer_down = Closure::<dyn Fn(_)>::new(move |ev: PointerEvent| {
