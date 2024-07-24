@@ -168,20 +168,14 @@ pub fn SliderRoot(
     item_map: RwSignal::new(HashMap::new()),
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    ("aria-disabled", disabled.into_attribute()),
-    (
-      "data-disabled",
-      Signal::derive(move || disabled.get().then_some("")).into_attribute(),
-    ),
-  ]);
-
   let home_key_down_update = update_values.clone();
   let end_key_down_update = update_values.clone();
 
   view! {
     <Slider
+      {..attrs}
+      attr:aria-disabled=disabled
+      attr:data-disabled=move || disabled.get().then_some("")
       min=Signal::derive(move || min.get())
       max=Signal::derive(move || max.get())
       inverted=Signal::derive(move || inverted.get())
@@ -219,7 +213,6 @@ pub fn SliderRoot(
         update_values(value + step_in_direction, at_index, true);
       })
       node_ref=node_ref
-      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
@@ -545,13 +538,6 @@ fn SliderImpl(
   } = use_context()
     .expect("SliderImpl must be used in either a SliderHorizontal or SliderVertical component");
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.push(("data-orientation", orientation.into_attribute()));
-
-  if orientation.get_untracked() == Orientation::Horizontal {
-    merged_attrs.push(("dir", direction.into_attribute()));
-  }
-
   let context =
     use_context::<SliderContextValue>().expect("Slider must be used in a SliderRoot component");
 
@@ -570,6 +556,9 @@ fn SliderImpl(
 
   view! {
     <Primitive
+      {..attrs}
+      attr:data-orientation=move || orientation.get().to_string()
+      attr:dir=move || (orientation.get() == Orientation::Horizontal).then_some(direction.get().to_string())
       element=html::span
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
@@ -651,7 +640,6 @@ fn SliderImpl(
         }
       }
       node_ref=node_ref
-      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
@@ -673,20 +661,13 @@ pub fn SliderTrack(
     ..
   } = use_context().expect("SliderTrack must be used in a SliderRoot component");
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    (
-      "data-disabled",
-      (move || disabled.get().then_some("")).into_attribute(),
-    ),
-    ("data-orientation", orientation.into_attribute()),
-  ]);
-
   view! {
     <Primitive
+      {..attrs}
+      attr:data-disabled=move || disabled.get().then_some("")
+      attr:data-orientation=move || orientation.get().to_string()
       element=html::span
       node_ref=node_ref
-      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
@@ -735,15 +716,6 @@ pub fn SliderRange(
         .fold(f64::NEG_INFINITY, |max, &x| max.max(x))
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    (
-      "data-disabled",
-      Signal::derive(move || context.disabled.get().then_some("")).into_attribute(),
-    ),
-    ("data-orientation", context.orientation.into_attribute()),
-  ]);
-
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
       _ = node
@@ -760,9 +732,11 @@ pub fn SliderRange(
 
   view! {
     <Primitive
+      {..attrs}
+      attr:data-disabled=move || context.disabled.get().then_some("")
+      attr:data-orientation=move || context.orientation.get().to_string()
       element=html::span
       node_ref=node_ref
-      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
@@ -893,34 +867,6 @@ pub fn SliderThumb(
     }
   });
 
-  let mut merged_attrs = attrs.clone();
-  merged_attrs.extend([
-    ("role", "slider".into_attribute()),
-    ("aria-label", name.clone().into_attribute()),
-    (
-      "aria-valuemin",
-      (move || context.min.get()).into_attribute(),
-    ),
-    (
-      "aria-valuenow",
-      (move || value.get().unwrap_or_default()).into_attribute(),
-    ),
-    (
-      "aria-valuemax",
-      (move || context.max.get()).into_attribute(),
-    ),
-    ("aria-orientation", context.orientation.into_attribute()),
-    ("data-orientation", context.orientation.into_attribute()),
-    (
-      "data-disabled",
-      (move || context.disabled.get().then_some("")).into_attribute(),
-    ),
-    (
-      "tabindex",
-      (move || (!context.disabled.get()).then_some(0)).into_attribute(),
-    ),
-  ]);
-
   let span_ref = NodeRef::<Span>::new();
 
   Effect::new(move |_| {
@@ -939,9 +885,18 @@ pub fn SliderThumb(
   view! {
     <span style:transform="var(--primitive-slider-thumb-transform)" style:position="absolute" node_ref=span_ref>
       <Primitive
+        {..attrs}
+        attr:role="slider"
+        attr:aria-label=name.clone()
+        attr:aria-valuemin=context.min
+        attr:aria-valuenow=move || value.get().unwrap_or_default()
+        attr:aria-valuemax=context.max
+        attr:aria-orientation=move || context.orientation.get().to_string()
+        attr:data-orientation=move || context.orientation.get().to_string()
+        attr:data-disabled=move || context.disabled.get().then_some("")
+        attr:tabindex=move || (!context.disabled.get()).then_some(0)
         element=html::span
         node_ref=node_ref
-        attrs=merged_attrs
         as_child=as_child
       >
         {children()}

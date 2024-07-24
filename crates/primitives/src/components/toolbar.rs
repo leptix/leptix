@@ -36,14 +36,6 @@ pub fn ToolbarRoot(
     direction: Signal::derive(move || direction.get()),
   });
 
-  let mut merged_attrs = vec![
-    ("role", "toolbar".into_attribute()),
-    ("aria-orientation", orientation.into_attribute()),
-    ("dir", direction.into_attribute()),
-  ];
-
-  merged_attrs.extend(attrs);
-
   let children = StoredValue::new(children);
 
   view! {
@@ -53,9 +45,12 @@ pub fn ToolbarRoot(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
+        {..attrs.clone()}
+        attr:role="toolbar"
+        attr:aria-orientation=move || orientation.get().to_string()
+        attr:dir=move || direction.get().to_string()
         element=html::div
         node_ref=node_ref
-        attrs=merged_attrs.clone()
         as_child=as_child
       >
         {children.with_value(|children| children())}
@@ -104,9 +99,6 @@ pub fn ToolbarButton(
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let mut merged_attrs = vec![("type", "button".into_attribute())];
-  merged_attrs.extend(attrs);
-
   let children = StoredValue::new(children);
 
   view! {
@@ -115,9 +107,10 @@ pub fn ToolbarButton(
       focusable=Signal::derive(move || disabled.get())
     >
       <Primitive
+        {..attrs.clone()}
+        attr:type="button"
         element=html::button
         node_ref=node_ref
-        attrs=merged_attrs.clone()
         as_child=as_child
       >
         {children.with_value(|children| children())}
@@ -183,21 +176,17 @@ pub fn ToolbarToggleGroup(
   let context = use_context::<ToolbarContextValue>()
     .expect("ToolbarToggleGroup must be in a ToolbarRoot component");
 
-  let mut merged_attrs = vec![
-    ("data-orientation", context.orientation.into_attribute()),
-    ("dir", context.direction.into_attribute()),
-  ];
-  merged_attrs.extend(attrs);
-
   view! {
     <ToggleGroupRoot
+      {..attrs}
+      attr:data-orientation=move || context.orientation.get().to_string()
+      attr:dir=move || context.direction.get().to_string()
       kind=kind
       disabled=Signal::derive(move || disabled.get())
       orientation=Signal::derive(move || orientation.get())
       direction=Signal::derive(move || direction.get())
       roving_focus=false
       node_ref=node_ref
-      attrs=merged_attrs
       as_child=as_child
     >
       {children()}
