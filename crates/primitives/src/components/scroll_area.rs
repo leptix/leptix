@@ -384,16 +384,16 @@ fn ScrollAreaScrollbarHover(
 
   view! {
     <Show when=move || presence.get()>
-        <ScrollAreaScrollbarAuto
-            {..attrs}
-            attr:data-state=move || if visible.get() { "visible" } else { "hidden" }
-            force_mount=force_mount
-            orientation=orientation
-            node_ref=node_ref
-            as_child=as_child
-        >
-            {children.with_value(|children| children())}
-        </ScrollAreaScrollbarAuto>
+      <ScrollAreaScrollbarAuto
+        {..attrs.clone()}
+        attr:data-state=move || if visible.get() { "visible" } else { "hidden" }
+        force_mount=force_mount
+        orientation=orientation
+        node_ref=node_ref
+        as_child=as_child
+      >
+        {children.with_value(|children| children())}
+      </ScrollAreaScrollbarAuto>
     </Show>
   }
 }

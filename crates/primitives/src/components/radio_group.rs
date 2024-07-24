@@ -72,7 +72,7 @@ pub fn RadioGroupRoot(
       should_loop=should_loop
     >
       <Primitive
-        {..attrs}
+        {..attrs.clone()}
         attr:role="radiogroup"
         attr:aria-required=required.clone()
         attr:aria-orientation=move || orientation.get().to_string()

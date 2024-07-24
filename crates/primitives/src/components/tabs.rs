@@ -101,7 +101,7 @@ pub fn TabsList(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
-        {..attrs}
+        {..attrs.clone()}
         attr:role="tablist"
         attr:aria-orientation=move || orientation.get().to_string()
         element=html::div
@@ -158,7 +158,7 @@ pub fn TabsTrigger(
       active=is_selected
     >
       <Primitive
-        {..attrs}
+        {..attrs.clone()}
         attr:type="button"
         attr:role="tab"
         attr:aria-selected=is_selected

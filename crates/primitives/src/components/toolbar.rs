@@ -45,7 +45,7 @@ pub fn ToolbarRoot(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
-        {..attrs}
+        {..attrs.clone()}
         attr:role="toolbar"
         attr:aria-orientation=move || orientation.get().to_string()
         attr:dir=move || direction.get().to_string()
@@ -107,7 +107,7 @@ pub fn ToolbarButton(
       focusable=Signal::derive(move || disabled.get())
     >
       <Primitive
-        {..attrs}
+        {..attrs.clone()}
         attr:type="button"
         element=html::button
         node_ref=node_ref
