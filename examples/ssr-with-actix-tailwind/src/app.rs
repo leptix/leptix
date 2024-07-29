@@ -1,7 +1,8 @@
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use leptos_use::{use_cookie, utils::FromToStringCodec};
+use leptos_use::use_cookie;
+use codee::string::FromToStringCodec;
 
 use crate::primitives::PrimitivesShowcase;
 

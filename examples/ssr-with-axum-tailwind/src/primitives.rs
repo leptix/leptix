@@ -8,8 +8,10 @@ use leptix_primitives::{
 
 use leptos_use::{
     use_cookie, use_interval_fn,
-    utils::{FromToStringCodec, Pausable},
+    utils::Pausable,
 };
+
+use codee::string::FromToStringCodec;
 
 use leptos_meta::*;
 

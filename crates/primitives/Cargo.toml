@@ -1,6 +1,6 @@
 [package]
 name = "leptix_primitives"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 readme = "README.md"
 repository = "https://github.com/leptix/leptix"
@@ -14,7 +14,7 @@ categories = ["accessibility", "web-programming"]
 
 [dependencies]
 leptos = "0.6"
-leptos-use = "0.10.4"
+leptos-use = "0.11"
 derive_more = "0.99.17"
 nanoid = "0.4.0"
 strum = { version = "0.26.2", features = ["derive"] }
