@@ -1,6 +1,6 @@
 [package]
 name = "ssr-with-axum-tailwind"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 [lib]
@@ -20,25 +20,26 @@ wasm-bindgen = "=0.2.92"
 thiserror = "1"
 tracing = { version = "0.1", optional = true }
 http = "1"
-leptos-use = { version = "0.10.4" }
+leptos-use = { version = "0.11" }
 leptix_primitives = { path = "../../crates/primitives" }
 axum-extra = { version = "0.9.3", features = ["cookie"] }
 time = "0.3.36"
+codee = "0.1"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
-    "leptos-use/ssr",
-    "leptos-use/axum",
-    "dep:axum",
-    "dep:tokio",
-    "dep:tower",
-    "dep:tower-http",
-    "dep:leptos_axum",
-    "leptos/ssr",
-    "leptos_meta/ssr",
-    "leptos_router/ssr",
-    "dep:tracing",
+  "leptos-use/ssr",
+  "leptos-use/axum",
+  "dep:axum",
+  "dep:tokio",
+  "dep:tower",
+  "dep:tower-http",
+  "dep:leptos_axum",
+  "leptos/ssr",
+  "leptos_meta/ssr",
+  "leptos_router/ssr",
+  "dep:tracing",
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode

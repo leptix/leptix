@@ -3,7 +3,9 @@ use crate::primitives::PrimitivesShowcase;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use leptos_use::{use_cookie, utils::FromToStringCodec};
+use leptos_use::use_cookie;
+
+use codee::string::FromToStringCodec;
 
 #[component]
 pub fn App() -> impl IntoView {
