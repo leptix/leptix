@@ -1,9 +1,14 @@
+use leptos::{Attribute, IntoAttribute, Oco};
+use strum::{Display, EnumString, IntoStaticStr};
+
 pub mod accordion;
 pub mod aspect_ratio;
 pub mod avatar;
 pub mod checkbox;
 pub mod collapsible;
+pub(crate) mod dismissable_layer;
 pub mod label;
+pub(crate) mod popper;
 pub mod primitive;
 pub mod progress;
 pub(crate) mod radio;
@@ -22,20 +27,58 @@ pub(crate) mod collection;
 pub(crate) mod presence;
 pub(crate) mod roving_focus;
 
-#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
+#[derive(Default, Clone, PartialEq, Copy, Display, IntoStaticStr)]
 pub enum Direction {
   #[default]
-  #[strum(to_string = "ltr")]
+  #[strum(serialize = "ltr")]
   LeftToRight,
-  #[strum(to_string = "rtl")]
+  #[strum(serialize = "rtl")]
   RightToLeft,
 }
 
-#[derive(Default, Clone, PartialEq, Copy, strum_macros::Display)]
+#[derive(Default, Clone, PartialEq, Copy, Display, IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
 pub enum Orientation {
   #[default]
-  #[strum(to_string = "horizontal")]
   Horizontal,
-  #[strum(to_string = "vertical")]
   Vertical,
+}
+
+#[derive(Clone, PartialEq, EnumString, Display, IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum Side {
+  Top,
+  Right,
+  Bottom,
+  Left,
+}
+
+impl IntoAttribute for Direction {
+  fn into_attribute(self) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.into()))
+  }
+
+  fn into_attribute_boxed(self: Box<Self>) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.as_ref().into()))
+  }
+}
+
+impl IntoAttribute for Orientation {
+  fn into_attribute(self) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.into()))
+  }
+
+  fn into_attribute_boxed(self: Box<Self>) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.as_ref().into()))
+  }
+}
+
+impl IntoAttribute for Side {
+  fn into_attribute(self) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.into()))
+  }
+
+  fn into_attribute_boxed(self: Box<Self>) -> Attribute {
+    Attribute::String(Oco::Borrowed(self.as_ref().into()))
+  }
 }

@@ -25,6 +25,8 @@ use crate::{
   Direction, Orientation,
 };
 
+use super::Side;
+
 #[derive(Clone)]
 struct SliderContextValue {
   name: Signal<Option<String>>,
@@ -216,14 +218,6 @@ pub fn SliderRoot(
       {children()}
     </Slider>
   }
-}
-
-#[derive(Clone, PartialEq, EnumString, strum::Display, strum::IntoStaticStr)]
-enum Side {
-  Top,
-  Right,
-  Bottom,
-  Left,
 }
 
 #[derive(Clone, PartialEq)]
@@ -726,11 +720,11 @@ pub fn SliderRange(
     if let Some(node) = node_ref.get() {
       _ = node
         .style(
-          orientation.start_edge.get().to_string().to_lowercase(),
+          Oco::Borrowed(orientation.start_edge.get().into()),
           format!("{}%", offset_start.get()),
         )
         .style(
-          orientation.end_edge.get().to_string().to_lowercase(),
+          Oco::Borrowed(orientation.end_edge.get().into()),
           format!("{}%", offset_end.get()),
         );
     }
@@ -878,7 +872,7 @@ pub fn SliderThumb(
   Effect::new(move |_| {
     if let Some(node) = span_ref.get() {
       _ = node.style(
-        orientation.start_edge.get().to_string().to_lowercase(),
+        Oco::Borrowed(orientation.start_edge.get().into()),
         format!(
           "calc({}% + {}px)",
           percent.get(),
