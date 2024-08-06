@@ -1,6 +1,6 @@
 [package]
 name = "ssr-with-actix-tailwind"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 [lib]
@@ -16,21 +16,22 @@ leptos_meta = { version = "0.6" }
 leptos_actix = { version = "0.6", optional = true }
 leptos_router = { version = "0.6" }
 wasm-bindgen = "=0.2.92"
-leptos-use = { version = "0.10.4" }
+leptos-use = { version = "0.11" }
 leptix_primitives = { path = "../../crates/primitives" }
+codee = "0.1"
 
 [features]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
-    "leptos-use/ssr",
-    "leptos-use/actix",
-    "dep:actix-files",
-    "dep:actix-web",
-    "dep:leptos_actix",
-    "leptos/ssr",
-    "leptos_meta/ssr",
-    "leptos_router/ssr",
+  "leptos-use/ssr",
+  "leptos-use/actix",
+  "dep:actix-files",
+  "dep:actix-web",
+  "dep:leptos_actix",
+  "leptos/ssr",
+  "leptos_meta/ssr",
+  "leptos_router/ssr",
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode

@@ -8,4 +8,4 @@ authors = ["Upbolt"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/leptix/leptix"
-version = "0.2.0"
+version = "0.2.1"
