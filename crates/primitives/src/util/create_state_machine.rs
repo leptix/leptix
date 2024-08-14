@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use leptos::*;
+use leptos::prelude::*;
 
 #[derive(Debug)]
 pub struct InvalidState;

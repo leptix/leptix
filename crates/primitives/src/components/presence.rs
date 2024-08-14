@@ -1,7 +1,7 @@
 use leptos::{
   ev::{animationcancel, animationend, animationstart},
   html::AnyElement,
-  *,
+  prelude::*,
 };
 use leptos_use::use_event_listener;
 use wasm_bindgen::{JsCast, JsValue};

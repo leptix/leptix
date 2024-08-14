@@ -1,7 +1,7 @@
 use leptos::{
   ev::{keydown, keyup},
   html::AnyElement,
-  *,
+  prelude::*,
 };
 use leptos_use::{use_document, use_event_listener};
 use wasm_bindgen::JsCast;

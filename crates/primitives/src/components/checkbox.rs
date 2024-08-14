@@ -1,6 +1,6 @@
 use leptos::{
   html::{AnyElement, Input},
-  *,
+  prelude::*,
 };
 
 use leptos_use::{use_element_size, UseElementSizeReturn};

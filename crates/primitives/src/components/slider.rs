@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use leptos::{
   ev::focus,
   html::{AnyElement, Input, Span},
-  *,
+  prelude::*,
 };
 
 use leptos_use::use_element_size;

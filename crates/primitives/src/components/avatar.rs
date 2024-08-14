@@ -1,5 +1,5 @@
 use html::AnyElement;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_use::{use_timeout_fn, UseTimeoutFnReturn};
 use wasm_bindgen::{closure::Closure, JsCast};
 

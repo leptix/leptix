@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use leptos::{html::AnyElement, *};
+use leptos::{html::AnyElement, prelude::*};
 use web_sys::KeyboardEvent;
 
 use wasm_bindgen::JsCast;

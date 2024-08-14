@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, *};
+use leptos::{html::AnyElement, prelude::*};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlAnchorElement, KeyboardEvent};
 

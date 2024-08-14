@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use leptos::{html::ElementDescriptor, *};
+use leptos::{html::ElementDescriptor, prelude::*};
 use web_sys::js_sys::Array;
 
 #[derive(Clone)]

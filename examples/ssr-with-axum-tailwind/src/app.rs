@@ -1,6 +1,6 @@
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::primitives::PrimitivesShowcase;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::*;
 use leptos_use::use_cookie;

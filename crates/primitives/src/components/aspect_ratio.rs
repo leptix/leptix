@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, *};
+use leptos::{html::AnyElement,  prelude::*};
 
 use crate::{primitive::Primitive, util::Attributes};
 

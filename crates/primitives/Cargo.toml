@@ -14,7 +14,8 @@ categories = ["accessibility", "web-programming"]
 
 [dependencies]
 leptos = "=0.7.0-beta"
-leptos-use = { git = "https://github.com/Synphonyte/leptos-use", branch = "leptos-0.7" }
+# leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "c42605c" }
+leptos-use = { path = "D:/Projects/leptos-ecosystem/leptos-use" }
 derive_more = "0.99.17"
 nanoid = "0.4.0"
 strum = { version = "0.26.2", features = ["derive"] }
@@ -22,6 +23,7 @@ strum_macros = "0.26.2"
 itertools = "0.12.1"
 wasm-bindgen = "=0.2.92"
 web-sys = { version = "0.3.65", features = ["CustomEventInit", "EventInit"] }
+# getrandom = { version = "0.2", features = ["js"] }
 
 [features]
 csr = ["leptos/csr"]

@@ -3,7 +3,7 @@
 async fn main() -> std::io::Result<()> {
   use actix_files::Files;
   use actix_web::*;
-  use leptos::*;
+  use leptos::prelude::*;
   use leptos_actix::{generate_route_list, LeptosRoutes};
   use ssr_with_actix_tailwind::app::*;
 
@@ -58,7 +58,7 @@ pub fn main() {
   // a client-side main function is required for using `trunk serve`
   // prefer using `cargo leptos serve` instead
   // to run: `trunk serve --open --features csr`
-  use leptos::*;
+  use leptos::prelude::*;
   use ros::app::*;
   use wasm_bindgen::prelude::wasm_bindgen;
 

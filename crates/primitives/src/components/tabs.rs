@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, *};
+use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, prelude::*};
 use web_sys::{FocusEvent, KeyboardEvent, MouseEvent};
 
 use crate::{

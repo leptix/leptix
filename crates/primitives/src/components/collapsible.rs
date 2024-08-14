@@ -1,4 +1,4 @@
-use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, *};
+use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, prelude::*};
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 

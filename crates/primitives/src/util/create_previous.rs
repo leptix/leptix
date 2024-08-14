@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 #[derive(Clone)]
 pub(crate) struct Previous<T> {

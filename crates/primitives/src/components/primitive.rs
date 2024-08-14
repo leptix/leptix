@@ -1,6 +1,6 @@
 use leptos::{
   html::{AnyElement, ElementDescriptor},
-  *,
+  prelude::*,
 };
 
 use crate::util::Attributes;

@@ -1,4 +1,4 @@
-use leptos::{html::Input, *};
+use leptos::{html::Input, prelude::*};
 
 use leptix_primitives::{
   accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,

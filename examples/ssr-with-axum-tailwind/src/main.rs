@@ -2,7 +2,7 @@
 #[tokio::main]
 async fn main() {
     use axum::Router;
-    use leptos::*;
+    use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use ssr_with_axum_tailwind::app::*;
     use ssr_with_axum_tailwind::fileserv::file_and_error_handler;

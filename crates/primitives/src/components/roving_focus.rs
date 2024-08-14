@@ -1,6 +1,10 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
-use leptos::{ev::EventDescriptor, html::AnyElement, *};
+use leptos::{
+  ev::EventDescriptor,
+  html::{AnyElement, HtmlElement},
+  prelude::*,
+};
 use leptos_use::use_event_listener;
 use wasm_bindgen::JsCast;
 use web_sys::{Event, FocusEvent, KeyboardEvent, MouseEvent};
@@ -59,11 +63,11 @@ impl EventDescriptor for OnEntryFocus {
   const BUBBLES: bool = false;
   type EventType = web_sys::Event;
 
-  fn name(&self) -> Oco<'static, str> {
+  fn name(&self) -> Cow<'static, str> {
     "roving_focus_group.on_entry_focus".into()
   }
 
-  fn event_delegation_key(&self) -> Oco<'static, str> {
+  fn event_delegation_key(&self) -> Cow<'static, str> {
     "$$$roving_focus_group.on_entry_focus".into()
   }
 }
