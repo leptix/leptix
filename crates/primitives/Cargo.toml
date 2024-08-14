@@ -1,6 +1,6 @@
 [package]
 name = "leptix_primitives"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 readme = "README.md"
 repository = "https://github.com/leptix/leptix"
@@ -14,14 +14,14 @@ categories = ["accessibility", "web-programming"]
 
 [dependencies]
 leptos = "0.6"
-leptos-use = "0.11"
+leptos-use = "0.12"
 derive_more = "0.99.17"
 nanoid = "0.4.0"
 strum = { version = "0.26.2", features = ["derive"] }
 strum_macros = "0.26.2"
 itertools = "0.12.1"
-wasm-bindgen = "=0.2.92"
-web-sys = { version = "0.3.65", features = ["CustomEventInit", "EventInit"] }
+wasm-bindgen = "0.2.93"
+web-sys = { version = "0.3.70", features = ["CustomEventInit", "EventInit"] }
 
 [features]
 csr = ["leptos/csr"]
