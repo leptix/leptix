@@ -1,10 +1,10 @@
 [package]
 name = "csr-with-tailwind"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
 leptos = { version = "0.6", features = ["csr"] }
-leptos-use = "0.11"
+leptos-use = "0.12"
 leptix_primitives = { path = "../../crates/primitives" }
