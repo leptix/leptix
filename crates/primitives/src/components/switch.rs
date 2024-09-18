@@ -1,6 +1,6 @@
 use leptos::{
-  html::{AnyElement, Input},
-  *,
+  html::{self, Button, Input, Span},
+  prelude::*,
 };
 use leptos_use::{use_element_size, UseElementSizeReturn};
 use wasm_bindgen::{JsCast, JsValue};
@@ -14,7 +14,6 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
-    Attributes,
   },
 };
 
@@ -33,17 +32,15 @@ pub fn SwitchRoot(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
 
-  #[prop(default=(|_|{}).into(), into)] on_checked_change: Callback<bool>,
-  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_checked_change: Callback<bool>,
+  #[prop(default=Callback::new(|_|{}), into)] on_click: Callback<MouseEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let node_ref = NodeRef::<AnyElement>::new();
-  let (is_form_control, set_is_form_control) = create_signal(true);
+  let (is_form_control, set_is_form_control) = signal(true);
 
   let has_consumer_stopped_propagation = StoredValue::new(false);
 
@@ -70,11 +67,10 @@ pub fn SwitchRoot(
 
   view! {
     <Primitive
-      {..attrs}
-      attr:type="button"
-      attr:role="switch"
-      attr:aria-checked=checked
-      attr:aria-required=required
+      element={html::button}
+      node_ref={node_ref}
+      as_child={as_child}
+      attr:data-disabled=disabled
       attr:data-state=move || {
         if checked.get().unwrap_or(false) {
           "checked"
@@ -82,11 +78,14 @@ pub fn SwitchRoot(
           "unchecked"
         }
       }
-      attr:data-disabled=disabled
-      attr:value=attr_value
-      element=html::button
+      {..}
+      type="button"
+      role="switch"
+      aria-checked=checked
+      aria-required=required
+      value=move || attr_value.get()
       on:click=move |ev: MouseEvent| {
-        on_click.call(ev.clone());
+        on_click.run(ev.clone());
 
         set_checked.update(|checked| *checked = Some(!checked.unwrap_or(false)));
 
@@ -98,8 +97,6 @@ pub fn SwitchRoot(
           }
         }
       }
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -120,8 +117,7 @@ pub fn SwitchRoot(
 
 #[component]
 pub fn SwitchThumb(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -133,7 +129,9 @@ pub fn SwitchThumb(
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::span}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         if checked.get() {
           "checked"
@@ -142,9 +140,6 @@ pub fn SwitchThumb(
         }
       }
       attr:data-disabled=move || disabled.get().then_some("")
-      element=html::span
-      node_ref=node_ref
-      as_child=as_child
     >
       {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>
@@ -159,8 +154,7 @@ pub fn BubbleInput(
   #[prop(into)] value: MaybeProp<String>,
   disabled: Signal<bool>,
   required: Signal<bool>,
-  control: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  control: NodeRef<Button>,
 ) -> impl IntoView {
   let node_ref = NodeRef::<Input>::new();
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
@@ -184,8 +178,8 @@ pub fn BubbleInput(
       .ok()?;
 
       if prev_checked.get() != checked.get() {
-        let mut ev_options = EventInit::new();
-        ev_options.bubbles(bubbles.get());
+        let ev_options = EventInit::new();
+        ev_options.set_bubbles(bubbles.get());
 
         let ev = Event::new_with_event_init_dict("click", &ev_options).ok()?;
 
@@ -202,24 +196,25 @@ pub fn BubbleInput(
     })();
   });
 
+  let value = Signal::derive(move || value.get().unwrap_or("on".into()));
+
   view! {
     <input
-      type="checkbox"
+      node_ref={node_ref}
+      style:position={"absolute"}
+      style:pointer-events={"none"}
+      style:opacity={"0"}
+      style:margin={"0"}
+      style:width={move || width.get().to_string()}
+      style:height={move || height.get().to_string()}
+      disabled={disabled}
+      required={required}
+      type={"checkbox"}
+      value={value}
       aria-hidden
-      checked=Signal::derive(move || checked.get()).into_attribute()
-      tabindex=(-1).into_attribute()
-      node_ref=node_ref
-      name=name.into_attribute()
-      value=Signal::derive(move || value.get().unwrap_or("on".into())).into_attribute()
-      disabled=Signal::derive(move || disabled.get()).into_attribute()
-      required=Signal::derive(move || required.get()).into_attribute()
-      style:position="absolute"
-      style:pointer-events="none"
-      style:opacity="0"
-      style:margin="0"
-      style:width=move || width.get()
-      style:height=move || height.get()
-      {..attrs}
+      checked={checked}
+      tabindex={-1}
+      // name={name}
     />
   }
 }

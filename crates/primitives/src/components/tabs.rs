@@ -1,4 +1,8 @@
-use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, *};
+use leptos::{
+  html::{self, Button, Div},
+  leptos_dom::helpers::AnimationFrameRequestHandle,
+  prelude::*,
+};
 use web_sys::{FocusEvent, KeyboardEvent, MouseEvent};
 
 use crate::{
@@ -8,7 +12,6 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Attributes,
   },
   Direction, Orientation,
 };
@@ -38,10 +41,9 @@ pub fn TabsRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(optional, into)] activation_mode: MaybeSignal<ActivationMode>,
 
-  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
+  #[prop(default=Callback::new(|_|{}), into)] on_value_change: Callback<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional)] as_child: MaybeProp<bool>,
@@ -65,10 +67,9 @@ pub fn TabsRoot(
 
   view! {
     <Primitive
-      element=html::div
-      node_ref=node_ref
-      attrs=attrs
-      as_child=as_child
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
     >
       {children()}
     </Primitive>
@@ -79,8 +80,7 @@ pub fn TabsRoot(
 pub fn TabsList(
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -101,12 +101,12 @@ pub fn TabsList(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
-        {..attrs.clone()}
-        attr:role="tablist"
-        attr:aria-orientation=move || orientation.get().to_string()
         element=html::div
         node_ref=node_ref
         as_child=as_child
+        attr:role="tablist"
+        {..}
+        aria-orientation=move || orientation.get().to_string()
       >
         {children.with_value(|children| children())}
       </Primitive>
@@ -119,12 +119,11 @@ pub fn TabsTrigger(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
 
-  #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
-  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
-  #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_mouse_down: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_focus: Callback<FocusEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -158,11 +157,9 @@ pub fn TabsTrigger(
       active=is_selected
     >
       <Primitive
-        {..attrs.clone()}
-        attr:type="button"
-        attr:role="tab"
-        attr:aria-selected=is_selected
-        attr:aria-controls=content_id
+        element={html::button}
+        node_ref={node_ref}
+        as_child={as_child}
         attr:data-state=move || {
           if is_selected.get() {
             "active"
@@ -171,36 +168,38 @@ pub fn TabsTrigger(
           }
         }
         attr:data-disabled=move || disabled.get().then_some("")
-        attr:disabled=disabled
-        attr:id=trigger_id
-        element=html::button
+        {..}
+        type="button"
+        role="tab"
+        aria-selected=is_selected
+        aria-controls=content_id
+        disabled=disabled
+        id=trigger_id
         on:mousedown=move|ev: MouseEvent| {
-          on_mouse_down.call(ev.clone());
+          on_mouse_down.run(ev.clone());
 
           if !disabled.get() && ev.button() == 0 && !ev.ctrl_key() {
-            on_value_change.call(value.get_value().get());
+            on_value_change.run(value.get_value().get());
           } else {
             ev.prevent_default();
           }
         }
         on:keydown=move |ev: KeyboardEvent| {
-          on_key_down.call(ev.clone());
+          on_key_down.run(ev.clone());
 
           if [" ", "Enter"].contains(&ev.key().as_str()) {
-            on_value_change.call(value.get_value().get());
+            on_value_change.run(value.get_value().get());
           }
         }
         on:focus=move |ev: FocusEvent| {
-          on_focus.call(ev.clone());
+          on_focus.run(ev.clone());
 
           let is_automatic_activation = activation_mode.get() != ActivationMode::Manual;
 
           if !is_selected.get() && !disabled.get() && is_automatic_activation {
-            on_value_change.call(value.get_value().get());
+            on_value_change.run(value.get_value().get());
           }
         }
-        node_ref=node_ref
-        as_child=as_child
       >
         {children.with_value(|children| children())}
       </Primitive>
@@ -213,8 +212,7 @@ pub fn TabsContent(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -264,7 +262,7 @@ pub fn TabsContent(
     _ = presence.get();
 
     if is_mount_animation_prevented.get_value() {
-      _ = node.style("animation-duration", "0s");
+      _ = node.style(("animation-duration", "0s"));
     }
   });
 
@@ -273,8 +271,9 @@ pub fn TabsContent(
   view! {
     <Show when=move || presence.get()>
       <Primitive
-        {..attrs.clone()}
-        attr:role="tabpanel"
+        element={html::div}
+        node_ref={node_ref}
+        as_child={as_child}
         attr:data-state=move || {
           if is_selected.get() {
             "active"
@@ -283,13 +282,12 @@ pub fn TabsContent(
           }
         }
         attr:data-orientation=move || orientation.get().to_string()
-        attr:aria-labelledby=trigger_id.clone()
-        attr:hidden=move || !is_present.get()
-        attr:id=content_id.clone()
-        attr:tabindex=0
-        element=html::div
-        node_ref=node_ref
-        as_child=as_child
+        {..}
+        role="tabpanel"
+        aria-labelledby=trigger_id.clone()
+        hidden=move || !is_present.get()
+        id=content_id.clone()
+        tabindex=0
       >
         {children.with_value(|children| children())}
       </Primitive>

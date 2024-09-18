@@ -105,7 +105,7 @@ const CheckboxDemo = () => (
 You would have this in Rust using Leptos:
 
 ```rust
-use leptos::*;
+use leptos::prelude::*;
 use leptix_primitives::checkbox::*;
 
 #[component]
