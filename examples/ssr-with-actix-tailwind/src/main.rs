@@ -7,7 +7,7 @@ async fn main() -> std::io::Result<()> {
   use leptos_actix::{generate_route_list, LeptosRoutes};
   use ssr_with_actix_tailwind::app::*;
 
-  let conf = get_configuration(None).await.unwrap();
+  let conf = get_configuration(None).unwrap();
   let addr = conf.leptos_options.site_addr;
   // Generate the list of routes in your Leptos App
   let routes = generate_route_list(App);
@@ -24,7 +24,10 @@ async fn main() -> std::io::Result<()> {
       .service(Files::new("/assets", site_root))
       // serve the favicon from /favicon.ico
       .service(favicon)
-      .leptos_routes(leptos_options.to_owned(), routes.to_owned(), App)
+      .leptos_routes(leptos_options.to_owned(), routes.to_owned(), {
+        let leptos_options = leptos_options.clone();
+        move || shell(leptos_options.clone())
+      })
       .app_data(web::Data::new(leptos_options.to_owned()))
     //.wrap(middleware::Compress::default())
   })

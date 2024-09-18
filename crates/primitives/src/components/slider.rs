@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use leptos::{
+  either::Either,
   ev::focus,
-  html::{AnyElement, Input, Span},
+  html,
+  html::{Input, Span},
   prelude::*,
 };
 
@@ -11,7 +13,7 @@ use strum::EnumString;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
   js_sys::{Array, Function, JsString, Object, Reflect},
-  DomRect, Event, EventInit, KeyboardEvent, PointerEvent,
+  DomRect, Event, EventInit, HtmlSpanElement, KeyboardEvent, PointerEvent,
 };
 
 use crate::{
@@ -20,7 +22,7 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_previous::create_previous,
-    linear_scale, Attributes,
+    linear_scale,
   },
   Direction, Orientation,
 };
@@ -33,7 +35,7 @@ struct SliderContextValue {
   max: Signal<f64>,
   values: Signal<Vec<f64>>,
   value_index_to_change: StoredValue<Option<usize>>,
-  thumbs: StoredValue<Vec<HtmlElement<AnyElement>>>,
+  thumbs: StoredValue<Vec<HtmlSpanElement>, LocalStorage>,
   orientation: Signal<Orientation>,
 }
 
@@ -51,16 +53,15 @@ pub fn SliderRoot(
   #[prop(optional, into)] default_value: MaybeProp<Vec<f64>>,
   #[prop(optional, into)] inverted: MaybeSignal<bool>,
 
-  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<Vec<f64>>,
-  #[prop(default=(|_|{}).into(), into)] on_value_commit: Callback<Vec<f64>>,
+  #[prop(default=Callback::new(|_|{}), into)] on_value_change: Callback<Vec<f64>>,
+  #[prop(default=Callback::new(|_|{}), into)] on_value_commit: Callback<Vec<f64>>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let thumbs = StoredValue::new(Vec::<HtmlElement<AnyElement>>::new());
+  let thumbs = StoredValue::new_local(Vec::<HtmlSpanElement>::new());
   let value_index_to_change = StoredValue::new(Some(0usize));
 
   let (values, set_values) = create_controllable_signal(CreateControllableSignalProps {
@@ -76,7 +77,7 @@ pub fn SliderRoot(
         }
       }
 
-      on_value_change.call(value);
+      on_value_change.run(value);
     }),
   });
 
@@ -109,7 +110,7 @@ pub fn SliderRoot(
 
         if has_changed {
           if commit {
-            on_value_commit.call(next_values.clone());
+            on_value_commit.run(next_values.clone());
           }
 
           *values = Some(next_values);
@@ -146,7 +147,7 @@ pub fn SliderRoot(
     let has_changed = next_value != prev_value;
 
     if has_changed {
-      on_value_commit.call(values.get());
+      on_value_commit.run(values.get());
     }
   });
 
@@ -161,7 +162,7 @@ pub fn SliderRoot(
     orientation: Signal::derive(move || orientation.get()),
   });
 
-  provide_context(CollectionContextValue::<SliderCollectionItem, AnyElement> {
+  provide_context(CollectionContextValue::<SliderCollectionItem, Span> {
     collection_ref: node_ref,
     item_map: RwSignal::new(HashMap::new()),
   });
@@ -171,17 +172,14 @@ pub fn SliderRoot(
 
   view! {
     <Slider
-      {..attrs}
-      attr:aria-disabled=disabled
-      attr:data-disabled=move || disabled.get().then_some("")
       min=Signal::derive(move || min.get())
       max=Signal::derive(move || max.get())
       inverted=Signal::derive(move || inverted.get())
       direction=Signal::derive(move || direction.get())
       orientation=Signal::derive(move || orientation.get())
-      on_slide_start=handle_slide_start
-      on_slide_move=handle_slide_move
-      on_slide_end=handle_slide_end
+      on_slide_start={handle_slide_start}
+      on_slide_move={handle_slide_move}
+      on_slide_end={handle_slide_end}
       on_home_key_down=Callback::new(move |_| {
         if !disabled.get() {
           home_key_down_update(min.get(), 0, true);
@@ -210,8 +208,11 @@ pub fn SliderRoot(
 
         update_values(value + step_in_direction, at_index, true);
       })
-      node_ref=node_ref
-      as_child=as_child
+      node_ref={node_ref}
+      as_child={as_child}
+      attr:data-disabled=move || disabled.get().then_some("")
+      {..}
+      aria-disabled=disabled
     >
       {children()}
     </Slider>
@@ -224,6 +225,17 @@ enum Side {
   Right,
   Bottom,
   Left,
+}
+
+impl Side {
+  fn to_str(&self) -> &'static str {
+    match self {
+      Self::Top => "top",
+      Self::Left => "left",
+      Self::Right => "right",
+      Self::Bottom => "bottom",
+    }
+  }
 }
 
 #[derive(Clone, PartialEq)]
@@ -263,7 +275,7 @@ struct SliderCollectionItem;
 
 #[derive(Clone)]
 struct SliderImplContextValue {
-  dom_rect: StoredValue<Option<DomRect>>,
+  dom_rect: StoredValue<Option<DomRect>, LocalStorage>,
 }
 
 #[component]
@@ -281,79 +293,72 @@ fn Slider(
   on_end_key_down: Callback<KeyboardEvent>,
   on_step_key_down: Callback<Step>,
 
-  #[prop(attrs)] attrs: Attributes,
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let dom_rect = StoredValue::<Option<DomRect>>::new(None);
+  let dom_rect = StoredValue::new_local(None);
 
   provide_context(SliderImplContextValue { dom_rect });
 
   let children = StoredValue::new(children);
 
-  move || {
-    let attrs = attrs.clone();
-
-    match orientation.get() {
-      Orientation::Horizontal => view! {
-          <SliderHorizontal
-              max=max
-              min=min
-              inverted=inverted
-              direction=direction
-              node_ref=node_ref
-          >
-              <SliderImpl
-                  max=max
-                  min=min
-                  inverted=inverted
-                  orientation=orientation
-                  direction=direction
-                  on_slide_start=on_slide_start
-                  on_slide_move=on_slide_move
-                  on_slide_end=on_slide_end
-                  on_home_key_down=on_home_key_down
-                  on_end_key_down=on_end_key_down
-                  on_step_key_down=on_step_key_down
-                  node_ref=node_ref
-                  attrs=attrs
-                  as_child=as_child
-              >
-                  {children.with_value(|children| children())}
-              </SliderImpl>
-          </SliderHorizontal>
-      },
-      Orientation::Vertical => view! {
-          <SliderVertical
-              max=max
-              min=min
-              inverted=inverted
-              direction=direction
-              node_ref=node_ref
-          >
-              <SliderImpl
-                  max=max
-                  min=min
-                  inverted=inverted
-                  orientation=orientation
-                  direction=direction
-                  on_slide_start=on_slide_start
-                  on_slide_move=on_slide_move
-                  on_slide_end=on_slide_end
-                  on_home_key_down=on_home_key_down
-                  on_end_key_down=on_end_key_down
-                  on_step_key_down=on_step_key_down
-                  node_ref=node_ref
-                  attrs=attrs
-                  as_child=as_child
-              >
-                  {children.with_value(|children| children())}
-              </SliderImpl>
-          </SliderVertical>
-      },
-    }
+  move || match orientation.get() {
+    Orientation::Horizontal => Either::Left(view! {
+      <SliderHorizontal
+        max={max}
+        min={min}
+        inverted={inverted}
+        direction={direction}
+        node_ref={node_ref}
+      >
+        <SliderImpl
+          max={max}
+          min={min}
+          inverted={inverted}
+          orientation={orientation}
+          direction={direction}
+          on_slide_start={on_slide_start}
+          on_slide_move={on_slide_move}
+          on_slide_end={on_slide_end}
+          on_home_key_down={on_home_key_down}
+          on_end_key_down={on_end_key_down}
+          on_step_key_down={on_step_key_down}
+          node_ref={node_ref}
+          as_child={as_child}
+        >
+          {children.with_value(|children| children())}
+        </SliderImpl>
+      </SliderHorizontal>
+    }),
+    Orientation::Vertical => Either::Right(view! {
+      <SliderVertical
+        max={max}
+        min={min}
+        inverted={inverted}
+        direction={direction}
+        node_ref={node_ref}
+      >
+        <SliderImpl
+          max={max}
+          min={min}
+          inverted={inverted}
+          orientation={orientation}
+          direction={direction}
+          on_slide_start={on_slide_start}
+          on_slide_move={on_slide_move}
+          on_slide_end={on_slide_end}
+          on_home_key_down={on_home_key_down}
+          on_end_key_down={on_end_key_down}
+          on_step_key_down={on_step_key_down}
+          node_ref={node_ref}
+          as_child={as_child}
+        >
+          {children.with_value(|children| children())}
+        </SliderImpl>
+      </SliderVertical>
+    }),
   }
 }
 
@@ -369,7 +374,7 @@ fn SliderHorizontal(
   min: Signal<f64>,
   inverted: Signal<bool>,
   direction: Signal<Direction>,
-  node_ref: NodeRef<AnyElement>,
+  node_ref: NodeRef<Span>,
   children: Children,
 ) -> impl IntoView {
   let SliderImplContextValue { dom_rect } =
@@ -436,9 +441,7 @@ fn SliderHorizontal(
     slide_direction,
   });
 
-  view! {
-      <>{children()}</>
-  }
+  children().into_view()
 }
 
 #[component]
@@ -447,7 +450,7 @@ fn SliderVertical(
   min: Signal<f64>,
   inverted: Signal<bool>,
   direction: Signal<Direction>,
-  node_ref: NodeRef<AnyElement>,
+  node_ref: NodeRef<Span>,
   children: Children,
 ) -> impl IntoView {
   let SliderImplContextValue { dom_rect } =
@@ -529,8 +532,7 @@ fn SliderImpl(
   on_end_key_down: Callback<KeyboardEvent>,
   on_step_key_down: Callback<Step>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -549,28 +551,30 @@ fn SliderImpl(
 
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
-      _ = node.style(
+      _ = node.style((
         "--primitive-slider-thumb-transform",
         if orientation.get() == Orientation::Vertical {
           "translateY(50%)"
         } else {
           "translateX(-50%)"
         },
-      );
+      ));
     }
   });
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::span}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-orientation=move || orientation.get().to_string()
-      attr:dir=move || (orientation.get() == Orientation::Horizontal).then_some(direction.get().to_string())
-      element=html::span
+      {..}
+      dir=move || (orientation.get() == Orientation::Horizontal).then_some(direction.get().to_string())
       on:keydown=move |ev: KeyboardEvent| {
         if ev.key() == "Home" {
-            on_home_key_down.call(ev.clone());
+            on_home_key_down.run(ev.clone());
         } else if ev.key() == "End" {
-            on_end_key_down.call(ev.clone());
+            on_end_key_down.run(ev.clone());
         } else if ["PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].contains(&ev.key().as_ref()) {
         let is_back_key = match slide_direction.get() {
             SlideDirection::FromLeft => ["Home", "PageDown", "ArrowDown", "ArrowLeft"].contains(&ev.key().as_ref()),
@@ -579,7 +583,7 @@ fn SliderImpl(
             SlideDirection::FromBottom => ["Home", "PageDown", "ArrowUp", "ArrowLeft"].contains(&ev.key().as_ref()),
         };
 
-        on_step_key_down.call(Step {
+        on_step_key_down.run(Step {
             event: ev.clone(),
             direction: if is_back_key {
                 OrientationDirection::Backward
@@ -613,7 +617,7 @@ fn SliderImpl(
           _ = target_el.focus();
         }
 
-        on_slide_start.call(pointer_value.call(ev.client_x()));
+        on_slide_start.run(pointer_value.run(ev.client_x()));
       }
       on:pointermove=move |ev: PointerEvent| {
         let Some(target) = ev.target() else {
@@ -625,7 +629,7 @@ fn SliderImpl(
         };
 
         if target_el.has_pointer_capture(ev.pointer_id()) {
-            on_slide_move.call(pointer_value.call(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
+            on_slide_move.run(pointer_value.run(if orientation.get() == Orientation::Horizontal { ev.client_x() } else { ev.client_y() }));
         }
       }
       on:pointerup=move |ev: PointerEvent| {
@@ -642,11 +646,9 @@ fn SliderImpl(
 
           dom_rect.set_value(None);
 
-          on_slide_end.call(());
+          on_slide_end.run(());
         }
       }
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -655,8 +657,7 @@ fn SliderImpl(
 
 #[component]
 pub fn SliderTrack(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -669,12 +670,11 @@ pub fn SliderTrack(
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::span}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-disabled=move || disabled.get().then_some("")
       attr:data-orientation=move || orientation.get().to_string()
-      element=html::span
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -683,8 +683,7 @@ pub fn SliderTrack(
 
 #[component]
 pub fn SliderRange(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -724,26 +723,24 @@ pub fn SliderRange(
 
   Effect::new(move |_| {
     if let Some(node) = node_ref.get() {
-      _ = node
-        .style(
-          orientation.start_edge.get().to_string().to_lowercase(),
-          format!("{}%", offset_start.get()),
-        )
-        .style(
-          orientation.end_edge.get().to_string().to_lowercase(),
-          format!("{}%", offset_end.get()),
-        );
+      node.style((
+        orientation.start_edge.get().to_str(),
+        format!("{}%", offset_start.get()),
+      ));
+      node.style((
+        orientation.end_edge.get().to_str(),
+        format!("{}%", offset_end.get()),
+      ));
     }
   });
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::span}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-disabled=move || context.disabled.get().then_some("")
       attr:data-orientation=move || context.orientation.get().to_string()
-      element=html::span
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -754,21 +751,20 @@ pub fn SliderRange(
 pub fn SliderThumb(
   #[prop(optional, into)] name: MaybeProp<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  use_collection_item_ref::<html::AnyElement, SliderCollectionItem>(node_ref, SliderCollectionItem);
-  let get_items = use_collection_context::<SliderCollectionItem, AnyElement>();
+  use_collection_item_ref::<Span, SliderCollectionItem>(node_ref, SliderCollectionItem);
+  let get_items = use_collection_context::<SliderCollectionItem, Span>();
 
   let context = use_context::<SliderContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
   let orientation = use_context::<OrientationContextValue>()
     .expect("SliderThumb must be used in a SliderRoot component");
 
-  let (is_form_control, set_is_form_control) = create_signal(true);
+  let (is_form_control, set_is_form_control) = signal(true);
 
   let size = use_element_size(node_ref);
 
@@ -841,21 +837,23 @@ pub fn SliderThumb(
       thumbs.push(node.clone());
     });
 
-    on_cleanup(move || {
-      // let Some(node) = node_ref.get() else {
-      //   return;
-      // };
+    Owner::current().map(|owner| {
+      owner.with_cleanup(move || {
+        // let Some(node) = node_ref.get() else {
+        //   return;
+        // };
 
-      _ = context.thumbs.try_update_value(|thumbs| {
-        if let Some(position) = thumbs.iter().position(|thumb| {
-          let thumb_el: &web_sys::Element = thumb;
-          let node_el: &web_sys::Element = &node.clone();
+        _ = context.thumbs.try_update_value(|thumbs| {
+          if let Some(position) = thumbs.iter().position(|thumb| {
+            let thumb_el: &web_sys::Element = thumb;
+            let node_el: &web_sys::Element = &node.clone();
 
-          thumb_el == node_el
-        }) {
-          _ = thumbs.remove(position);
-        }
-      });
+            thumb_el == node_el
+          }) {
+            _ = thumbs.remove(position);
+          }
+        });
+      })
     });
   });
 
@@ -864,12 +862,12 @@ pub fn SliderThumb(
       return;
     };
 
-    let node = node.on(focus, move |_| {
+    node.on(focus, move |_| {
       context.value_index_to_change.set_value(index.get());
     });
 
     if value.get().is_none() {
-      _ = node.clone().style("display", "none");
+      _ = node.style(("display", "none"));
     }
   });
 
@@ -877,41 +875,44 @@ pub fn SliderThumb(
 
   Effect::new(move |_| {
     if let Some(node) = span_ref.get() {
-      _ = node.style(
-        orientation.start_edge.get().to_string().to_lowercase(),
+      _ = node.style((
+        orientation.start_edge.get().to_str(),
         format!(
           "calc({}% + {}px)",
           percent.get(),
           thumbs_in_bound_offset.get()
         ),
-      );
+      ));
     }
   });
 
+  let label_name = name.clone();
+
   view! {
-    <span style:transform="var(--primitive-slider-thumb-transform)" style:position="absolute" node_ref=span_ref>
+    // <span style:transform="var(--primitive-slider-thumb-transform)" style:position="absolute" node_ref=span_ref>
+    <span>
       <Primitive
-        {..attrs}
-        attr:role="slider"
-        attr:aria-label=name.clone()
-        attr:aria-valuemin=context.min
-        attr:aria-valuenow=move || value.get().unwrap_or_default()
-        attr:aria-valuemax=context.max
-        attr:aria-orientation=move || context.orientation.get().to_string()
+        element={html::span}
+        node_ref={node_ref}
+        as_child={as_child}
         attr:data-orientation=move || context.orientation.get().to_string()
         attr:data-disabled=move || context.disabled.get().then_some("")
-        attr:tabindex=move || (!context.disabled.get()).then_some(0)
-        element=html::span
-        node_ref=node_ref
-        as_child=as_child
+        {..}
+        role="slider"
+        aria-label=move || label_name.get()
+        aria-valuemin=context.min
+        aria-valuenow=move || value.get().unwrap_or_default()
+        aria-valuemax=context.max
+        aria-orientation=move || context.orientation.get().to_string()
+        tabindex=move || (!context.disabled.get()).then_some(0)
       >
         {children()}
       </Primitive>
 
      <Show when=move || is_form_control.get()>
        <BubbleInput
-           name=name.clone()
-         value=Signal::derive(move || value.get().unwrap_or_default())
+          name=name.clone()
+          value=Signal::derive(move || value.get().unwrap_or_default())
        />
      </Show>
     </span>
@@ -947,8 +948,8 @@ fn BubbleInput(
       .ok()?;
 
       if prev_value.get() != value.get() {
-        let mut ev_options = EventInit::new();
-        ev_options.bubbles(true);
+        let ev_options = EventInit::new();
+        ev_options.set_bubbles(true);
 
         let ev = Event::new_with_event_init_dict("input", &ev_options).ok()?;
 
@@ -974,8 +975,8 @@ fn BubbleInput(
   view! {
     <input
       aria-hidden
-      name=Signal::derive(move || name.get().map(|name| format!("{}{}", name, if values.get().len() > 1 { "[]" } else { "" }))).into_attribute()
-      value=value.into_attribute()
+      name=Signal::derive(move || name.get().map(|name| format!("{}{}", name, if values.get().len() > 1 { "[]" } else { "" })))
+      value=value
       node_ref=node_ref
       style:display="none"
     />

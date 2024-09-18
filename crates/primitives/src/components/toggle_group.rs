@@ -1,4 +1,8 @@
-use leptos::{html::AnyElement, prelude::*};
+use leptos::{
+  either::Either,
+  html::{self, Button, Div},
+  prelude::*,
+};
 
 use crate::{
   components::{
@@ -6,10 +10,7 @@ use crate::{
     roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
     toggle::ToggleRoot,
   },
-  util::{
-    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-    Attributes,
-  },
+  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
   Direction, Orientation,
 };
 
@@ -51,8 +52,7 @@ pub fn ToggleGroupRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -62,44 +62,42 @@ pub fn ToggleGroupRoot(
       value,
       default_value,
       on_value_change,
-    } => view! {
+    } => Either::Left(view! {
       <ToggleGroupSingleImpl
-        disabled=disabled
-        roving_focus=roving_focus
-        should_loop=should_loop
-        orientation=orientation
-        direction=direction
-        value=value
-        default_value=default_value
-        on_value_change=on_value_change.unwrap_or((|_|{}).into())
-        node_ref=node_ref
-        attrs=attrs
-        as_child=as_child
+        disabled={disabled}
+        roving_focus={roving_focus}
+        should_loop={should_loop}
+        orientation={orientation}
+        direction={direction}
+        value={value}
+        default_value={default_value}
+        on_value_change={on_value_change.unwrap_or(Callback::new(|_|{}))}
+        node_ref={node_ref}
+        as_child={as_child}
       >
         {children()}
       </ToggleGroupSingleImpl>
-    },
+    }),
     ToggleGroupKind::Multiple {
       value,
       default_value,
       on_value_change,
-    } => view! {
+    } => Either::Right(view! {
       <ToggleGroupMultipleImpl
-        disabled=disabled
-        roving_focus=roving_focus
-        should_loop=should_loop
-        orientation=orientation
-        direction=direction
-        value=value
-        default_value=default_value
-        on_value_change=on_value_change.unwrap_or((|_|{}).into())
-        node_ref=node_ref
-        attrs=attrs
-        as_child=as_child
+        disabled={disabled}
+        roving_focus={roving_focus}
+        should_loop={should_loop}
+        orientation={orientation}
+        direction={direction}
+        value={value}
+        default_value={default_value}
+        on_value_change={on_value_change.unwrap_or(Callback::new(|_|{}))}
+        node_ref={node_ref}
+        as_child={as_child}
       >
         {children()}
       </ToggleGroupMultipleImpl>
-    },
+    }),
   }
 }
 
@@ -129,8 +127,7 @@ fn ToggleGroupSingleImpl(
 
   on_value_change: Callback<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -154,14 +151,13 @@ fn ToggleGroupSingleImpl(
 
   view! {
     <ToggleGroup
-      disabled=disabled
-      roving_focus=roving_focus
-      should_loop=should_loop
-      orientation=orientation
-      direction=direction
-      node_ref=node_ref
-      attrs=attrs
-      as_child=as_child
+      disabled={disabled}
+      roving_focus={roving_focus}
+      should_loop={should_loop}
+      orientation={orientation}
+      direction={direction}
+      node_ref={node_ref}
+      as_child={as_child}
     >
       {children()}
     </ToggleGroup>
@@ -180,8 +176,7 @@ fn ToggleGroupMultipleImpl(
 
   on_value_change: Callback<Vec<String>>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -222,14 +217,13 @@ fn ToggleGroupMultipleImpl(
 
   view! {
     <ToggleGroup
-      disabled=disabled
-      roving_focus=roving_focus
-      should_loop=should_loop
-      orientation=orientation
-      direction=direction
-      node_ref=node_ref
-      attrs=attrs
-      as_child=as_child
+      disabled={disabled}
+      roving_focus={roving_focus}
+      should_loop={should_loop}
+      orientation={orientation}
+      direction={direction}
+      node_ref={node_ref}
+      as_child={as_child}
     >
       {children()}
     </ToggleGroup>
@@ -250,8 +244,7 @@ fn ToggleGroup(
   orientation: MaybeSignal<Orientation>,
   direction: MaybeSignal<Direction>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -262,19 +255,18 @@ fn ToggleGroup(
   });
 
   let children = StoredValue::new(children);
-  let attrs = StoredValue::new(attrs);
 
   view! {
     <Show
       when=move || roving_focus.get()
       fallback=move || view! {
         <Primitive
-          {..attrs.get_value()}
-          attr:role="group"
-          attr:dir=move || direction.get().to_string()
-          element=html::div
-          node_ref=node_ref
-          as_child=as_child
+          element={html::div}
+          node_ref={node_ref}
+          as_child={as_child}
+          {..}
+          role="group"
+          dir=move || direction.get().to_string()
         >
           {children.with_value(|children| children())}
         </Primitive>
@@ -287,12 +279,12 @@ fn ToggleGroup(
         should_loop=Signal::derive(move || should_loop.get())
       >
         <Primitive
-          {..attrs.get_value()}
-          attr:role="group"
-          attr:dir=move || direction.get().to_string()
-          element=html::div
-          node_ref=node_ref
-          as_child=as_child
+          element={html::div}
+          node_ref={node_ref}
+          as_child={as_child}
+          {..}
+          role="group"
+          dir=move || direction.get().to_string()
         >
           {children.with_value(|children| children())}
         </Primitive>
@@ -306,8 +298,7 @@ pub fn ToggleGroupItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional)] as_child: MaybeProp<bool>,
@@ -330,7 +321,6 @@ pub fn ToggleGroupItem(
 
   let children = StoredValue::new(children);
   let kind = StoredValue::new(kind);
-  let attrs = StoredValue::new(attrs);
   let value = StoredValue::new(value);
 
   view! {
@@ -338,20 +328,20 @@ pub fn ToggleGroupItem(
       when=move || roving_focus.get()
       fallback=move || view! {
         <ToggleRoot
-          {..attrs.get_value()}
-          attr:role=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some("radio")
-          attr:aria-checked=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
-          disabled=is_disabled
-          pressed=is_pressed
+          disabled={is_disabled}
+          pressed={is_pressed}
+          node_ref={node_ref}
+          as_child={as_child}
           on_pressed_changed=Callback::new(move |pressed| {
             if pressed {
-              on_item_activate.call(value.get_value().get());
+              on_item_activate.run(value.get_value().get());
             } else {
-              on_item_deactivate.call(value.get_value().get());
+              on_item_deactivate.run(value.get_value().get());
             }
           })
-          node_ref=node_ref
-          as_child=as_child
+          {..}
+          role=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some("radio")
+          aria-checked=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
         >
           {children.with_value(|children| children())}
         </ToggleRoot>
@@ -363,20 +353,20 @@ pub fn ToggleGroupItem(
         active=is_pressed
       >
         <ToggleRoot
-          {..attrs.get_value()}
-          attr:role=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some("radio")
-          attr:aria-checked=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
           disabled=is_disabled
           pressed=is_pressed
+          node_ref={node_ref}
+          as_child={as_child}
           on_pressed_changed=Callback::new(move |pressed| {
             if pressed {
-              on_item_activate.call(value.get_value().get());
+              on_item_activate.run(value.get_value().get());
             } else {
-              on_item_deactivate.call(value.get_value().get());
+              on_item_deactivate.run(value.get_value().get());
             }
           })
-          node_ref=node_ref
-          as_child=as_child
+          {..}
+          role=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some("radio")
+          aria-checked=move || (kind.get_value() == ToggleGroupValueKind::Single).then_some(is_pressed.get().to_string())
         >
           {children.with_value(|children| children())}
         </ToggleRoot>

@@ -11,17 +11,22 @@ actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4", optional = true, features = ["macros"] }
 console_error_panic_hook = "0.1"
 http = { version = "1.0.0", optional = true }
-leptos = { version = "0.6" }
-leptos_meta = { version = "0.6" }
-leptos_actix = { version = "0.6", optional = true }
-leptos_router = { version = "0.6" }
-wasm-bindgen = "0.2.93"
-leptos-use = { version = "0.12" }
+leptos = { version = "0.7.0-beta" }
+leptos_meta = { version = "0.7.0-beta" }
+leptos_actix = { version = "0.7.0-beta", optional = true }
+leptos_router = { version = "0.7.0-beta" }
+# leptos = { git = "https://github.com/leptos-rs/leptos" }
+# leptos_meta = { git = "https://github.com/leptos-rs/leptos" }
+# leptos_actix = { git = "https://github.com/leptos-rs/leptos", optional = true }
+# leptos_router = { git = "https://github.com/leptos-rs/leptos" }
+wasm-bindgen = "0.2"
+getrandom = { version = "0.2", features = ["js"] }
+leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "49f89bc" }
+# leptos-use = { path = "D:/Projects/leptos-ecosystem/leptos-use" }
 leptix_primitives = { path = "../../crates/primitives" }
-codee = "0.1"
+codee = "0.2"
 
 [features]
-csr = ["leptos/csr"]
 hydrate = ["leptos/hydrate"]
 ssr = [
   "leptos-use/ssr",

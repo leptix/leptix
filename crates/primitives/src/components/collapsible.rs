@@ -1,4 +1,9 @@
-use leptos::{html::AnyElement, leptos_dom::helpers::AnimationFrameRequestHandle, prelude::*};
+use leptos::{
+  html::{self, Button, Div},
+  leptos_dom::helpers::AnimationFrameRequestHandle,
+  logging,
+  prelude::*,
+};
 use wasm_bindgen::JsValue;
 use web_sys::{js_sys::Object, CssStyleDeclaration, MouseEvent};
 
@@ -7,7 +12,6 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Attributes,
   },
 };
 
@@ -27,11 +31,10 @@ pub fn CollapsibleRoot(
   #[prop(optional, into)] default_open: MaybeSignal<bool>,
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
 
-  #[prop(default=(|_|{}).into(), into)] on_open_change: Callback<bool>,
-  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_open_change: Callback<bool>,
+  #[prop(default=Callback::new(|_|{}), into)] on_click: Callback<MouseEvent>,
 
-  #[prop(optional, into)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional, into)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -40,7 +43,7 @@ pub fn CollapsibleRoot(
     value: Signal::derive(move || Some(open.get())),
     default_value: Signal::derive(move || Some(default_open.get())),
     on_change: Callback::new(move |value| {
-      on_open_change.call(value);
+      on_open_change.run(value);
     }),
   });
 
@@ -55,7 +58,9 @@ pub fn CollapsibleRoot(
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         if open.get().unwrap_or(false) {
           "open"
@@ -64,9 +69,6 @@ pub fn CollapsibleRoot(
         }
       }
       attr:data-disabled=disabled
-      element=html::div
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -75,10 +77,9 @@ pub fn CollapsibleRoot(
 
 #[component]
 pub fn CollapsibleTrigger(
-  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_click: Callback<MouseEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -93,19 +94,19 @@ pub fn CollapsibleTrigger(
 
   view! {
     <Primitive
-      {..attrs}
-      attr:aria-controls=content_id
-      attr:aria-expanded=open
-      attr:data-state=move || if open.get() { "open" } else { "closed" }
-      attr:data-disabled=disabled
-      attr:disabled=disabled
-      element=html::button
+      element={html::button}
+      node_ref={node_ref}
+      as_child={as_child}
+      attr:data-state={move || if open.get() { "open" } else { "closed" }}
+      attr:data-disabled={disabled}
+      {..}
+      aria-controls={content_id}
+      aria-expanded={open}
+      disabled=disabled
       on:click=move |ev: MouseEvent| {
-        on_click.call(ev);
-        on_open_toggle.call(());
+        on_click.run(ev);
+        on_open_toggle.run(());
       }
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -116,8 +117,7 @@ pub fn CollapsibleTrigger(
 pub fn CollapsibleContent(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -135,7 +135,6 @@ pub fn CollapsibleContent(
       <CollapsibleContentImpl
         is_present=presence
         node_ref=node_ref
-        attrs=attrs.clone()
         as_child=as_child
       >
         {children.with_value(|children| children())}
@@ -148,8 +147,7 @@ pub fn CollapsibleContent(
 fn CollapsibleContentImpl(
   is_present: Signal<bool>,
 
-  node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -165,8 +163,8 @@ fn CollapsibleContentImpl(
   let is_open = Signal::derive(move || open.get() || is_present.get());
   let is_mount_animation_prevented = StoredValue::new(is_open.get_untracked());
 
-  let original_styles = StoredValue::<Option<CssStyleDeclaration>>::new(None);
-  let animation_frame_handle = StoredValue::<Option<AnimationFrameRequestHandle>>::new(None);
+  let original_styles = StoredValue::new_local(None);
+  let animation_frame_handle = StoredValue::new_local(None);
 
   Effect::new(move |_| {
     if let Ok(handle) = request_animation_frame_with_handle(move || {
@@ -183,7 +181,7 @@ fn CollapsibleContentImpl(
   });
 
   let rect_size = Signal::derive(move || {
-    let mut node = node_ref.get()?;
+    let node = node_ref.get()?;
     let node_style = window().get_computed_style(&node).ok()?;
 
     if original_styles.get_value().is_none() {
@@ -203,28 +201,31 @@ fn CollapsibleContentImpl(
     }
 
     logging::log!("removing animations");
-    node = node
-      .style("transition-duration", "0s")
-      .style("animation-name", "none");
+    node.style(("transition-duration", "0s"));
+    node.style(("animation-name", "none"));
 
     let rect = node.get_bounding_client_rect();
 
     if !is_mount_animation_prevented.get_value() {
       logging::log!("adding back animations");
 
-      _ = node
-        .style(
-          "transition-duration",
-          original_styles
-            .get_value()
-            .and_then(|styles| styles.get_property_value("transition-duration").ok()),
-        )
-        .style(
-          "animation-name",
-          original_styles
-            .get_value()
-            .and_then(|styles| styles.get_property_value("animation-name").ok()),
-        );
+      if let Some(transition_duration) = original_styles
+        .get_value()
+        .and_then(|styles| styles.get_property_value("transition-duration").ok())
+      {
+        node.style(("transition-duration", transition_duration));
+      } else {
+        node.style("transition-duration");
+      }
+
+      if let Some(animation_name) = original_styles
+        .get_value()
+        .and_then(|styles| styles.get_property_value("animation-name").ok())
+      {
+        node.style(("animation-name", animation_name));
+      } else {
+        node.style("animation-name");
+      }
     }
 
     logging::log!("{} {}", rect.width(), rect.height());
@@ -248,22 +249,23 @@ fn CollapsibleContentImpl(
       return;
     };
 
-    _ = node
-      .style(
-        "--primitive-collapsible-content-width",
-        format!("{width}px"),
-      )
-      .style(
-        "--primitive-collapsible-content-height",
-        format!("{height}px"),
-      );
+    node.style((
+      "--primitive-collapsible-content-width",
+      format!("{width}px"),
+    ));
+    node.style((
+      "--primitive-collapsible-content-height",
+      format!("{height}px"),
+    ));
   });
 
   let children = StoredValue::new(children);
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         if open.get() {
           "open"
@@ -271,12 +273,10 @@ fn CollapsibleContentImpl(
           "closed"
         }
       }
-      attr:data-disabled=disabled
-      attr:id=content_id
-      attr:hidden=move || !(is_open.get() || present_state.get())
-      element=html::div
-      node_ref=node_ref
-      as_child=as_child
+      attr:data-disabled={disabled}
+      {..}
+      id=content_id
+      hidden=move || !(is_open.get() || present_state.get())
     >
       <Show when=move || is_open.get()>
         {children.with_value(|children| children())}

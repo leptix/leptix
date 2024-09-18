@@ -1,6 +1,9 @@
-use leptos::{html::AnyElement, prelude::*};
+use leptos::{
+  html::{self, Div},
+  prelude::*,
+};
 
-use crate::{primitive::Primitive, util::Attributes};
+use crate::primitive::Primitive;
 
 const DEFAULT_MAX: f64 = 100.0;
 
@@ -17,8 +20,7 @@ pub fn ProgressRoot(
 
   #[prop(optional)] get_value_label: Option<Callback<(f64, f64), String>>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -48,7 +50,7 @@ pub fn ProgressRoot(
   let value_label = Signal::derive(move || {
     value
       .get()
-      .map(|value| get_value_label.call((value, max.get())))
+      .map(|value| get_value_label.run((value, max.get())))
   });
 
   provide_context(ProgressContextValue {
@@ -58,12 +60,9 @@ pub fn ProgressRoot(
 
   view! {
     <Primitive
-      {..attrs}
-      attr:role="progressbar"
-      attr:aria-valuemax=max
-      attr:aria-valuemin=0
-      attr:aria-valuenow=value
-      attr:aria-valuetext=value_label
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         value
         .get()
@@ -76,11 +75,14 @@ pub fn ProgressRoot(
         })
         .unwrap_or("indeterminate")
       }
-      attr:data-value=value
-      attr:data-max=max
-      element=html::div
-      node_ref=node_ref
-      as_child=as_child
+      {..}
+      data-value={value}
+      data-max={max}
+      aria-valuemax={max}
+      aria-valuemin={0}
+      aria-valuenow={value}
+      aria-valuetext={value_label}
+      role="progressbar"
     >
       {children()}
     </Primitive>
@@ -89,8 +91,7 @@ pub fn ProgressRoot(
 
 #[component]
 pub fn ProgressIndicator(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -102,7 +103,9 @@ pub fn ProgressIndicator(
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         value
         .get()
@@ -117,9 +120,6 @@ pub fn ProgressIndicator(
       }
       attr:data-value=value
       attr:data-max=max
-      element=html::div
-      node_ref=node_ref
-      as_child=as_child
     >
       {children.with_value(|children| children.as_ref().map(|children| children()))}
     </Primitive>

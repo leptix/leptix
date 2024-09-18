@@ -17,5 +17,5 @@ pub(crate) fn linear_scale(
   }
 }
 
-pub(crate) type AttributePair = (&'static str, leptos::Attribute);
-pub(crate) type Attributes = Vec<AttributePair>;
+// pub(crate) type AttributePair = (&'static str, leptos::attr::Attribute);
+// pub(crate) type Attributes = Vec<AttributePair>;

@@ -1,5 +1,5 @@
 use leptos::{
-  html::{AnyElement, Input},
+  html::{self, Button, Input, Span},
   prelude::*,
 };
 use leptos_use::{use_element_size, UseElementSizeReturn};
@@ -10,9 +10,7 @@ use web_sys::{
 };
 
 use crate::{
-  presence::create_presence,
-  primitive::Primitive,
-  util::{create_previous::create_previous, Attributes},
+  presence::create_presence, primitive::Primitive, util::create_previous::create_previous,
 };
 
 #[derive(Clone)]
@@ -26,19 +24,18 @@ pub fn Radio(
   #[prop(optional, into)] value: MaybeSignal<String>,
   #[prop(optional, into)] checked: MaybeSignal<bool>,
   #[prop(optional, into)] required: MaybeSignal<bool>,
-  #[prop(default=(|_|{}).into(), into)] on_check: Callback<()>,
-  #[prop(default=(|_|{}).into(), into)] on_click: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_check: Callback<()>,
+  #[prop(default=Callback::new(|_|{}), into)] on_click: Callback<MouseEvent>,
 
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(optional, into)] name: MaybeProp<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let (is_form_control, set_is_form_control) = create_signal(true);
+  let (is_form_control, set_is_form_control) = signal(true);
   let has_consumer_stopped_propagation = StoredValue::new(false);
 
   Effect::new(move |_| {
@@ -56,10 +53,9 @@ pub fn Radio(
 
   view! {
     <Primitive
-      {..attrs}
-      attr:type="button"
-      attr:role="radio"
-      attr:aria-checked=move || checked.get().to_string()
+      element={html::button}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-state=move || {
         if checked.get() {
           "checked"
@@ -67,15 +63,18 @@ pub fn Radio(
           "unchecked"
         }
       }
-      attr:data-disabled=disabled
-      attr:disabled=move || disabled.get().then_some("")
-      attr:value=value.clone()
-      element=html::button
+      attr:data-disabled={disabled}
+      {..}
+      type="button"
+      role="radio"
+      aria-checked=move || checked.get().to_string()
+      disabled=move || disabled.get().then_some("")
+      value=value.clone()
       on:click=move |ev: MouseEvent| {
-        on_click.call(ev.clone());
+        on_click.run(ev.clone());
 
         if !checked.get() {
-          on_check.call(())
+          on_check.run(())
         }
 
         if is_form_control.get() {
@@ -86,8 +85,6 @@ pub fn Radio(
           }
         }
       }
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -110,8 +107,7 @@ pub fn Radio(
 pub fn RadioIndicator(
   #[prop(optional, into)] force_mount: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -126,22 +122,21 @@ pub fn RadioIndicator(
 
   view! {
     <Show when=move || presence.get()>
-        <Primitive
-          {..attrs.clone()}
-          attr:data-state=move || {
-            if checked.get() {
-              "checked"
-            } else {
-              "unchecked"
-            }
+      <Primitive
+        element={html::span}
+        node_ref={node_ref}
+        as_child={as_child}
+        attr:data-state=move || {
+          if checked.get() {
+            "checked"
+          } else {
+            "unchecked"
           }
-          attr:data-disabled=disabled.clone()
-          element=html::span
-          node_ref=node_ref
-          as_child=as_child
-        >
-          {children.with_value(|children| children())}
-        </Primitive>
+        }
+        attr:data-disabled=disabled.clone()
+      >
+        {children.with_value(|children| children())}
+      </Primitive>
     </Show>
   }
 }
@@ -154,8 +149,7 @@ fn BubbleInput(
   value: MaybeSignal<String>,
   required: Signal<bool>,
   disabled: Signal<bool>,
-  control: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  control: NodeRef<Button>,
 ) -> impl IntoView {
   let node_ref = NodeRef::<Input>::new();
   let prev_checked = create_previous(Signal::derive(move || checked.get()));
@@ -180,7 +174,7 @@ fn BubbleInput(
 
       if prev_checked.get() != checked.get() {
         let mut ev_options = EventInit::new();
-        ev_options.bubbles(bubbles.get());
+        ev_options.set_bubbles(bubbles.get());
 
         let ev = Event::new_with_event_init_dict("click", &ev_options).ok()?;
 
@@ -199,22 +193,21 @@ fn BubbleInput(
 
   view! {
     <input
-      type="checkbox"
-      aria-hidden
-      name=name.into_attribute()
-      value=value.into_attribute()
-      required=required.into_attribute()
-      disabled=disabled.into_attribute()
-      checked=checked.into_attribute()
-      tabindex=(-1).into_attribute()
       node_ref=node_ref
+      value={value}
+      aria-hidden
+      // name={name}
+      required={required}
+      disabled={disabled}
+      checked={checked}
+      tabindex={-1}
       style:position="absolute"
       style:pointer-events="none"
       style:opacity="0"
       style:margin="0"
-      style:width=move || width.get()
-      style:height=move || height.get()
-      {..attrs}
+      style:width={move || width.get().to_string()}
+      style:height={move || height.get().to_string()}
+      type="checkbox"
     />
   }
 }

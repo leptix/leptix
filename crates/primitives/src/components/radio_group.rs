@@ -1,6 +1,6 @@
 use leptos::{
   ev::{keydown, keyup},
-  html::AnyElement,
+  html::{self, Button, Div, Span},
   prelude::*,
 };
 use leptos_use::{use_document, use_event_listener};
@@ -11,10 +11,7 @@ use crate::{
   primitive::Primitive,
   radio::{Radio, RadioIndicator},
   roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
-  util::{
-    create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
-    Attributes,
-  },
+  util::create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
   Direction, Orientation,
 };
 
@@ -38,10 +35,9 @@ pub fn RadioGroupRoot(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
-  #[prop(default=(|_|{}).into(), into)] on_value_change: Callback<String>,
+  #[prop(default=Callback::new(|_|{}), into)] on_value_change: Callback<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -72,15 +68,15 @@ pub fn RadioGroupRoot(
       should_loop=should_loop
     >
       <Primitive
-        {..attrs.clone()}
-        attr:role="radiogroup"
-        attr:aria-required=required.clone()
-        attr:aria-orientation=move || orientation.get().to_string()
+        element={html::div}
+        node_ref={node_ref}
+        as_child={as_child}
         attr:data-disabled=disabled.clone()
-        attr:dir=move || direction.get().to_string()
-        element=html::div
-        node_ref=node_ref
-        as_child=as_child
+        {..}
+        role="radiogroup"
+        aria-required=required.clone()
+        aria-orientation=move || orientation.get().to_string()
+        dir=move || direction.get().to_string()
       >
         {children.with_value(|children| children())}
       </Primitive>
@@ -93,11 +89,10 @@ pub fn RadioGroupItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(default=(|_|{}).into(), into)] on_focus: Callback<FocusEvent>,
-  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_focus: Callback<FocusEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_key_down: Callback<KeyboardEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -141,16 +136,16 @@ pub fn RadioGroupItem(
         required=required
         checked=is_checked
         name=name.clone()
-        on_check=Callback::new(move |_| on_value_change.call(value.get_value().get()))
+        on_check=Callback::new(move |_| on_value_change.run(value.get_value().get()))
         on:keydown=move |ev: KeyboardEvent| {
-          on_key_down.call(ev.clone());
+          on_key_down.run(ev.clone());
 
           if ev.key() == "Enter" {
             ev.prevent_default();
           }
         }
         on:focus=move |ev: FocusEvent| {
-          on_focus.call(ev.clone());
+          on_focus.run(ev.clone());
 
           if is_arrow_key_pressed.get_value() {
             let Some(node) = node_ref.get() else {
@@ -164,9 +159,8 @@ pub fn RadioGroupItem(
             node_el.click();
           }
         }
-        node_ref=node_ref
-        attrs=attrs.clone()
-        as_child=as_child
+        node_ref={node_ref}
+        as_child={as_child}
       >
         {children.with_value(|children| children())}
       </Radio>
@@ -176,8 +170,7 @@ pub fn RadioGroupItem(
 
 #[component]
 pub fn RadioGroupIndicator(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Span>,
   #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -186,9 +179,8 @@ pub fn RadioGroupIndicator(
 
   view! {
     <RadioIndicator
-      attrs=attrs
-      node_ref=node_ref
-      as_child=as_child
+      node_ref={node_ref}
+      as_child={as_child}
     >
       {children.with_value(|children| children.as_ref().map(|children| children()))}
     </RadioIndicator>

@@ -1,23 +1,23 @@
 use leptos::prelude::*;
 
-pub struct CreateControllableSignalProps<T: Clone + PartialEq + 'static> {
+pub struct CreateControllableSignalProps<T: Clone + PartialEq + Send + Sync + 'static> {
   pub value: Signal<Option<T>>,
   pub default_value: Signal<Option<T>>,
   pub on_change: Callback<T>,
 }
 
 #[derive(Clone, Copy)]
-pub struct WriteControllableSignal<T: Clone + 'static> {
+pub struct WriteControllableSignal<T: Clone + Send + Sync + 'static> {
   is_controlled: Signal<bool>,
   value: Signal<Option<T>>,
   pub(crate) set_uncontrolled_value: WriteSignal<Option<T>>,
   pub(crate) on_change: Callback<Option<T>>,
 }
 
-impl<T: Clone + 'static> WriteControllableSignal<T> {
+impl<T: Clone + Send + Sync + 'static> WriteControllableSignal<T> {
   pub fn set(&self, value: T) {
     if self.is_controlled.get() {
-      self.on_change.call(Some(value));
+      self.on_change.run(Some(value));
     } else {
       let set_uncontrolled_value = self.set_uncontrolled_value;
       let cloned_value = value.clone();
@@ -26,7 +26,7 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
       set_uncontrolled_value.set(Some(cloned_value));
       // self.set_uncontrolled_value.set(Some(cloned_value));
       // });
-      self.on_change.call(Some(value));
+      self.on_change.run(Some(value));
     }
   }
 
@@ -36,17 +36,17 @@ impl<T: Clone + 'static> WriteControllableSignal<T> {
 
       callback(&mut value);
 
-      self.on_change.call(value);
+      self.on_change.run(value);
     } else {
       self.set_uncontrolled_value.update(|value| {
         callback(value);
-        self.on_change.call(value.clone());
+        self.on_change.run(value.clone());
       });
     }
   }
 }
 
-pub fn create_controllable_signal<T: Clone + PartialEq + 'static>(
+pub fn create_controllable_signal<T: Clone + PartialEq + Send + Sync + 'static>(
   CreateControllableSignalProps {
     value,
     default_value,
@@ -76,32 +76,32 @@ pub fn create_controllable_signal<T: Clone + PartialEq + 'static>(
       set_uncontrolled_value,
       on_change: Callback::new(move |value| {
         if let Some(value) = value {
-          on_change.call(value);
+          on_change.run(value);
         }
       }),
     },
   )
 }
 
-pub(crate) struct CreateUncontrolledSignalProps<T: Clone + 'static> {
+pub(crate) struct CreateUncontrolledSignalProps<T: Clone + Send + Sync + 'static> {
   default_value: Signal<Option<T>>,
   on_change: Callback<T>,
 }
 
-fn create_uncontrolled_signal<T: Clone + PartialEq + 'static>(
+fn create_uncontrolled_signal<T: Clone + PartialEq + Send + Sync + 'static>(
   CreateUncontrolledSignalProps {
     default_value,
     on_change,
   }: CreateUncontrolledSignalProps<T>,
 ) -> (ReadSignal<Option<T>>, WriteSignal<Option<T>>) {
-  let (uncontrolled_value, set_uncontrolled_value) = create_signal(default_value.get_untracked());
+  let (uncontrolled_value, set_uncontrolled_value) = signal(default_value.get_untracked());
 
   let prev_value = StoredValue::new(uncontrolled_value.get_untracked());
 
   Effect::new(move |_| {
     if prev_value.get_value() != uncontrolled_value.get() {
       if let Some(value) = uncontrolled_value.get() {
-        on_change.call(value);
+        on_change.run(value);
       }
 
       prev_value.set_value(uncontrolled_value.get());

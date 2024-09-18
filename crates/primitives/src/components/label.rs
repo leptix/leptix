@@ -1,34 +1,33 @@
-use leptos::{html::AnyElement,  prelude::*};
+use leptos::{html, html::Label, prelude::*};
 use web_sys::MouseEvent;
 
-use crate::{primitive::Primitive, util::Attributes};
+use crate::primitive::Primitive;
 
 #[component]
 pub fn LabelRoot(
   #[prop(optional, into)] for_html: MaybeProp<String>,
 
-  #[prop(default=(|_|{}).into(), into)] on_mouse_down: Callback<MouseEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_mouse_down: Callback<MouseEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Label>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
   view! {
     <Primitive
-      {..attrs}
-      attr:for=for_html
-      element=html::label
+      element={html::label}
+      node_ref={node_ref}
+      as_child={as_child}
       on:mousedown=move |ev: MouseEvent| {
-        on_mouse_down.call(ev.clone());
+        on_mouse_down.run(ev.clone());
 
         if ev.default_prevented() && ev.detail() > 1 {
           ev.prevent_default();
         }
       }
-      node_ref=node_ref
-      as_child=as_child
+      {..}
+      for=move || for_html.get()
     >
       {children()}
     </Primitive>

@@ -13,16 +13,16 @@ exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
 
 [dependencies]
-leptos = "=0.7.0-beta"
-# leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "c42605c" }
-leptos-use = { path = "D:/Projects/leptos-ecosystem/leptos-use" }
-derive_more = "0.99.17"
+leptos = "0.7.0-beta"
+# leptos = { git = "https://github.com/leptos-rs/leptos" }
+leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "49f89bc" }
+# leptos-use = { path = "D:/Projects/leptos-ecosystem/leptos-use" }
+derive_more = { version = "1.0", features = ["full"] }
 nanoid = "0.4.0"
-strum = { version = "0.26.2", features = ["derive"] }
-strum_macros = "0.26.2"
-itertools = "0.12.1"
-wasm-bindgen = "0.2.93"
-web-sys = { version = "0.3.70", features = ["CustomEventInit", "EventInit"] }
+strum = { version = "0.26", features = ["derive"] }
+strum_macros = "0.26"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["CustomEventInit", "EventInit"] }
 
 [features]
 csr = ["leptos/csr"]

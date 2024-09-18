@@ -1,6 +1,6 @@
 use leptos::{
   ev::{animationcancel, animationend, animationstart},
-  html::AnyElement,
+  html::ElementType,
   prelude::*,
 };
 use leptos_use::use_event_listener;
@@ -20,11 +20,17 @@ impl Default for StyleDeclaration {
   }
 }
 
-pub(crate) fn create_presence(
-  is_present: Signal<bool>,
-  node_ref: NodeRef<AnyElement>,
-) -> Signal<bool> {
-  let styles = StoredValue::<Option<StyleDeclaration>>::new(None);
+use leptos_use::core::{IntoElementMaybeSignalType, OptionSignalMarker};
+
+pub(crate) fn create_presence<El>(is_present: Signal<bool>, node_ref: NodeRef<El>) -> Signal<bool>
+where
+  El: ElementType + Clone + 'static,
+  <El as ElementType>::Output: JsCast + Clone + 'static,
+  NodeRef<El>: IntoElementMaybeSignalType<web_sys::EventTarget, OptionSignalMarker>
+    + WithUntracked<Value = Option<El::Output>>,
+  <NodeRef<El> as WithUntracked>::Value: Clone + 'static,
+{
+  let styles = StoredValue::<Option<StyleDeclaration>, LocalStorage>::new_local(None);
   let prev_present = StoredValue::new(is_present.get_untracked());
   let prev_animation_name = StoredValue::new(String::from("none"));
 
@@ -39,7 +45,10 @@ pub(crate) fn create_presence(
   let (state, send) = create_state_machine(initial.into());
 
   Effect::new(move |_| {
-    if let Some(node) = node_ref.get() {
+    if let Some(node) = node_ref
+      .get()
+      .and_then(|node| node.dyn_into::<web_sys::Element>().ok())
+    {
       if let Ok(Some(computed_style)) = window().get_computed_style(&node) {
         styles.set_value(Some(computed_style.into()));
       }
@@ -78,21 +87,21 @@ pub(crate) fn create_presence(
       .unwrap_or("none".to_string());
 
     if is_present.get() {
-      send.call(PresenceEvent::Mount);
+      send.run(PresenceEvent::Mount);
     } else if current_animation_name == "none"
       || styles
         .get_property_value("display")
         .map(|display| display == "none")
         .unwrap_or(false)
     {
-      send.call(PresenceEvent::Unmount);
+      send.run(PresenceEvent::Unmount);
     } else {
       let is_animating = prev_animation_name.get_value() != current_animation_name;
 
       if was_present && is_animating {
-        send.call(PresenceEvent::AnimationOut);
+        send.run(PresenceEvent::AnimationOut);
       } else {
-        send.call(PresenceEvent::Unmount);
+        send.run(PresenceEvent::Unmount);
       }
     }
 
@@ -101,14 +110,8 @@ pub(crate) fn create_presence(
 
   Effect::new(move |_| {
     let Some(node) = node_ref.get() else {
-      send.call(PresenceEvent::AnimationEnd);
       return;
     };
-
-    if node.is_null() {
-      send.call(PresenceEvent::AnimationEnd);
-      return;
-    }
 
     let handle_start_node = node.clone();
     _ = use_event_listener(node_ref, animationstart, move |ev: AnimationEvent| {
@@ -120,7 +123,11 @@ pub(crate) fn create_presence(
         return;
       };
 
-      if target_el.eq(&handle_start_node) {
+      let Some(handle_start_node) = handle_start_node.dyn_ref::<web_sys::Element>() else {
+        return;
+      };
+
+      if target_el.eq(handle_start_node) {
         if styles.get_value().is_none() {
           styles.set_value(Some(StyleDeclaration::default()));
         }
@@ -153,12 +160,15 @@ pub(crate) fn create_presence(
         return;
       };
 
-      let Some(target_el) = target.dyn_ref::<web_sys::Element>() else {
+      let (Some(target_el), Some(handle_end_node)) = (
+        target.dyn_ref::<web_sys::Element>(),
+        handle_end_node.dyn_ref::<web_sys::Element>(),
+      ) else {
         return;
       };
 
-      if target_el.eq(&handle_end_node) && is_current_animation {
-        send.call(PresenceEvent::AnimationEnd);
+      if target_el.eq(handle_end_node) && is_current_animation {
+        send.run(PresenceEvent::AnimationEnd);
       }
     };
 

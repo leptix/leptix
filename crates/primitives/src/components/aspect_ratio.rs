@@ -1,13 +1,12 @@
-use leptos::{html::AnyElement,  prelude::*};
+use leptos::{html, html::Div, prelude::*};
 
-use crate::{primitive::Primitive, util::Attributes};
+use crate::primitive::Primitive;
 
 #[component]
 pub fn AspectRatioRoot(
   #[prop(default=1.0f64.into(), into)] ratio: MaybeSignal<f64>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -18,11 +17,11 @@ pub fn AspectRatioRoot(
       style:padding-bottom=Signal::derive(move || format!("{}%", 100.0 / ratio.get()))
     >
       <Primitive
-        {..attrs}
-        attr:style="position: absolute; top: 0; right: 0; bottom: 0; left: 0"
-        element=html::div
-        node_ref=node_ref
-        as_child=as_child
+        element={html::div}
+        node_ref={node_ref}
+        as_child={as_child}
+        {..}
+        style="position: absolute; top: 0; right: 0; bottom: 0; left: 0"
       >
         {children()}
       </Primitive>
