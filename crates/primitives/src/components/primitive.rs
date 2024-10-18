@@ -1,5 +1,5 @@
 use leptos::{
-  html::{CreateElement, ElementType, HtmlElement},
+  html::{ElementType, HtmlElement},
   prelude::*,
 };
 
@@ -7,15 +7,17 @@ use wasm_bindgen::JsCast;
 
 #[component]
 pub fn Primitive<El, NewChild>(
-  element: fn() -> HtmlElement<El, (), (), Dom>,
+  element: fn() -> HtmlElement<El, (), ()>,
   children: TypedChildrenFn<NewChild>,
   #[prop(optional)] as_child: MaybeProp<bool>,
   #[prop(optional)] node_ref: NodeRef<El>,
 ) -> impl IntoView
 where
-  HtmlElement<El, (), (), Dom>: ElementChild<Dom, View<NewChild>>,
-  <HtmlElement<El, (), (), Dom> as ElementChild<Dom, View<NewChild>>>::Output: IntoView,
-  El: ElementType + CreateElement<Dom> + 'static,
+  // HtmlElement<El, (), (), Dom>: ElementChild<Dom, View<NewChild>>,
+  HtmlElement<El, (), ()>: ElementChild<View<NewChild>>,
+  // <HtmlElement<El, (), (), Dom> as ElementChild<Dom, View<NewChild>>>::Output: IntoView,
+  <HtmlElement<El, (), ()> as ElementChild<View<NewChild>>>::Output: IntoView,
+  El: ElementType + 'static,
   <El as ElementType>::Output: JsCast,
   NewChild: IntoView + Send + 'static,
 {
@@ -38,13 +40,13 @@ where
 
 #[component]
 pub fn PrimitiveSelfClosing<El, NewChild>(
-  element: fn() -> HtmlElement<El, (), (), Dom>,
+  element: fn() -> HtmlElement<El, (), ()>,
   children: TypedChildrenFn<NewChild>,
   #[prop(optional)] as_child: MaybeProp<bool>,
   #[prop(optional)] node_ref: NodeRef<El>,
 ) -> impl IntoView
 where
-  El: ElementType + CreateElement<Dom> + 'static,
+  El: ElementType + 'static,
   <El as ElementType>::Output: JsCast,
   NewChild: IntoView + Send + 'static,
 {

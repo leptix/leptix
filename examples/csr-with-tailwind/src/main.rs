@@ -24,11 +24,11 @@ fn main() {
 pub fn PrimitivesDemo() -> impl IntoView {
   view! {
     <>
-      <ThemeToggle/>
+      // <ThemeToggle/>
 
-      <WithTitle title="Accordion">
-        <AccordionDemo/>
-      </WithTitle>
+      // <WithTitle title="Accordion">
+      //   <AccordionDemo/>
+      // </WithTitle>
 
       <WithTitle title="Aspect Ratio">
         <AspectRatioDemo/>
@@ -38,29 +38,29 @@ pub fn PrimitivesDemo() -> impl IntoView {
         <AvatarDemo/>
       </WithTitle>
 
-      <WithTitle title="Checkbox">
-        <CheckboxDemo/>
-      </WithTitle>
+      // <WithTitle title="Checkbox">
+      //   <CheckboxDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Collapsible">
-        <CollapsibleDemo/>
-      </WithTitle>
+      // <WithTitle title="Collapsible">
+      //   <CollapsibleDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Label">
-        <LabelDemo/>
-      </WithTitle>
+      // <WithTitle title="Label">
+      //   <LabelDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Progress">
-        <ProgressDemo/>
-      </WithTitle>
+      // <WithTitle title="Progress">
+      //   <ProgressDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Radio Group">
-        <RadioGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Radio Group">
+      //   <RadioGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="ScrollArea">
-        <ScrollAreaDemo/>
-      </WithTitle>
+      // <WithTitle title="ScrollArea">
+      //   <ScrollAreaDemo/>
+      // </WithTitle>
 
       <WithTitle title="Separator">
         <SeparatorDemo/>
@@ -74,21 +74,21 @@ pub fn PrimitivesDemo() -> impl IntoView {
         <SwitchDemo/>
       </WithTitle>
 
-      <WithTitle title="Tabs">
-        <TabsDemo/>
-      </WithTitle>
+      // <WithTitle title="Tabs">
+      //   <TabsDemo/>
+      // </WithTitle>
 
       <WithTitle title="Toggle">
         <ToggleDemo/>
       </WithTitle>
 
-      <WithTitle title="Toggle Group">
-        <ToggleGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Toggle Group">
+      //   <ToggleGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Toolbar">
-        <ToolbarDemo/>
-      </WithTitle>
+      // <WithTitle title="Toolbar">
+      //   <ToolbarDemo/>
+      // </WithTitle>
     </>
   }
 }

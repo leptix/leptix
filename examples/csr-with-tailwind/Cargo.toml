@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
-leptos = { version = "0.7.0-beta", features = ["csr"] }
-leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "49f89bc" }
+leptos = { version = "0.7.0-gamma", features = ["csr"] }
+leptos-use = "0.14.0-gamma"
 leptix_primitives = { path = "../../crates/primitives" }
 getrandom = { version = "0.2", features = ["js"] }

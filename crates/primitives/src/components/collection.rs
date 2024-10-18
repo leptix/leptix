@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use leptos::{
-  html::{CreateElement, ElementType},
-  prelude::*,
-};
+use leptos::{html::ElementType, prelude::*};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::js_sys::Array;
 
@@ -38,16 +35,16 @@ pub fn use_collection_item_ref<ItemElement, ItemData: Clone + Ord + Send + Sync 
   data: ItemData,
 ) -> NodeRef<ItemElement>
 where
-  ItemElement: ElementType + CreateElement<Dom> + Clone + 'static,
+  ItemElement: ElementType + Clone + 'static,
   <ItemElement as ElementType>::Output: JsCast + leptos::html::ElementExt + Clone + 'static,
   NodeRef<ItemElement>: IntoElementMaybeSignalType<web_sys::EventTarget, OptionSignalMarker>
     + WithUntracked<Value = Option<ItemElement::Output>>,
   <NodeRef<ItemElement> as WithUntracked>::Value: Clone + 'static,
 {
-  let CollectionContextValue { item_map, .. } =
-    use_context::<CollectionContextValue<ItemData, ItemElement>>().expect(
-      "create_collection_item_ref must be used in a component that provides a collection context",
-    );
+  let CollectionContextValue { item_map, .. } = use_context::<
+    CollectionContextValue<ItemData, ItemElement>,
+  >()
+  .expect("use_collection_item_ref must be used in a component that provides a collection context");
 
   let (id, set_id) = signal::<Option<CollectionItemId>>(None);
   //let item_ref = NodeRef::<ItemElement>::new();

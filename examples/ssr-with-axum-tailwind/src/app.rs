@@ -1,6 +1,6 @@
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::primitives::PrimitivesShowcase;
-use leptos::{spawn::spawn_local, prelude::*};
+use leptos::{task::spawn_local, prelude::*};
 use leptos_meta::*;
 use leptos_router::{
   components::{Route, Router, Routes},

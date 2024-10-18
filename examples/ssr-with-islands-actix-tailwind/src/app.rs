@@ -1,4 +1,4 @@
-use leptos::{spawn::spawn_local, prelude::*};
+use leptos::{task::spawn_local, prelude::*};
 use leptos_meta::*;
 use leptos_router::{*, components::{Route, Routes, Router}};
 use leptos_use::use_cookie;

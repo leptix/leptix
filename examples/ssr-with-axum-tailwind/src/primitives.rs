@@ -1,4 +1,4 @@
-use leptos::{attr::Attribute, html::Input, spawn::spawn_local, prelude::*};
+use leptos::{attr::Attribute, html::Input, task::spawn_local, prelude::*};
 
 use leptix_primitives::{
   accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,
@@ -18,11 +18,11 @@ use crate::app::DarkThemeContext;
 pub fn PrimitivesShowcase() -> impl IntoView {
   view! {
     <>
-      <ThemeToggle/>
+      // <ThemeToggle/>
 
-      <WithTitle title="Accordion">
-        <AccordionDemo/>
-      </WithTitle>
+      // <WithTitle title="Accordion">
+      //   <AccordionDemo/>
+      // </WithTitle>
 
       <WithTitle title="Aspect Ratio">
         <AspectRatioDemo/>
@@ -32,29 +32,29 @@ pub fn PrimitivesShowcase() -> impl IntoView {
         <AvatarDemo/>
       </WithTitle>
 
-      <WithTitle title="Checkbox">
-        <CheckboxDemo/>
-      </WithTitle>
+      // <WithTitle title="Checkbox">
+      //   <CheckboxDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Collapsible">
-        <CollapsibleDemo/>
-      </WithTitle>
+      // <WithTitle title="Collapsible">
+      //   <CollapsibleDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Label">
-        <LabelDemo/>
-      </WithTitle>
+      // <WithTitle title="Label">
+      //   <LabelDemo/>
+      // </WithTitle>
 
       <WithTitle title="Progress">
         <ProgressDemo/>
       </WithTitle>
 
-      <WithTitle title="Radio Group">
-        <RadioGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Radio Group">
+      //   <RadioGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="ScrollArea">
-        <ScrollAreaDemo/>
-      </WithTitle>
+      // <WithTitle title="ScrollArea">
+      //   <ScrollAreaDemo/>
+      // </WithTitle>
 
       <WithTitle title="Separator">
         <SeparatorDemo/>
@@ -64,25 +64,25 @@ pub fn PrimitivesShowcase() -> impl IntoView {
         <SliderDemo/>
       </WithTitle>
 
-      <WithTitle title="Switch">
-        <SwitchDemo/>
-      </WithTitle>
+      // <WithTitle title="Switch">
+      //   <SwitchDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Tabs">
-        <TabsDemo/>
-      </WithTitle>
+      // <WithTitle title="Tabs">
+      //   <TabsDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Toggle">
-        <ToggleDemo/>
-      </WithTitle>
+      // <WithTitle title="Toggle">
+      //   <ToggleDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Toggle Group">
-        <ToggleGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Toggle Group">
+      //   <ToggleGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Toolbar">
-        <ToolbarDemo/>
-      </WithTitle>
+      // <WithTitle title="Toolbar">
+      //   <ToolbarDemo/>
+      // </WithTitle>
     </>
   }
 }

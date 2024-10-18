@@ -13,10 +13,8 @@ exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
 
 [dependencies]
-leptos = "0.7.0-beta"
-# leptos = { git = "https://github.com/leptos-rs/leptos" }
-leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "49f89bc" }
-# leptos-use = { path = "D:/Projects/leptos-ecosystem/leptos-use" }
+leptos = "0.7.0-gamma"
+leptos-use = "0.14.0-gamma"
 derive_more = { version = "1.0", features = ["full"] }
 nanoid = "0.4.0"
 strum = { version = "0.26", features = ["derive"] }

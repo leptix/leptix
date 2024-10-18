@@ -87,8 +87,8 @@ pub fn AccordionRoot(
       default_value,
       on_value_change,
       collapsible,
-    } => view! {
-      Either::Left(<AccordionSingleImpl
+    } => Either::Left(view! {
+      <AccordionSingleImpl
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or(Callback::new(|_|{}))
@@ -100,14 +100,14 @@ pub fn AccordionRoot(
         as_child=as_child
       >
         {children()}
-      </AccordionSingleImpl>)
-    },
+      </AccordionSingleImpl>
+    }),
     AccordionKind::Multiple {
       value,
       default_value,
       on_value_change,
-    } => view! {
-      Either::Right(<AccordionMultipleImpl
+    } => Either::Right(view! {
+      <AccordionMultipleImpl
         value=value
         default_value=default_value
         on_value_change=on_value_change.unwrap_or(Callback::new(|_|{}))
@@ -118,8 +118,8 @@ pub fn AccordionRoot(
         as_child=as_child
       >
         {children()}
-      </AccordionMultipleImpl>)
-    },
+      </AccordionMultipleImpl>
+    }),
   }
 }
 
