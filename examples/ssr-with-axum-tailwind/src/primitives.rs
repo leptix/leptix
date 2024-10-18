@@ -1,4 +1,4 @@
-use leptos::{html::Input, *};
+use leptos::{attr::Attribute, html::Input, task::spawn_local, prelude::*};
 
 use leptix_primitives::{
   accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,
@@ -6,167 +6,159 @@ use leptix_primitives::{
   toggle_group::*, toolbar::*, Orientation,
 };
 
-use leptos_use::{
-    use_cookie, use_interval_fn,
-    utils::Pausable,
-};
+use leptos_use::{use_cookie, use_interval_fn, utils::Pausable};
 
 use codee::string::FromToStringCodec;
 
 use leptos_meta::*;
 
+use crate::app::DarkThemeContext;
+
 #[component]
 pub fn PrimitivesShowcase() -> impl IntoView {
-    view! {
-      <>
-        <ThemeToggle/>
+  view! {
+    <>
+      // <ThemeToggle/>
 
-        <WithTitle title="Accordion">
-          <AccordionDemo/>
-        </WithTitle>
+      // <WithTitle title="Accordion">
+      //   <AccordionDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Aspect Ratio">
-          <AspectRatioDemo/>
-        </WithTitle>
+      <WithTitle title="Aspect Ratio">
+        <AspectRatioDemo/>
+      </WithTitle>
 
-        <WithTitle title="Avatar">
-          <AvatarDemo/>
-        </WithTitle>
+      <WithTitle title="Avatar">
+        <AvatarDemo/>
+      </WithTitle>
 
-        <WithTitle title="Checkbox">
-          <CheckboxDemo/>
-        </WithTitle>
+      // <WithTitle title="Checkbox">
+      //   <CheckboxDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Collapsible">
-          <CollapsibleDemo/>
-        </WithTitle>
+      // <WithTitle title="Collapsible">
+      //   <CollapsibleDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Label">
-          <LabelDemo/>
-        </WithTitle>
+      // <WithTitle title="Label">
+      //   <LabelDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Progress">
-          <ProgressDemo/>
-        </WithTitle>
+      <WithTitle title="Progress">
+        <ProgressDemo/>
+      </WithTitle>
 
-        <WithTitle title="Radio Group">
-          <RadioGroupDemo/>
-        </WithTitle>
+      // <WithTitle title="Radio Group">
+      //   <RadioGroupDemo/>
+      // </WithTitle>
 
-        <WithTitle title="ScrollArea">
-          <ScrollAreaDemo/>
-        </WithTitle>
+      // <WithTitle title="ScrollArea">
+      //   <ScrollAreaDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Separator">
-          <SeparatorDemo/>
-        </WithTitle>
+      <WithTitle title="Separator">
+        <SeparatorDemo/>
+      </WithTitle>
 
-        <WithTitle title="Slider">
-          <SliderDemo/>
-        </WithTitle>
+      <WithTitle title="Slider">
+        <SliderDemo/>
+      </WithTitle>
 
-        <WithTitle title="Switch">
-          <SwitchDemo/>
-        </WithTitle>
+      // <WithTitle title="Switch">
+      //   <SwitchDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Tabs">
-          <TabsDemo/>
-        </WithTitle>
+      // <WithTitle title="Tabs">
+      //   <TabsDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Toggle">
-          <ToggleDemo/>
-        </WithTitle>
+      // <WithTitle title="Toggle">
+      //   <ToggleDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Toggle Group">
-          <ToggleGroupDemo/>
-        </WithTitle>
+      // <WithTitle title="Toggle Group">
+      //   <ToggleGroupDemo/>
+      // </WithTitle>
 
-        <WithTitle title="Toolbar">
-          <ToolbarDemo/>
-        </WithTitle>
-      </>
-    }
+      // <WithTitle title="Toolbar">
+      //   <ToolbarDemo/>
+      // </WithTitle>
+    </>
+  }
 }
 
 #[server]
 async fn toggle_dark_mode(enabled: bool) -> Result<(), ServerFnError> {
-    use axum_extra::extract::cookie::{Cookie, SameSite};
+  use axum_extra::extract::cookie::{Cookie, SameSite};
 
-    use time::{Duration, OffsetDateTime, Time};
+  use time::{Duration, OffsetDateTime, Time};
 
-    use axum::{http::header, http::header::HeaderValue};
-    use leptos_axum::ResponseOptions;
-    use std::ops::Add;
+  use axum::{http::header, http::header::HeaderValue};
+  use leptos_axum::ResponseOptions;
+  use std::ops::Add;
 
-    let mut cookie = if enabled {
-        Cookie::build(("dark", "true"))
-            .max_age(Duration::hours(500 * 365 * 24))
-            .expires(OffsetDateTime::now_utc() + Duration::hours(500 * 365 * 24))
-            .http_only(true)
-            .same_site(SameSite::Lax)
-            .path("/")
-            .finish()
-    } else {
-        Cookie::build(("dark", ""))
-            .max_age(Duration::seconds(0))
-            .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
-            .http_only(true)
-            .same_site(SameSite::Lax)
-            .path("/")
-            .finish()
-    };
+  let mut cookie = if enabled {
+    Cookie::build(("dark", "true"))
+      .max_age(Duration::hours(500 * 365 * 24))
+      .expires(OffsetDateTime::now_utc() + Duration::hours(500 * 365 * 24))
+      .http_only(true)
+      .same_site(SameSite::Lax)
+      .path("/")
+      .finish()
+  } else {
+    Cookie::build(("dark", ""))
+      .max_age(Duration::seconds(0))
+      .expires(OffsetDateTime::now_utc() - Duration::seconds(1))
+      .http_only(true)
+      .same_site(SameSite::Lax)
+      .path("/")
+      .finish()
+  };
 
-    if let Ok(cookie) = HeaderValue::from_str(&cookie.to_string()) {
-        expect_context::<ResponseOptions>().insert_header(header::SET_COOKIE, cookie);
-    }
+  if let Ok(cookie) = HeaderValue::from_str(&cookie.to_string()) {
+    expect_context::<ResponseOptions>().insert_header(header::SET_COOKIE, cookie);
+  }
 
-    Ok(())
+  Ok(())
 }
 
 #[component]
 fn ThemeToggle() -> impl IntoView {
-    let (dark, _) = use_cookie::<String, FromToStringCodec>("dark");
-    let (dark_theme, set_dark_theme) = create_signal(dark.get_untracked().is_some());
-    let theme = if dark.get_untracked().is_some() { "dark" } else { "" };
+  let DarkThemeContext { dark_theme } = use_context().unwrap();
 
-    view! {
-        <Html class=theme />
+  view! {
+    <ToggleRoot
+      attr:aria-label="Toggle italic"
+      attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
+      pressed=true
+      on_click=Callback::new(move |_| {
+          dark_theme
+              .update(|dark_theme| {
+                  *dark_theme = !*dark_theme;
+              });
+          let Some(el) = document().document_element() else {
+              return;
+          };
 
-      <ToggleRoot
-        attr:aria-label="Toggle italic"
-        attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
-        pressed=true
-        on_click=Callback::new(move |_| {
-            set_dark_theme
-                .update(|dark_theme| {
-                    *dark_theme = !*dark_theme;
-                });
-            let Some(el) = document().document_element() else {
-                return;
-            };
+          if dark_theme.get() {
+              _ = el.class_list().add_1("dark");
+          } else {
+              _ = el.class_list().remove_1("dark");
+          }
 
-            if dark_theme.get() {
-                _ = el.class_list().add_1("dark");
-            } else {
-                _ = el.class_list().remove_1("dark");
-            }
-
-            spawn_local(async move {
-                _ = toggle_dark_mode(dark_theme.get()).await;
-            });
-        })
+          spawn_local(async move {
+              _ = toggle_dark_mode(dark_theme.get()).await;
+          });
+      })
+    >
+      <Show
+        when=move || dark_theme.get()
+        fallback=|| view! { <SunIcon /> }
       >
-
-        {move || {
-            if dark_theme.get() {
-                view! { <MoonIcon/> }
-            } else {
-                view! { <SunIcon/> }
-            }
-        }}
-
-      </ToggleRoot>
-    }
+        <MoonIcon />
+      </Show>
+    </ToggleRoot>
+  }
 }
 
 #[component]
@@ -297,8 +289,10 @@ fn AspectRatioDemo() -> impl IntoView {
 #[component]
 fn ProgressDemo() -> impl IntoView {
   let progress = RwSignal::new(25.0f64);
-  let (indicator_style, set_indicator_style) =
-    create_signal(format!("transform: translateX(-{}%)", 100.0 - progress.get_untracked()));
+  let (indicator_style, set_indicator_style) = signal(format!(
+    "transform: translateX(-{}%)",
+    100.0 - progress.get_untracked()
+  ));
 
   Effect::new(move |_| {
     let Pausable { pause, .. } = use_interval_fn(
@@ -398,13 +392,13 @@ fn AvatarDemo() -> impl IntoView {
 
 #[component]
 fn CollapsibleDemo() -> impl IntoView {
-  let (open, set_open) = create_signal(false);
+  let (open, set_open) = signal(false);
 
   view! {
       <CollapsibleRoot
           attr:class="w-[300px]"
           open=open
-          on_open_change=move |open: bool| set_open.set(open)
+          // on_open_change=move |open: bool| set_open.set(open)
       >
           <div class="flex items-center justify-between">
               <span class="dark:text-white text-[15px] leading-[25px] dark:text-white">
@@ -412,14 +406,12 @@ fn CollapsibleDemo() -> impl IntoView {
               </span>
               <CollapsibleTrigger as_child=true>
                   <button class="rounded-full h-[25px] w-[25px] inline-flex items-center justify-center text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none data-[state=closed]:bg-white data-[state=open]:bg-violet3 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black">
-                      {move || {
-                          if open.get() {
-                              view! { <Cross2Icon/> }
-                          } else {
-                              view! { <RowSpacingIcon/> }
-                          }
-                      }}
-
+                    <Show
+                      when=move || open.get()
+                      fallback = || view! { <RowSpacingIcon /> }
+                    >
+                      <Cross2Icon />
+                    </Show>
                   </button>
               </CollapsibleTrigger>
           </div>
@@ -522,7 +514,10 @@ fn AccordionDemo() -> impl IntoView {
 }
 
 #[component]
-fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: ChildrenFn) -> impl IntoView {
+fn AccordionItemDemo(
+  #[prop(into)] value: MaybeSignal<String>,
+  children: ChildrenFn,
+) -> impl IntoView {
   view! {
       <AccordionItem
           value=value
@@ -535,7 +530,7 @@ fn AccordionItemDemo(#[prop(into)] value: MaybeSignal<String>, children: Childre
 
 #[component]
 fn AccordionTriggerDemo(children: ChildrenFn) -> impl IntoView {
-    let children = StoredValue::new(children);
+  let children = StoredValue::new(children);
 
   view! {
       <AccordionHeader attr:class="flex">
@@ -543,7 +538,7 @@ fn AccordionTriggerDemo(children: ChildrenFn) -> impl IntoView {
               {children.with_value(|children| children())}
               <ChevronDownIcon
                   attr:class="text-violet10 ease-[cubic-bezier(0.87,_0,_0.13,_1)] transition-transform duration-300 group-data-[state=open]:rotate-180"
-                  attr:aria-hidden=true.into_attribute()
+                  attr:aria-hidden=true
               />
           </AccordionTrigger>
       </AccordionHeader>
@@ -560,23 +555,22 @@ fn AccordionContentDemo(children: ChildrenFn) -> impl IntoView {
 }
 
 #[component]
-fn ChevronDownIcon(#[prop(attrs)] attrs: Vec<(&'static str, Attribute)>) -> impl IntoView {
+fn ChevronDownIcon() -> impl IntoView {
   view! {
       <svg
-          width="15"
-          height="15"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-          {..attrs}
+        width="15"
+        height="15"
+        viewBox="0 0 15 15"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
       >
-          <path
-              d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
-              fill="currentColor"
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-          ></path>
+        <path
+          d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
+          fill="currentColor"
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+        ></path>
       </svg>
   }
 }
@@ -584,7 +578,12 @@ fn ChevronDownIcon(#[prop(attrs)] attrs: Vec<(&'static str, Attribute)>) -> impl
 #[component]
 fn LabelDemo() -> impl IntoView {
   let node_ref = NodeRef::<Input>::new();
-  node_ref.on_load(|node| {
+
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
     node.set_default_value("Pedro Duarte");
   });
 
@@ -965,7 +964,7 @@ fn SwitchDemo() -> impl IntoView {
 }
 
 #[component]
-  fn TabsDemo() -> impl IntoView {
+fn TabsDemo() -> impl IntoView {
   let username_node_ref = NodeRef::<Input>::new();
   let name_node_ref = NodeRef::<Input>::new();
 
@@ -1126,10 +1125,12 @@ fn SliderDemo() -> impl IntoView {
 
 #[component]
 fn ScrollAreaDemo() -> impl IntoView {
-  let tags = StoredValue::new((1..=50)
-    .rev()
-    .map(|num| format!("v1.2.0-beta.{num}"))
-    .collect::<Vec<_>>());
+  let tags = StoredValue::new(
+    (1..=50)
+      .rev()
+      .map(|num| format!("v1.2.0-beta.{num}"))
+      .collect::<Vec<_>>(),
+  );
 
   view! {
       <ScrollAreaRoot attr:class="w-[200px] h-[225px] rounded overflow-hidden shadow-[0_2px_10px] shadow-blackA4 bg-white">

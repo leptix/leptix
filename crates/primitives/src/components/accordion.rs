@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use leptos::{html::AnyElement, *};
+use leptos::{
+  either::Either,
+  html::{self, Button, Div, H3},
+  prelude::*,
+};
 use web_sys::KeyboardEvent;
 
 use wasm_bindgen::JsCast;
@@ -12,7 +16,6 @@ use crate::{
   util::{
     create_controllable_signal::{create_controllable_signal, CreateControllableSignalProps},
     create_id::create_id,
-    Attributes,
   },
   Direction, Orientation,
 };
@@ -68,18 +71,15 @@ pub fn AccordionRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=Orientation::Vertical.into(), into)] orientation: MaybeSignal<Orientation>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  provide_context(
-    CollectionContextValue::<AccordionCollectionItem, AnyElement> {
-      collection_ref: node_ref,
-      item_map: RwSignal::new(HashMap::new()),
-    },
-  );
+  provide_context(CollectionContextValue::<AccordionCollectionItem, Div> {
+    collection_ref: node_ref,
+    item_map: RwSignal::new(HashMap::new()),
+  });
 
   match kind {
     AccordionKind::Single {
@@ -87,41 +87,39 @@ pub fn AccordionRoot(
       default_value,
       on_value_change,
       collapsible,
-    } => view! {
+    } => Either::Left(view! {
       <AccordionSingleImpl
         value=value
         default_value=default_value
-        on_value_change=on_value_change.unwrap_or((|_|{}).into())
+        on_value_change=on_value_change.unwrap_or(Callback::new(|_|{}))
         collapsible=Signal::derive(move || collapsible.get())
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
         orientation=Signal::derive(move || orientation.get())
         node_ref=node_ref
-        attrs=attrs
         as_child=as_child
       >
         {children()}
       </AccordionSingleImpl>
-    },
+    }),
     AccordionKind::Multiple {
       value,
       default_value,
       on_value_change,
-    } => view! {
+    } => Either::Right(view! {
       <AccordionMultipleImpl
         value=value
         default_value=default_value
-        on_value_change=on_value_change.unwrap_or((|_|{}).into())
+        on_value_change=on_value_change.unwrap_or(Callback::new(|_|{}))
         disabled=Signal::derive(move || disabled.get())
         direction=Signal::derive(move || direction.get())
         orientation=Signal::derive(move || orientation.get())
         node_ref=node_ref
-        attrs=attrs
         as_child=as_child
       >
         {children()}
       </AccordionMultipleImpl>
-    },
+    }),
   }
 }
 
@@ -137,8 +135,7 @@ fn AccordionSingleImpl(
   direction: Signal<Direction>,
   orientation: Signal<Orientation>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -147,7 +144,7 @@ fn AccordionSingleImpl(
     value: Signal::derive(move || value.get()),
     default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
-      on_value_change.call(value);
+      on_value_change.run(value);
     }),
   });
 
@@ -176,7 +173,6 @@ fn AccordionSingleImpl(
       direction=direction
       orientation=orientation
       node_ref=node_ref
-      attrs=attrs
       as_child=as_child
     >
       {children()}
@@ -195,8 +191,7 @@ fn AccordionMultipleImpl(
   direction: Signal<Direction>,
   orientation: Signal<Orientation>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -205,7 +200,7 @@ fn AccordionMultipleImpl(
     value: Signal::derive(move || value.get()),
     default_value: Signal::derive(move || default_value.get()),
     on_change: Callback::new(move |value| {
-      on_value_change.call(value);
+      on_value_change.run(value);
     }),
   });
 
@@ -246,7 +241,6 @@ fn AccordionMultipleImpl(
       direction=direction
       orientation=orientation
       node_ref=node_ref
-      attrs=attrs
       as_child=as_child
     >
       {children()}
@@ -269,15 +263,14 @@ fn Accordion(
   disabled: Signal<bool>,
   orientation: Signal<Orientation>,
   direction: Signal<Direction>,
-  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_key_down: Callback<KeyboardEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
 ) -> impl IntoView {
-  let get_items = use_collection_context::<AccordionCollectionItem, AnyElement>();
+  let get_items = use_collection_context::<AccordionCollectionItem, Div>();
 
   let is_direction_left_to_right =
     Signal::derive(move || direction.get() == Direction::LeftToRight);
@@ -290,11 +283,13 @@ fn Accordion(
 
   view! {
     <Primitive
-      {..attrs}
-      attr:data-orientation=move || orientation.get().to_string()
-      element=html::div
+      element={html::div}
+      node_ref={node_ref}
+      as_child={as_child}
+      {..}
+      data-orientation=move || orientation.get().to_string()
       on:keydown=move |ev: KeyboardEvent| {
-        on_key_down.call(ev.clone());
+        on_key_down.run(ev.clone());
 
         if !disabled.get() {
           return;
@@ -392,8 +387,6 @@ fn Accordion(
           Some(())
         })();
       }
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -412,8 +405,7 @@ pub fn AccordionItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -443,21 +435,20 @@ pub fn AccordionItem(
   let open_value = value.clone();
   view! {
     <CollapsibleRoot
-      {..attrs}
+      open={is_open}
+      disabled={is_disabled}
+      on_open_change=Callback::new(move |open| {
+        if open {
+          value_context.on_item_open.run(open_value.get());
+        } else {
+          value_context.on_item_close.run(open_value.get());
+        }
+      })
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-orientation=move || state_context.orientation.get().to_string()
       attr:data-state=move || if is_open.get() { "open" } else { "closed" }
       attr:data-disabled=disabled
-      open=is_open
-      disabled=is_disabled
-      on_open_change=Callback::new(move |open| {
-        if open {
-          value_context.on_item_open.call(open_value.get());
-        } else {
-          value_context.on_item_close.call(open_value.get());
-        }
-      })
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </CollapsibleRoot>
@@ -466,8 +457,7 @@ pub fn AccordionItem(
 
 #[component]
 pub fn AccordionHeader(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<H3>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -479,13 +469,12 @@ pub fn AccordionHeader(
 
   view! {
     <Primitive
-      {..attrs}
+      element={html::h3}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-orientation=move || orientation.get().to_string()
       attr:data-state=move || if open.get() { "open" } else { "closed" }
       attr:data-disabled=disabled
-      element=html::h3
-      node_ref=node_ref
-      as_child=as_child
     >
       {children()}
     </Primitive>
@@ -494,8 +483,7 @@ pub fn AccordionHeader(
 
 #[component]
 pub fn AccordionTrigger(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -512,12 +500,12 @@ pub fn AccordionTrigger(
 
   view! {
     <CollapsibleTrigger
-      {..attrs}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-orientation=move || orientation.get().to_string()
-      attr:id=trigger_id
-      attr:aria-disabled=move || open.get() && !collapsible.get()
-      node_ref=node_ref
-      as_child=as_child
+      {..}
+      id=trigger_id
+      aria-disabled=move || open.get() && !collapsible.get()
     >
       {children()}
     </CollapsibleTrigger>
@@ -526,8 +514,7 @@ pub fn AccordionTrigger(
 
 #[component]
 pub fn AccordionContent(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -542,25 +529,24 @@ pub fn AccordionContent(
       return;
     };
 
-    _ = node
-      .style(
-        "--primitive-accordion-content-width",
-        "var(--primitive-collapsible-content-width)",
-      )
-      .style(
-        "--primitive-accordion-content-height",
-        "var(--primitive-collapsible-content-height)",
-      );
+    node.style((
+      "--primitive-accordion-content-width",
+      "var(--primitive-collapsible-content-width)",
+    ));
+    node.style((
+      "--primitive-accordion-content-height",
+      "var(--primitive-collapsible-content-height)",
+    ));
   });
 
   view! {
     <CollapsibleContent
-      {..attrs}
+      node_ref={node_ref}
+      as_child={as_child}
       attr:data-orientation=move || orientation.get().to_string()
-      attr:aria-labelledby=trigger_id
-      attr:role="region"
-      node_ref=node_ref
-      as_child=as_child
+      {..}
+      aria-labelledby=trigger_id
+      role="region"
     >
       {children()}
     </CollapsibleContent>

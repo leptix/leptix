@@ -13,15 +13,14 @@ exclude = ["README.md", "assets/*"]
 categories = ["accessibility", "web-programming"]
 
 [dependencies]
-leptos = "0.6"
-leptos-use = "0.12"
-derive_more = "0.99.17"
+leptos = "0.7.0-gamma"
+leptos-use = "0.14.0-gamma"
+derive_more = { version = "1.0", features = ["full"] }
 nanoid = "0.4.0"
-strum = { version = "0.26.2", features = ["derive"] }
-strum_macros = "0.26.2"
-itertools = "0.12.1"
-wasm-bindgen = "0.2.93"
-web-sys = { version = "0.3.70", features = ["CustomEventInit", "EventInit"] }
+strum = { version = "0.26", features = ["derive"] }
+strum_macros = "0.26"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["CustomEventInit", "EventInit"] }
 
 [features]
 csr = ["leptos/csr"]

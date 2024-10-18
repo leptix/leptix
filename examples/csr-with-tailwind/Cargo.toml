@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
-leptos = { version = "0.6", features = ["csr"] }
-leptos-use = "0.12"
+leptos = { version = "0.7.0-gamma", features = ["csr"] }
+leptos-use = "0.14.0-gamma"
 leptix_primitives = { path = "../../crates/primitives" }
+getrandom = { version = "0.2", features = ["js"] }

@@ -1,4 +1,7 @@
-use leptos::{html::AnyElement, *};
+use leptos::{
+  html::{self, Button, Div, A},
+  prelude::*,
+};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlAnchorElement, KeyboardEvent};
 
@@ -7,7 +10,6 @@ use crate::{
   roving_focus::{RovingFocusGroup, RovingFocusGroupItem},
   separator::SeparatorRoot,
   toggle_group::{ToggleGroupItem, ToggleGroupRoot},
-  util::Attributes,
   Direction, Orientation,
 };
 
@@ -25,8 +27,7 @@ pub fn ToolbarRoot(
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
   #[prop(default=true.into(), into)] should_loop: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -45,13 +46,13 @@ pub fn ToolbarRoot(
       should_loop=Signal::derive(move || should_loop.get())
     >
       <Primitive
-        {..attrs.clone()}
-        attr:role="toolbar"
-        attr:aria-orientation=move || orientation.get().to_string()
-        attr:dir=move || direction.get().to_string()
-        element=html::div
-        node_ref=node_ref
-        as_child=as_child
+        element={html::div}
+        node_ref={node_ref}
+        as_child={as_child}
+        {..}
+        role="toolbar"
+        aria-orientation=move || orientation.get().to_string()
+        dir=move || direction.get().to_string()
       >
         {children.with_value(|children| children())}
       </Primitive>
@@ -61,8 +62,7 @@ pub fn ToolbarRoot(
 
 #[component]
 pub fn ToolbarSeparator(
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   #[prop(optional)] children: Option<ChildrenFn>,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -79,10 +79,9 @@ pub fn ToolbarSeparator(
 
   view! {
     <SeparatorRoot
-      orientation=orientation
-      node_ref=node_ref
-      attrs=attrs
-      as_child=as_child
+      orientation={orientation}
+      node_ref={node_ref}
+      as_child={as_child}
     >
       {children.with_value(|children| children.as_ref().map(|children| children()))}
     </SeparatorRoot>
@@ -93,8 +92,7 @@ pub fn ToolbarSeparator(
 pub fn ToolbarButton(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -107,11 +105,11 @@ pub fn ToolbarButton(
       focusable=Signal::derive(move || disabled.get())
     >
       <Primitive
-        {..attrs.clone()}
-        attr:type="button"
-        element=html::button
-        node_ref=node_ref
-        as_child=as_child
+        element={html::button}
+        node_ref={node_ref}
+        as_child={as_child}
+        {..}
+        type="button"
       >
         {children.with_value(|children| children())}
       </Primitive>
@@ -121,10 +119,9 @@ pub fn ToolbarButton(
 
 #[component]
 pub fn ToolbarLink(
-  #[prop(default=(|_|{}).into(), into)] on_key_down: Callback<KeyboardEvent>,
+  #[prop(default=Callback::new(|_|{}), into)] on_key_down: Callback<KeyboardEvent>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<A>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -137,12 +134,11 @@ pub fn ToolbarLink(
       focusable=true
     >
       <Primitive
-        element=html::a
-        node_ref=node_ref
-        attrs=attrs.clone()
-        as_child=as_child
+        element={html::a}
+        node_ref={node_ref}
+        as_child={as_child}
         on:keydown=move |ev: KeyboardEvent| {
-          on_key_down.call(ev.clone());
+          on_key_down.run(ev.clone());
 
           if ev.key() == " " {
             if let Some(current_target) = ev.current_target() {
@@ -167,8 +163,7 @@ pub fn ToolbarToggleGroup(
   #[prop(optional, into)] orientation: MaybeSignal<Orientation>,
   #[prop(optional, into)] direction: MaybeSignal<Direction>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Div>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -178,16 +173,16 @@ pub fn ToolbarToggleGroup(
 
   view! {
     <ToggleGroupRoot
-      {..attrs}
-      attr:data-orientation=move || context.orientation.get().to_string()
-      attr:dir=move || context.direction.get().to_string()
-      kind=kind
+      kind={kind}
       disabled=Signal::derive(move || disabled.get())
       orientation=Signal::derive(move || orientation.get())
       direction=Signal::derive(move || direction.get())
-      roving_focus=false
-      node_ref=node_ref
-      as_child=as_child
+      roving_focus={false}
+      node_ref={node_ref}
+      as_child={as_child}
+      attr:data-orientation=move || context.orientation.get().to_string()
+      {..}
+      dir=move || context.direction.get().to_string()
     >
       {children()}
     </ToggleGroupRoot>
@@ -199,8 +194,7 @@ pub fn ToolbarToggleItem(
   #[prop(optional, into)] disabled: MaybeSignal<bool>,
   #[prop(into)] value: MaybeSignal<String>,
 
-  #[prop(optional)] node_ref: NodeRef<AnyElement>,
-  #[prop(attrs)] attrs: Attributes,
+  #[prop(optional)] node_ref: NodeRef<Button>,
   children: ChildrenFn,
 
   #[prop(optional, into)] as_child: MaybeProp<bool>,
@@ -210,11 +204,10 @@ pub fn ToolbarToggleItem(
   view! {
     <ToolbarButton as_child=true>
       <ToggleGroupItem
+        node_ref={node_ref}
+        as_child={as_child}
         disabled=Signal::derive(move || disabled.get())
         value=value.clone()
-        node_ref=node_ref
-        attrs=attrs.clone()
-        as_child=as_child
       >
         {children.with_value(|children| children())}
       </ToggleGroupItem>

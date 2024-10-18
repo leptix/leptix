@@ -1,4 +1,4 @@
-use leptos::{html::Input, *};
+use leptos::{attr::Attribute, html::Input, prelude::*};
 
 use leptix_primitives::{
   accordion::*, aspect_ratio::*, avatar::*, checkbox::*, collapsible::*, label::*, progress::*,
@@ -24,11 +24,11 @@ fn main() {
 pub fn PrimitivesDemo() -> impl IntoView {
   view! {
     <>
-      <ThemeToggle/>
+      // <ThemeToggle/>
 
-      <WithTitle title="Accordion">
-        <AccordionDemo/>
-      </WithTitle>
+      // <WithTitle title="Accordion">
+      //   <AccordionDemo/>
+      // </WithTitle>
 
       <WithTitle title="Aspect Ratio">
         <AspectRatioDemo/>
@@ -38,29 +38,29 @@ pub fn PrimitivesDemo() -> impl IntoView {
         <AvatarDemo/>
       </WithTitle>
 
-      <WithTitle title="Checkbox">
-        <CheckboxDemo/>
-      </WithTitle>
+      // <WithTitle title="Checkbox">
+      //   <CheckboxDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Collapsible">
-        <CollapsibleDemo/>
-      </WithTitle>
+      // <WithTitle title="Collapsible">
+      //   <CollapsibleDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Label">
-        <LabelDemo/>
-      </WithTitle>
+      // <WithTitle title="Label">
+      //   <LabelDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Progress">
-        <ProgressDemo/>
-      </WithTitle>
+      // <WithTitle title="Progress">
+      //   <ProgressDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Radio Group">
-        <RadioGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Radio Group">
+      //   <RadioGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="ScrollArea">
-        <ScrollAreaDemo/>
-      </WithTitle>
+      // <WithTitle title="ScrollArea">
+      //   <ScrollAreaDemo/>
+      // </WithTitle>
 
       <WithTitle title="Separator">
         <SeparatorDemo/>
@@ -74,28 +74,28 @@ pub fn PrimitivesDemo() -> impl IntoView {
         <SwitchDemo/>
       </WithTitle>
 
-      <WithTitle title="Tabs">
-        <TabsDemo/>
-      </WithTitle>
+      // <WithTitle title="Tabs">
+      //   <TabsDemo/>
+      // </WithTitle>
 
       <WithTitle title="Toggle">
         <ToggleDemo/>
       </WithTitle>
 
-      <WithTitle title="Toggle Group">
-        <ToggleGroupDemo/>
-      </WithTitle>
+      // <WithTitle title="Toggle Group">
+      //   <ToggleGroupDemo/>
+      // </WithTitle>
 
-      <WithTitle title="Toolbar">
-        <ToolbarDemo/>
-      </WithTitle>
+      // <WithTitle title="Toolbar">
+      //   <ToolbarDemo/>
+      // </WithTitle>
     </>
   }
 }
 
 #[component]
 fn ThemeToggle() -> impl IntoView {
-  let (dark_theme, set_dark_theme) = create_signal(true);
+  let (dark_theme, set_dark_theme) = signal(true);
 
   view! {
     <ToggleRoot
@@ -103,29 +103,28 @@ fn ThemeToggle() -> impl IntoView {
       attr:class="dark:hover:bg-neutral-800 dark:bg-neutral-900 hover:bg-black/20 bg-black/10 color-mauve11 shadow-blackA4 flex h-[35px] w-[35px] items-center justify-center rounded leading-4 shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black"
       pressed=true
       on_click=Callback::new(move |_| {
-          set_dark_theme
-              .update(|dark_theme| {
-                  *dark_theme = !*dark_theme;
-              });
-          let Some(el) = document().document_element() else {
-              return;
-          };
-          if dark_theme.get() {
-              _ = el.class_list().add_1("dark");
-          } else {
-              _ = el.class_list().remove_1("dark");
-          }
+        set_dark_theme
+          .update(|dark_theme| {
+            *dark_theme = !*dark_theme;
+          });
+
+        let Some(el) = document().document_element() else {
+          return;
+        };
+
+        if dark_theme.get() {
+          _ = el.class_list().add_1("dark");
+        } else {
+          _ = el.class_list().remove_1("dark");
+        }
       })
     >
-
-      {move || {
-          if dark_theme.get() {
-              view! { <MoonIcon/> }
-          } else {
-              view! { <SunIcon/> }
-          }
-      }}
-
+      <Show
+        when=move || dark_theme.get()
+        fallback=|| view! { <SunIcon /> }
+      >
+        <MoonIcon />
+      </Show>
     </ToggleRoot>
   }
 }
@@ -133,21 +132,21 @@ fn ThemeToggle() -> impl IntoView {
 #[component]
 fn SunIcon() -> impl IntoView {
   view! {
-      <svg
-          width="16"
-          height="16"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style="display:var(--theme-toggle-sun-icon-display)"
-      >
-          <path
-              d="M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2.1967 2.1967C2.39196 2.00144 2.70854 2.00144 2.90381 2.1967L4.31802 3.61091C4.51328 3.80617 4.51328 4.12276 4.31802 4.31802C4.12276 4.51328 3.80617 4.51328 3.61091 4.31802L2.1967 2.90381C2.00144 2.70854 2.00144 2.39196 2.1967 2.1967ZM0.5 7C0.223858 7 0 7.22386 0 7.5C0 7.77614 0.223858 8 0.5 8H2.5C2.77614 8 3 7.77614 3 7.5C3 7.22386 2.77614 7 2.5 7H0.5ZM2.1967 12.8033C2.00144 12.608 2.00144 12.2915 2.1967 12.0962L3.61091 10.682C3.80617 10.4867 4.12276 10.4867 4.31802 10.682C4.51328 10.8772 4.51328 11.1938 4.31802 11.3891L2.90381 12.8033C2.70854 12.9986 2.39196 12.9986 2.1967 12.8033ZM12.5 7C12.2239 7 12 7.22386 12 7.5C12 7.77614 12.2239 8 12.5 8H14.5C14.7761 8 15 7.77614 15 7.5C15 7.22386 14.7761 7 14.5 7H12.5ZM10.682 4.31802C10.4867 4.12276 10.4867 3.80617 10.682 3.61091L12.0962 2.1967C12.2915 2.00144 12.608 2.00144 12.8033 2.1967C12.9986 2.39196 12.9986 2.70854 12.8033 2.90381L11.3891 4.31802C11.1938 4.51328 10.8772 4.51328 10.682 4.31802ZM8 12.5C8 12.2239 7.77614 12 7.5 12C7.22386 12 7 12.2239 7 12.5V14.5C7 14.7761 7.22386 15 7.5 15C7.77614 15 8 14.7761 8 14.5V12.5ZM10.682 10.682C10.8772 10.4867 11.1938 10.4867 11.3891 10.682L12.8033 12.0962C12.9986 12.2915 12.9986 12.608 12.8033 12.8033C12.608 12.9986 12.2915 12.9986 12.0962 12.8033L10.682 11.3891C10.4867 11.1938 10.4867 10.8772 10.682 10.682ZM5.5 7.5C5.5 6.39543 6.39543 5.5 7.5 5.5C8.60457 5.5 9.5 6.39543 9.5 7.5C9.5 8.60457 8.60457 9.5 7.5 9.5C6.39543 9.5 5.5 8.60457 5.5 7.5ZM7.5 4.5C5.84315 4.5 4.5 5.84315 4.5 7.5C4.5 9.15685 5.84315 10.5 7.5 10.5C9.15685 10.5 10.5 9.15685 10.5 7.5C10.5 5.84315 9.15685 4.5 7.5 4.5Z"
-              fill="currentColor"
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-          ></path>
-      </svg>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 15 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style="display:var(--theme-toggle-sun-icon-display)"
+    >
+      <path
+        d="M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2.1967 2.1967C2.39196 2.00144 2.70854 2.00144 2.90381 2.1967L4.31802 3.61091C4.51328 3.80617 4.51328 4.12276 4.31802 4.31802C4.12276 4.51328 3.80617 4.51328 3.61091 4.31802L2.1967 2.90381C2.00144 2.70854 2.00144 2.39196 2.1967 2.1967ZM0.5 7C0.223858 7 0 7.22386 0 7.5C0 7.77614 0.223858 8 0.5 8H2.5C2.77614 8 3 7.77614 3 7.5C3 7.22386 2.77614 7 2.5 7H0.5ZM2.1967 12.8033C2.00144 12.608 2.00144 12.2915 2.1967 12.0962L3.61091 10.682C3.80617 10.4867 4.12276 10.4867 4.31802 10.682C4.51328 10.8772 4.51328 11.1938 4.31802 11.3891L2.90381 12.8033C2.70854 12.9986 2.39196 12.9986 2.1967 12.8033ZM12.5 7C12.2239 7 12 7.22386 12 7.5C12 7.77614 12.2239 8 12.5 8H14.5C14.7761 8 15 7.77614 15 7.5C15 7.22386 14.7761 7 14.5 7H12.5ZM10.682 4.31802C10.4867 4.12276 10.4867 3.80617 10.682 3.61091L12.0962 2.1967C12.2915 2.00144 12.608 2.00144 12.8033 2.1967C12.9986 2.39196 12.9986 2.70854 12.8033 2.90381L11.3891 4.31802C11.1938 4.51328 10.8772 4.51328 10.682 4.31802ZM8 12.5C8 12.2239 7.77614 12 7.5 12C7.22386 12 7 12.2239 7 12.5V14.5C7 14.7761 7.22386 15 7.5 15C7.77614 15 8 14.7761 8 14.5V12.5ZM10.682 10.682C10.8772 10.4867 11.1938 10.4867 11.3891 10.682L12.8033 12.0962C12.9986 12.2915 12.9986 12.608 12.8033 12.8033C12.608 12.9986 12.2915 12.9986 12.0962 12.8033L10.682 11.3891C10.4867 11.1938 10.4867 10.8772 10.682 10.682ZM5.5 7.5C5.5 6.39543 6.39543 5.5 7.5 5.5C8.60457 5.5 9.5 6.39543 9.5 7.5C9.5 8.60457 8.60457 9.5 7.5 9.5C6.39543 9.5 5.5 8.60457 5.5 7.5ZM7.5 4.5C5.84315 4.5 4.5 5.84315 4.5 7.5C4.5 9.15685 5.84315 10.5 7.5 10.5C9.15685 10.5 10.5 9.15685 10.5 7.5C10.5 5.84315 9.15685 4.5 7.5 4.5Z"
+        fill="currentColor"
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+      ></path>
+    </svg>
   }
 }
 
@@ -258,7 +257,7 @@ fn AspectRatioDemo() -> impl IntoView {
 #[component]
 fn ProgressDemo() -> impl IntoView {
   let progress = RwSignal::new(25.0f64);
-  let (indicator_style, set_indicator_style) = create_signal(format!(
+  let (indicator_style, set_indicator_style) = signal(format!(
     "transform: translateX(-{}%)",
     100.0 - progress.get_untracked()
   ));
@@ -361,13 +360,13 @@ fn AvatarDemo() -> impl IntoView {
 
 #[component]
 fn CollapsibleDemo() -> impl IntoView {
-  let (open, set_open) = create_signal(false);
+  let (open, set_open) = signal(false);
 
   view! {
       <CollapsibleRoot
           attr:class="w-[300px]"
           open=open
-          on_open_change=move |open: bool| set_open.set(open)
+          // on_open_change=move |open: bool| set_open.set(open)
       >
           <div class="flex items-center justify-between">
               <span class="dark:text-white text-[15px] leading-[25px] dark:text-white">
@@ -375,14 +374,12 @@ fn CollapsibleDemo() -> impl IntoView {
               </span>
               <CollapsibleTrigger as_child=true>
                   <button class="rounded-full h-[25px] w-[25px] inline-flex items-center justify-center text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none data-[state=closed]:bg-white data-[state=open]:bg-violet3 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black">
-                      {move || {
-                          if open.get() {
-                              view! { <Cross2Icon/> }
-                          } else {
-                              view! { <RowSpacingIcon/> }
-                          }
-                      }}
-
+                    <Show
+                      when=move || open.get()
+                      fallback = || view! { <RowSpacingIcon /> }
+                    >
+                      <Cross2Icon />
+                    </Show>
                   </button>
               </CollapsibleTrigger>
           </div>
@@ -509,7 +506,7 @@ fn AccordionTriggerDemo(children: ChildrenFn) -> impl IntoView {
               {children.with_value(|children| children())}
               <ChevronDownIcon
                   attr:class="text-violet10 ease-[cubic-bezier(0.87,_0,_0.13,_1)] transition-transform duration-300 group-data-[state=open]:rotate-180"
-                  attr:aria-hidden=true.into_attribute()
+                  attr:aria-hidden=true
               />
           </AccordionTrigger>
       </AccordionHeader>
@@ -526,31 +523,35 @@ fn AccordionContentDemo(children: ChildrenFn) -> impl IntoView {
 }
 
 #[component]
-fn ChevronDownIcon(#[prop(attrs)] attrs: Vec<(&'static str, Attribute)>) -> impl IntoView {
+fn ChevronDownIcon() -> impl IntoView {
   view! {
-      <svg
-          width="15"
-          height="15"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-          {..attrs}
-      >
-          <path
-              d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
-              fill="currentColor"
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-          ></path>
-      </svg>
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 15 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
+        fill="currentColor"
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+      ></path>
+    </svg>
   }
 }
 
 #[component]
 fn LabelDemo() -> impl IntoView {
   let node_ref = NodeRef::<Input>::new();
-  node_ref.on_load(|node| {
+
+  Effect::new(move |_| {
+    let Some(node) = node_ref.get() else {
+      return;
+    };
+
     node.set_default_value("Pedro Duarte");
   });
 
