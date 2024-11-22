@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 console_error_panic_hook = "0.1.7"
 leptos = { version = "0.6", features = ["csr"] }
-leptos-use = "0.12"
+leptos-use = "0.13"
 leptix_primitives = { path = "../../crates/primitives" }
