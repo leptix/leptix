@@ -21,7 +21,7 @@ strum = { version = "0.26.2", features = ["derive"] }
 strum_macros = "0.26.2"
 itertools = "0.12.1"
 wasm-bindgen = "0.2"
-web-sys = { version = "0.3.70", features = ["CustomEventInit", "EventInit"] }
+web-sys = { version = "0.3", features = ["CustomEventInit", "EventInit"] }
 
 [features]
 csr = ["leptos/csr"]
