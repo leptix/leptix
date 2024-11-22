@@ -14,13 +14,13 @@ categories = ["accessibility", "web-programming"]
 
 [dependencies]
 leptos = "0.6"
-leptos-use = "0.12"
+leptos-use = "0.13"
 derive_more = "0.99.17"
 nanoid = "0.4.0"
 strum = { version = "0.26.2", features = ["derive"] }
 strum_macros = "0.26.2"
 itertools = "0.12.1"
-wasm-bindgen = "0.2.93"
+wasm-bindgen = "0.2"
 web-sys = { version = "0.3.70", features = ["CustomEventInit", "EventInit"] }
 
 [features]
