@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://crates.io/crates/leptix_primitives" target="_blank"><img src="https://img.shields.io/crates/v/leptix_primitives"/></a>
-  <a href="https://docs.rs/leptix_primitives" target="_blank"><img src="https://img.shields.io/docsrs/leptix_primitives/0.1.0"/></a>
+  <a href="https://docs.rs/leptix_primitives" target="_blank"><img src="https://img.shields.io/docsrs/leptix_primitives"/></a>
 </p>
 
 <p align="center">
